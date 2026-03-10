@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --foreground: #f5f5f5;
+  --background: #0F0F0F;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1A1A1A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #F97316;
+}
+
+/* Bracket connector lines */
+.bracket-connector {
+  position: relative;
+}
+
+.bracket-connector::after {
+  content: '';
+  position: absolute;
+  right: -16px;
+  width: 16px;
+  top: 50%;
+  border-top: 2px solid #333333;
+}
+
+.bracket-pair::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 25%;
+  height: 50%;
+  border-right: 2px solid #333333;
+}
+
+/* Team slot hover effects */
+.team-slot {
+  transition: all 0.15s ease;
+}
+
+.team-slot:hover:not(.empty-slot):not(.winner-slot) {
+  transform: scale(1.02);
+}
+
+/* Glow effects for winners */
+.winner-glow {
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.4);
+}
+
+/* Loading skeleton */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1A1A1A 25%, #242424 50%, #1A1A1A 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Bracket zoom container */
+.bracket-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  min-height: 600px;
+}
+
+/* Input styles */
+.input-base {
+  @apply w-full bg-brand-card border border-brand-border rounded-lg px-4 py-3 text-white placeholder-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent transition-all;
+}
+
+/* Button styles */
+.btn-primary {
+  @apply bg-brand-gradient text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-brand-card border border-brand-border text-white font-medium px-6 py-3 rounded-lg hover:bg-brand-border transition-all active:scale-95;
+}
+
+.btn-ghost {
+  @apply text-brand-muted font-medium px-4 py-2 rounded-lg hover:text-white hover:bg-brand-card transition-all;
+}
