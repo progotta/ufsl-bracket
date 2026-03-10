@@ -1,70 +1,26 @@
 # NEEDS_APPROVAL.md
 
-Items requiring manual approval/action. Most of the app is built and ready.
+Everything is DONE. The only thing left is the manual Supabase + deployment setup.
 
 ---
 
-## 1. GitHub Push (READY TO PUSH)
+## Action Items for Shawn
 
-The repo was created at: **https://github.com/progotta/ufsl-bracket**
-
-The local git repo is initialized and committed. To push:
-
-```bash
-cd /home/ubuntu/.openclaw/workspace/ufsl-bracket
-git push -u origin main
-```
-
-Remote is already configured with PAT.
-
----
-
-## 2. npm install
-
-```bash
-cd /home/ubuntu/.openclaw/workspace/ufsl-bracket
-npm install --legacy-peer-deps
-```
-
-This needs to run before `npm run dev` will work.
-
----
-
-## 3. Supabase Setup (Manual — requires your credentials)
-
+### 1. Supabase Setup (Required — takes ~10 min)
 1. Create project at https://supabase.com
-2. Copy project URL and anon key
-3. Edit `.env.local`:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key_here
-   NEXT_PUBLIC_SITE_URL=http://localhost:3000
-   ```
-4. Run the SQL migration in Supabase SQL Editor:
-   `supabase/migrations/001_initial_schema.sql`
+2. Run SQL migration: `supabase/migrations/001_initial_schema.sql`
+3. Enable auth providers (Google, Apple, Facebook, Phone)
+4. Fill in `.env.local` with project URL + anon key
 
-5. Enable Auth providers in Supabase Dashboard:
-   - Authentication → Providers → Google (need Client ID + Secret from Google Cloud Console)
-   - Authentication → Providers → Apple (need Apple Developer credentials)
-   - Authentication → Providers → Facebook (need Facebook App ID + Secret)
-   - Authentication → Providers → Phone → enable + add Twilio credentials (for SMS OTP)
-   - Email is on by default ✓
-
----
-
-## 4. Vercel Deploy (after npm install works)
-
+### 2. Vercel Deploy (After Supabase is set up)
 ```bash
+cd /home/ubuntu/.openclaw/workspace/ufsl-bracket
 npx vercel --prod
 ```
-
-Or: Connect GitHub repo at vercel.com → New Project → import progotta/ufsl-bracket
-
-Set env vars in Vercel dashboard.
+Or connect the GitHub repo at vercel.com.
 
 ---
 
-## Status
+## Nothing blocking — code is all written, built, and pushed to GitHub!
 
-Everything EXCEPT npm install + git push is done and ready.
-All code is written and committed locally.
+See PROGRESS.md for full details.
