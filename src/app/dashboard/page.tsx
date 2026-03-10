@@ -2,6 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Trophy, Users, ArrowRight, Calendar } from 'lucide-react'
+import type { Profile, Bracket, Pool } from '@/types/database'
 
 export default async function DashboardPage() {
   const supabase = createServerClient()
@@ -9,37 +10,50 @@ export default async function DashboardPage() {
 
   if (!session) redirect('/auth')
 
-  const { data: profile } = await supabase
+  const { data: profileRaw } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', session.user.id)
-    .single()
+    .maybeSingle()
 
-  const { data: pools } = await supabase
+  const profile = profileRaw as Profile | null
+
+  const { data: membershipsRaw } = await supabase
     .from('pool_members')
-    .select(`
-      role,
-      pools (
-        id,
-        name,
-        description,
-        status,
-        invite_code,
-        commissioner_id,
-        created_at
-      )
-    `)
+    .select('role, pool_id')
     .eq('user_id', session.user.id)
-    .order('created_at', { ascending: false })
 
-  const { data: brackets } = await supabase
+  // Fetch pools separately for each membership to avoid join type issues
+  const poolIds = membershipsRaw?.map(m => m.pool_id) || []
+  const { data: poolsRaw } = poolIds.length > 0
+    ? await supabase.from('pools').select('*').in('id', poolIds).order('created_at', { ascending: false })
+    : { data: [] }
+
+  const pools = (poolsRaw || []) as Pool[]
+
+  const poolMap = new Map(pools.map(p => [p.id, p]))
+  const membershipsWithPools = (membershipsRaw || []).map(m => ({
+    role: m.role,
+    pool: poolMap.get(m.pool_id),
+  })).filter(m => m.pool)
+
+  const { data: bracketsRaw } = await supabase
     .from('brackets')
-    .select('*, pools(name)')
+    .select('*')
     .eq('user_id', session.user.id)
     .order('updated_at', { ascending: false })
 
+  const brackets = (bracketsRaw || []) as Bracket[]
+
+  // Fetch pool names for brackets
+  const bracketPoolIds = Array.from(new Set(brackets.map(b => b.pool_id)))
+  const { data: bracketPoolsRaw } = bracketPoolIds.length > 0
+    ? await supabase.from('pools').select('id, name').in('id', bracketPoolIds)
+    : { data: [] }
+  const bracketPoolMap = new Map((bracketPoolsRaw || []).map((p: any) => [p.id, p.name]))
+
   const displayName = profile?.display_name || session.user.email?.split('@')[0] || 'Champion'
-  const totalScore = brackets?.reduce((sum, b) => sum + (b.score || 0), 0) || 0
+  const totalScore = brackets.reduce((sum, b) => sum + (b.score || 0), 0)
 
   return (
     <div className="space-y-8">
@@ -61,8 +75,8 @@ export default async function DashboardPage() {
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Pools" value={pools?.length || 0} icon={<Users size={20} />} />
-        <StatCard label="Brackets" value={brackets?.length || 0} icon={<Trophy size={20} />} />
+        <StatCard label="Pools" value={membershipsWithPools.length} icon={<Users size={20} />} />
+        <StatCard label="Brackets" value={brackets.length} icon={<Trophy size={20} />} />
         <StatCard label="Total Points" value={totalScore} icon={<Trophy size={20} className="text-brand-gold" />} />
         <StatCard
           label="Tournament"
@@ -97,7 +111,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {!pools?.length ? (
+        {!membershipsWithPools.length ? (
           <EmptyState
             title="No pools yet"
             desc="Create a pool and invite your crew, or join one with an invite code."
@@ -105,9 +119,8 @@ export default async function DashboardPage() {
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pools.map((pm) => {
-              const pool = pm.pools as any
-              if (!pool) return null
+            {membershipsWithPools.map((m) => {
+              const pool = m.pool!
               return (
                 <Link
                   key={pool.id}
@@ -125,7 +138,7 @@ export default async function DashboardPage() {
                     <p className="text-brand-muted text-xs mt-1 line-clamp-2">{pool.description}</p>
                   )}
                   <div className="flex items-center gap-3 mt-3">
-                    <span className="text-xs text-brand-muted">{pm.role === 'commissioner' ? '👑 Commissioner' : '👤 Member'}</span>
+                    <span className="text-xs text-brand-muted">{m.role === 'commissioner' ? '👑 Commissioner' : '👤 Member'}</span>
                   </div>
                 </Link>
               )
@@ -135,7 +148,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* Brackets section */}
-      {brackets && brackets.length > 0 && (
+      {brackets.length > 0 && (
         <section>
           <h2 className="text-xl font-bold mb-4">Your Brackets</h2>
           <div className="space-y-3">
@@ -149,7 +162,7 @@ export default async function DashboardPage() {
                   <div className="text-2xl">📋</div>
                   <div>
                     <div className="font-semibold group-hover:text-brand-orange transition-colors">{bracket.name}</div>
-                    <div className="text-xs text-brand-muted">{(bracket.pools as any)?.name}</div>
+                    <div className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">

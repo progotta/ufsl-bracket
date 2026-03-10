@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { MOCK_TEAMS } from '@/lib/bracket'
 import type { BracketTeam } from '@/lib/bracket'
-import type { Team } from '@/types/database'
+import type { Bracket, Team } from '@/types/database'
 
 interface Props {
   params: { bracketId: string }
@@ -34,13 +34,23 @@ export default async function BracketPage({ params }: Props) {
     .eq('id', session.user.id)
     .single()
 
-  const { data: bracket } = await supabase
+  // Fetch bracket separately to avoid join typing issues
+  const { data: bracketRaw } = await supabase
     .from('brackets')
-    .select('*, pools(name, status, id)')
+    .select('id, pool_id, user_id, name, picks, is_submitted, score, max_possible_score')
     .eq('id', params.bracketId)
-    .single()
+    .maybeSingle()
 
-  if (!bracket) redirect('/dashboard')
+  if (!bracketRaw) redirect('/dashboard')
+  
+  const bracket = bracketRaw as Bracket
+
+  // Get pool name
+  const { data: poolRaw } = await supabase
+    .from('pools')
+    .select('name, status, id')
+    .eq('id', bracket.pool_id)
+    .maybeSingle()
 
   // Only the owner or pool members can view
   if (bracket.user_id !== session.user.id) {
@@ -49,7 +59,7 @@ export default async function BracketPage({ params }: Props) {
       .select('id')
       .eq('pool_id', bracket.pool_id)
       .eq('user_id', session.user.id)
-      .single()
+      .maybeSingle()
     if (!membership) redirect('/dashboard')
   }
 
@@ -59,8 +69,8 @@ export default async function BracketPage({ params }: Props) {
     ? dbTeams.map(teamToPickerTeam)
     : MOCK_TEAMS
 
-  const pool = bracket.pools as any
   const isOwner = bracket.user_id === session.user.id
+  const pool = poolRaw as { name: string; status: string; id: string } | null
 
   return (
     <div className="min-h-screen bg-brand-dark flex flex-col">
@@ -74,7 +84,7 @@ export default async function BracketPage({ params }: Props) {
         </Link>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-black truncate">{bracket.name}</h1>
-          <p className="text-brand-muted text-xs">{pool?.name}</p>
+          <p className="text-brand-muted text-xs">{pool?.name || 'Pool'}</p>
         </div>
         {bracket.is_submitted && (
           <span className="text-xs font-semibold text-green-400 bg-green-400/10 border border-green-400/20 px-3 py-1 rounded-full">
@@ -91,7 +101,7 @@ export default async function BracketPage({ params }: Props) {
         <BracketPicker
           bracketId={bracket.id}
           poolId={bracket.pool_id}
-          initialPicks={bracket.picks as Record<string, string> || {}}
+          initialPicks={(bracket.picks as Record<string, string>) || {}}
           isSubmitted={bracket.is_submitted || !isOwner}
           teams={teams}
         />

@@ -36,7 +36,7 @@ export default function BracketPicker({
   const [saved, setSaved] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [zoom, setZoom] = useState(1)
-  const [activeRegion, setActiveRegion] = useState<Region | 'All'>('All')
+  const [activeRegion, setActiveRegion] = useState<Region | 'All' | 'Final Four'>('All')
   const router = useRouter()
   const supabase = createClient()
 
@@ -111,7 +111,7 @@ export default function BracketPicker({
               {(['All', ...REGIONS, 'Final Four'] as const).map(r => (
                 <button
                   key={r}
-                  onClick={() => setActiveRegion(r as Region | 'All')}
+                  onClick={() => setActiveRegion(r as Region | 'All' | 'Final Four')}
                   className={clsx(
                     'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
                     activeRegion === r
@@ -224,7 +224,7 @@ export default function BracketPicker({
             />
           ) : (
             <RegionBracket
-              region={activeRegion === 'Final Four' ? 'Final Four' : activeRegion}
+              region={activeRegion as string}
               gameMap={gameMap}
               picks={picks}
               onPick={handlePick}

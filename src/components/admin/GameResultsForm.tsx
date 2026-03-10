@@ -127,7 +127,7 @@ function GameRow({
     )
   }
 
-  const isCompleted = game.status === 'completed' || game.winner
+  const isCompleted = game.status === 'completed' || !!game.winner
 
   return (
     <div className={`bg-brand-surface border rounded-xl p-4 flex items-center gap-4 ${
