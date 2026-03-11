@@ -75,6 +75,47 @@ _Last updated: 2026-03-11_
 
 ---
 
+## Multi-Environment Strategy
+
+### Environments
+
+| Environment | URL | Purpose | Auto-Deploy |
+|-------------|-----|---------|-------------|
+| **Dev/Test** | https://ufsl-bracket.vercel.app | Development, testing, March Madness 2026 pilot | Yes, on push to `main` |
+| **Production** | https://ufsl.net | Long-term home for UFSL platform | Requires Vercel custom domain setup |
+
+### What Needs to Change for Production (ufsl.net)
+
+1. **Vercel Custom Domain:** Add `ufsl.net` in Vercel project settings (DNS → point to Vercel)
+2. **Supabase Auth URLs:** Add production URLs to allowed list:
+   - Site URL: `https://ufsl.net`
+   - Redirect URLs: `https://ufsl.net/**`
+3. **Environment Variables:** Production Vercel env vars should use same Supabase project OR a separate prod Supabase project (recommended for isolation)
+4. **OAuth Providers:** Redirect URIs in Google/Apple/Facebook consoles need `https://ufsl.net` added
+
+### Environment-Specific Configs
+
+```bash
+# .env.local (local dev)
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon_key>
+
+# Vercel: ufsl-bracket.vercel.app (Dev/Test)
+# - Set in Vercel dashboard → Environment Variables → Preview/Production
+
+# Vercel: ufsl.net (Production)
+# - Same vars but can point to a different Supabase project for isolation
+# - Or same Supabase project with both URLs whitelisted in Auth settings
+```
+
+### Recommended Path
+
+1. Keep current setup (ufsl-bracket.vercel.app) for March Madness 2026 pilot
+2. After pilot: evaluate usage, then set up ufsl.net as production
+3. Consider separate Supabase projects for staging vs production data isolation
+
+---
+
 ## Next Actions
 
 1. ~~Create Supabase project~~ ✅
@@ -84,6 +125,7 @@ _Last updated: 2026-03-11_
 5. Enable OAuth providers (Google + Email minimum)
 6. Test auth flow end-to-end
 7. After Selection Sunday (March 16): populate real teams in `teams` table
+8. (Future) Set up ufsl.net custom domain in Vercel for production
 
 ---
 
@@ -97,7 +139,8 @@ cp .env.example .env.local
 npm install
 npm run dev
 
-# Deploy
+# Deploy (auto via git push to main → Vercel)
+# Manual deploy if needed:
 npx vercel --prod
 # Add env vars in Vercel dashboard
 ```
