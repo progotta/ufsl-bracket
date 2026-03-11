@@ -25,9 +25,10 @@ _Last updated: 2026-03-11_
 
 ## What's NOT Built / TODO
 
-- [ ] Supabase project not created yet
-- [ ] OAuth providers not configured (Google, Apple, Facebook, Twilio)
-- [ ] Not deployed to Vercel yet
+- [x] ~~Supabase project not created yet~~ — DONE 2026-03-11
+- [x] ~~Not deployed to Vercel yet~~ — LIVE at https://ufsl-bracket.vercel.app
+- [ ] OAuth providers not fully configured (Google, Apple, Facebook, Twilio) — need to set up in Supabase Auth
+- [ ] Supabase redirect URLs need configuration (Site URL + Redirect URLs)
 - [ ] Teams table has placeholder data — needs real teams after Selection Sunday (March 16)
 
 ---
@@ -67,19 +68,22 @@ _Last updated: 2026-03-11_
 
 ## Current Blockers
 
-**None** — just needs infrastructure setup and deploy.
+**Auth config** — Need to configure Supabase Authentication:
+1. Set Site URL to `https://ufsl-bracket.vercel.app`
+2. Add redirect URL `https://ufsl-bracket.vercel.app/**`
+3. Enable OAuth providers (Google at minimum)
 
 ---
 
 ## Next Actions
 
-1. Create Supabase project
-2. Run `supabase/migrations/001_initial_schema.sql` in SQL editor
-3. Enable auth providers (start with Google + Email, add others later)
-4. Set env vars locally, test with `npm run dev`
-5. Deploy to Vercel, set env vars there
-6. Update Supabase Site URL to Vercel URL
-7. After Selection Sunday: populate real teams in `teams` table
+1. ~~Create Supabase project~~ ✅
+2. ~~Run migration SQL~~ ✅
+3. ~~Deploy to Vercel~~ ✅
+4. Configure Supabase Auth redirect URLs (Site URL + Redirect URLs)
+5. Enable OAuth providers (Google + Email minimum)
+6. Test auth flow end-to-end
+7. After Selection Sunday (March 16): populate real teams in `teams` table
 
 ---
 
