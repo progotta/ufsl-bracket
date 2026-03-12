@@ -252,6 +252,20 @@ export interface Database {
   }
 }
 
+// SmackMessage (not in DB types codegen yet — added manually)
+export interface SmackMessage {
+  id: string
+  pool_id: string
+  user_id: string
+  message: string
+  created_at: string
+  reactions: Record<string, string[]>
+  profiles?: {
+    display_name: string | null
+    avatar_url: string | null
+  } | null
+}
+
 // Convenience types
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type Pool = Database['public']['Tables']['pools']['Row']

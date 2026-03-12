@@ -180,6 +180,15 @@ export default async function DashboardPage() {
         </section>
       )}
 
+      {/* All Smack */}
+      {poolIds.length > 0 && (
+        <AllSmack
+          poolIds={poolIds}
+          poolNames={Object.fromEntries(pools.map(p => [p.id, p.name]))}
+          currentUserId={session.user.id}
+        />
+      )}
+
       {/* News Feed */}
       <section>
         <NewsFeed />

@@ -3,7 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus } from 'lucide-react'
 import InviteButton from '@/components/pools/InviteButton'
-import Leaderboard from '@/components/pools/Leaderboard'
+import PoolLeaderboard from '@/components/pools/Leaderboard'
+import Leaderboard from '@/components/Leaderboard'
 import SmackTalk from '@/components/smack/SmackTalk'
 
 interface Props {
@@ -152,11 +153,12 @@ export default async function PoolPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Leaderboard */}
+      {/* Leaderboard — tabbed (Pool / Global / Friends) */}
       <Leaderboard
-        entries={leaderboard || []}
+        poolId={params.id}
         currentUserId={session.user.id}
-        poolStatus={pool.status}
+        defaultTab="pool"
+        showTabs={true}
       />
 
       {/* Smack Talk */}
