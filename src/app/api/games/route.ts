@@ -2,14 +2,13 @@
 import { createRouteClient } from '@/lib/supabase/route'
 import { NextResponse } from 'next/server'
 import { ROUND_POINTS } from '@/lib/bracket'
+import { requireAdmin } from '@/lib/adminAuth'
 
 export async function POST(request: Request) {
-  const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const authError = await requireAdmin()
+  if (authError) return authError
 
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const supabase = createRouteClient()
 
   const { gameId, winnerId, team1Score, team2Score } = await request.json()
 

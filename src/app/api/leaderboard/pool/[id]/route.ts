@@ -17,6 +17,26 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verify requesting user is a member of this pool (or pool is public)
+    const { data: membership } = await supabase
+      .from('pool_members')
+      .select('id')
+      .eq('pool_id', poolId)
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+
+    if (!membership) {
+      const { data: pool } = await supabase
+        .from('pools')
+        .select('commissioner_id, is_public')
+        .eq('id', poolId)
+        .maybeSingle()
+
+      if (!pool?.is_public && pool?.commissioner_id !== session.user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     const cacheKey = `leaderboard:pool:${poolId}`
 
     const entries = await getCached(

@@ -59,6 +59,7 @@ export interface Achievement {
   emoji: string
   category: 'picks' | 'social' | 'pools' | 'streaks' | 'special'
   points: number
+  xp_value: number
   rarity: 'common' | 'rare' | 'epic' | 'legendary'
   secret: boolean
   created_at: string
