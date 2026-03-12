@@ -115,13 +115,24 @@ export default async function PoolPage({ params }: Props) {
               </Link>
             </div>
           ) : isMember ? (
-            <Link
-              href={`/pools/${params.id}/bracket/new`}
-              className="btn-primary w-full text-center flex items-center justify-center gap-2"
-            >
-              <Plus size={16} />
-              Start Your Bracket
-            </Link>
+            <div className="space-y-2">
+              <Link
+                href={`/pools/${params.id}/bracket/new`}
+                className="btn-primary w-full text-center flex items-center justify-center gap-2"
+              >
+                <Plus size={16} />
+                Start Your Bracket
+              </Link>
+              <p className="text-center text-xs text-brand-muted">
+                Already filled one out elsewhere?{' '}
+                <Link
+                  href={`/pools/${params.id}/bracket/new`}
+                  className="text-brand-orange hover:underline"
+                >
+                  Start &amp; import a screenshot →
+                </Link>
+              </p>
+            </div>
           ) : (
             <JoinPoolButton poolId={params.id} />
           )}

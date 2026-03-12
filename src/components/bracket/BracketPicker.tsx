@@ -19,10 +19,11 @@ import {
   FILL_STRATEGY_META,
   type FillStrategy,
 } from '@/lib/quickFill'
-import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, X } from 'lucide-react'
+import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, X, Download } from 'lucide-react'
 import clsx from 'clsx'
 import TeamCard from '@/components/TeamCard'
 import MatchupInsights from '@/components/predictions/MatchupInsights'
+import BracketImportModal from '@/components/bracket/BracketImportModal'
 import { getTeamPrediction } from '@/lib/predictions'
 
 interface BracketPickerProps {
@@ -51,6 +52,7 @@ export default function BracketPicker({
   const [showInsights, setShowInsights] = useState(false)
   const [showQuickFillMenu, setShowQuickFillMenu] = useState(false)
   const [pendingFill, setPendingFill] = useState<{ strategy: FillStrategy; newPicks: Record<string, string> } | null>(null)
+  const [showImportModal, setShowImportModal] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -148,6 +150,12 @@ export default function BracketPicker({
     setPendingFill({ strategy: 'chaos', newPicks: {} })
   }
 
+  const handleImportApply = useCallback((importedPicks: Record<string, string>) => {
+    setUndoPicks(picks)
+    setPicks(prev => ({ ...prev, ...importedPicks }))
+    setSaved(false)
+  }, [picks])
+
   const isClear = pendingFill?.newPicks !== undefined && Object.keys(pendingFill.newPicks).length === 0
   const pendingMeta = pendingFill && !isClear ? FILL_STRATEGY_META[pendingFill.strategy] : null
   const fillChanges = pendingFill
@@ -158,6 +166,15 @@ export default function BracketPicker({
     <div className="flex flex-col h-full">
       {/* Team info card drawer */}
       <TeamCard team={selectedTeam} onClose={() => setSelectedTeam(null)} />
+
+      {/* Bracket Import Modal */}
+      {showImportModal && (
+        <BracketImportModal
+          onClose={() => setShowImportModal(false)}
+          onApply={handleImportApply}
+          teams={teams}
+        />
+      )}
 
       {/* Quick-fill confirmation modal */}
       {pendingFill && (
@@ -198,6 +215,18 @@ export default function BracketPicker({
             <div className="text-sm text-brand-muted hidden sm:block">
               <span className="text-white font-bold">{completedPicks}</span>/{totalGames} picks
             </div>
+
+            {/* Import Bracket button */}
+            {!isSubmitted && (
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-orange/50"
+                title="Import bracket from ESPN, Yahoo, CBS, or NCAA screenshot"
+              >
+                <Download size={12} />
+                <span className="hidden sm:inline">Import</span>
+              </button>
+            )}
 
             {/* Quick-fill dropdown */}
             {!isSubmitted && (
