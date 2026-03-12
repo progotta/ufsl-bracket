@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MOCK_TEAMS, type BracketTeam } from '@/lib/bracket'
 import { createServerClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/ratelimit'
+
+export const maxDuration = 30
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -310,6 +313,10 @@ export async function POST(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Rate limit: 5 requests per hour per user
+    const rlResponse = await rateLimit(session.user.id, 'bracket-import', { requests: 5, window: '1 h' })
+    if (rlResponse) return rlResponse
 
     const formData = await req.formData()
     const file = formData.get('image') as File | null

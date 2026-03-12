@@ -26,11 +26,13 @@ export default function LiveScore({ bracketId, initialScore }: LiveScoreProps) {
         },
         (payload) => {
           const newScore = (payload.new as any).score
-          if (newScore !== score) {
-            setScore(newScore)
-            setPulse(true)
-            setTimeout(() => setPulse(false), 1000)
-          }
+          setScore((prev: number) => {
+            if (newScore !== prev) {
+              setPulse(true)
+              setTimeout(() => setPulse(false), 1000)
+            }
+            return newScore
+          })
         }
       )
       .subscribe()
@@ -38,7 +40,7 @@ export default function LiveScore({ bracketId, initialScore }: LiveScoreProps) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [bracketId, score, supabase])
+  }, [bracketId, supabase])
 
   return (
     <div className={`transition-all ${pulse ? 'scale-110' : 'scale-100'}`}>

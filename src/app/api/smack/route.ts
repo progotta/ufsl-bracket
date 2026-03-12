@@ -1,5 +1,6 @@
 import { createRouteClient } from '@/lib/supabase/route'
 import { NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/ratelimit'
 
 // GET /api/smack?pool_id=xxx[&before=<iso>&limit=20]
 export async function GET(request: Request) {
@@ -50,6 +51,10 @@ export async function POST(request: Request) {
   const supabase = createRouteClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Rate limit: 20 requests per minute per user
+  const rlResponse = await rateLimit(session.user.id, 'smack-post', { requests: 20, window: '1 m' })
+  if (rlResponse) return rlResponse
 
   const { pool_id, message } = await request.json()
   if (!pool_id || !message?.trim()) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient as createClient } from '@/lib/supabase/server'
 import { computeCrowdPicks, type CrowdPickResult } from '@/lib/predictions'
+import { getCached } from '@/lib/cache'
 
 /**
  * GET /api/predictions/crowd-picks?gameIds=game1,game2&team1s=t1,t1&team2s=t2,t2
@@ -40,33 +41,35 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = await createClient()
+    const cacheKey = `crowd-picks:${poolId ?? 'all'}:${gameIdsParam}`
 
-    let query = supabase
-      .from('brackets')
-      .select('picks')
-      .eq('is_submitted', true)
+    const cached = await getCached(cacheKey, async () => {
+      const supabase = await createClient()
 
-    if (poolId) {
-      query = query.eq('pool_id', poolId)
-    }
+      let query = supabase
+        .from('brackets')
+        .select('picks')
+        .eq('is_submitted', true)
 
-    const { data, error } = await query
+      if (poolId) {
+        query = query.eq('pool_id', poolId)
+      }
 
-    if (error) throw error
+      const { data, error } = await query
 
-    const allPicks = (data ?? []).map(b => b.picks as Record<string, string>)
-    const totalBrackets = allPicks.length
+      if (error) throw error
 
-    const results: CrowdPickResult[] = gameIds.map((gameId, i) =>
-      computeCrowdPicks(allPicks, gameId, team1s[i], team2s[i])
-    )
+      const allPicks = (data ?? []).map(b => b.picks as Record<string, string>)
+      const totalBrackets = allPicks.length
 
-    return NextResponse.json({
-      results,
-      totalBrackets,
-      poolId: poolId ?? 'all',
-    })
+      const results: CrowdPickResult[] = gameIds.map((gameId, i) =>
+        computeCrowdPicks(allPicks, gameId, team1s[i], team2s[i])
+      )
+
+      return { results, totalBrackets, poolId: poolId ?? 'all' }
+    }, 60)
+
+    return NextResponse.json(cached)
   } catch (err) {
     console.error('[crowd-picks] Error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
