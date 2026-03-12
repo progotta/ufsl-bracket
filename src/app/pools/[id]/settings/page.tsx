@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import PoolSettingsForm from '@/components/pools/PoolSettingsForm'
+import JoinRequestsPanel from '@/components/pools/JoinRequestsPanel'
 
 interface Props {
   params: { id: string }
@@ -32,6 +33,11 @@ export default async function PoolSettingsPage({ params }: Props) {
       </div>
 
       <PoolSettingsForm pool={pool} />
+
+      {/* Join requests panel — shown if approval required */}
+      {(pool as any).join_requires_approval && (
+        <JoinRequestsPanel poolId={params.id} />
+      )}
     </div>
   )
 }
