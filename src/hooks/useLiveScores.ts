@@ -4,9 +4,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { LiveScoresResponse, LiveGameScore } from '@/lib/liveScores'
 
 // Polling intervals
-const ACTIVE_POLL_MS = 30_000  // 30 sec when games are live
-const IDLE_POLL_MS = 5 * 60_000 // 5 min when no active games
-const IDLE_AFTER_MS = 5 * 60_000 // consider user idle after 5 min of no interaction
+const ACTIVE_POLL_MS = 30_000     // 30s when games are live
+const IDLE_POLL_MS = 60_000       // 60s when no active games
+const MAX_IDLE_POLL_MS = 5 * 60_000 // 5 min max when user is idle
+const IDLE_AFTER_MS = 60_000      // user is "idle" after 60s of no input
+const MAX_BACKOFF_MS = 5 * 60_000  // cap exponential backoff at 5 min
+const BACKOFF_BASE_MS = 5_000      // start backoff at 5s on first error
 
 interface UseLiveScoresOptions {
   /** Filter to specific ESPN or DB game IDs */
@@ -40,23 +43,47 @@ export function useLiveScores(options: UseLiveScoresOptions = {}): UseLiveScores
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastActivityRef = useRef<number>(Date.now())
+  const consecutiveErrorsRef = useRef<number>(0)
   const mountedRef = useRef(true)
+  const tabVisibleRef = useRef<boolean>(true)
 
-  // Track user activity to reduce polling when idle
+  // Track user activity to throttle polling when idle
   useEffect(() => {
     if (disabled) return
     const updateActivity = () => { lastActivityRef.current = Date.now() }
+
     window.addEventListener('mousemove', updateActivity, { passive: true })
     window.addEventListener('keydown', updateActivity, { passive: true })
     window.addEventListener('touchstart', updateActivity, { passive: true })
-    window.addEventListener('visibilitychange', updateActivity)
+    window.addEventListener('click', updateActivity, { passive: true })
+    window.addEventListener('scroll', updateActivity, { passive: true })
+
     return () => {
       window.removeEventListener('mousemove', updateActivity)
       window.removeEventListener('keydown', updateActivity)
       window.removeEventListener('touchstart', updateActivity)
-      window.removeEventListener('visibilitychange', updateActivity)
+      window.removeEventListener('click', updateActivity)
+      window.removeEventListener('scroll', updateActivity)
     }
   }, [disabled])
+
+  // Page visibility API — pause polling when tab is hidden
+  useEffect(() => {
+    if (disabled) return
+
+    const handleVisibility = () => {
+      tabVisibleRef.current = document.visibilityState === 'visible'
+      if (tabVisibleRef.current) {
+        // Tab became visible — update activity and trigger an immediate refetch
+        lastActivityRef.current = Date.now()
+        if (timerRef.current) clearTimeout(timerRef.current)
+        fetchScores().then(scheduleNext) // eslint-disable-line @typescript-eslint/no-use-before-define
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [disabled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchScores = useCallback(async () => {
     if (!mountedRef.current || disabled) return
@@ -71,10 +98,12 @@ export function useLiveScores(options: UseLiveScoresOptions = {}): UseLiveScores
       setData(json)
       setError(null)
       setLastUpdated(new Date())
+      consecutiveErrorsRef.current = 0
 
       if (onUpdate) onUpdate(json.games)
     } catch (err) {
       if (mountedRef.current) {
+        consecutiveErrorsRef.current++
         setError(err instanceof Error ? err.message : 'Failed to fetch scores')
       }
     } finally {
@@ -86,17 +115,27 @@ export function useLiveScores(options: UseLiveScoresOptions = {}): UseLiveScores
     if (timerRef.current) clearTimeout(timerRef.current)
     if (!mountedRef.current || disabled) return
 
-    // Check if user is idle
-    const userIsIdle = Date.now() - lastActivityRef.current > IDLE_AFTER_MS
+    // Don't schedule if tab is hidden — will resume on visibilitychange
+    if (!tabVisibleRef.current) return
 
-    // Check if there are active games
+    const userIsIdle = Date.now() - lastActivityRef.current > IDLE_AFTER_MS
     const hasActive = data?.games.some(
       g => g.status === 'in_progress' || g.status === 'halftime'
     ) ?? false
 
+    // Exponential backoff on errors: 5s, 10s, 20s, 40s ... up to MAX_BACKOFF_MS
+    const errors = consecutiveErrorsRef.current
+    if (errors > 0) {
+      const backoff = Math.min(BACKOFF_BASE_MS * Math.pow(2, errors - 1), MAX_BACKOFF_MS)
+      timerRef.current = setTimeout(() => {
+        fetchScores().then(scheduleNext)
+      }, backoff)
+      return
+    }
+
     let interval: number
     if (userIsIdle) {
-      interval = IDLE_POLL_MS // Don't burn requests when user is away
+      interval = MAX_IDLE_POLL_MS
     } else if (hasActive) {
       interval = ACTIVE_POLL_MS
     } else {
@@ -112,6 +151,7 @@ export function useLiveScores(options: UseLiveScoresOptions = {}): UseLiveScores
   useEffect(() => {
     if (disabled) return
     mountedRef.current = true
+    tabVisibleRef.current = document.visibilityState === 'visible'
 
     fetchScores().then(scheduleNext)
 
@@ -130,6 +170,7 @@ export function useLiveScores(options: UseLiveScoresOptions = {}): UseLiveScores
   const refetch = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
     setLoading(true)
+    consecutiveErrorsRef.current = 0
     fetchScores().then(scheduleNext)
   }, [fetchScores, scheduleNext])
 

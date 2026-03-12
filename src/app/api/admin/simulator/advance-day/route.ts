@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createRouteClient } from '@/lib/supabase/route'
+import { requireAdmin } from '@/lib/adminAuth'
 import { NextResponse } from 'next/server'
 
 export async function POST() {
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   const supabase = createRouteClient()
   const db = supabase as any
 

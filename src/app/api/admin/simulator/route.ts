@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createRouteClient } from '@/lib/supabase/route'
+import { requireAdmin } from '@/lib/adminAuth'
 import { NextResponse } from 'next/server'
 
 // GET: fetch sim config + games with team info
 export async function GET() {
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   const supabase = createRouteClient()
   const db = supabase as any
 
@@ -25,6 +29,9 @@ export async function GET() {
 
 // PATCH: update simulation config
 export async function PATCH(request: Request) {
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   const supabase = createRouteClient()
   const db = supabase as any
   const body = await request.json()

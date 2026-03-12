@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import { Share2 } from 'lucide-react'
-import ShareModal from '@/components/ShareModal'
+import dynamic from 'next/dynamic'
+
+// Lazy-load the share modal — it's only needed when the user clicks share
+const ShareModal = dynamic(() => import('@/components/ShareModal'), { ssr: false })
 
 interface ShareButtonProps {
   bracketId: string

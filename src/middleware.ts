@@ -46,7 +46,9 @@ export async function middleware(req: NextRequest) {
   // Redirect to dashboard if logged in and on auth page
   if (session && req.nextUrl.pathname === '/auth') {
     const next = req.nextUrl.searchParams.get('next') || '/dashboard'
-    return NextResponse.redirect(new URL(next, req.url))
+    // Prevent open redirect: only allow relative paths (must start with /)
+    const safePath = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard'
+    return NextResponse.redirect(new URL(safePath, req.url))
   }
 
   return res

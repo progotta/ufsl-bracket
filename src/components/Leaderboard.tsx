@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Share2 } from 'lucide-react'
 import Link from 'next/link'
-import ShareModal from '@/components/ShareModal'
+import dynamic from 'next/dynamic'
+
+// Lazy-load the share modal — only needed when the user clicks share
+const ShareModal = dynamic(() => import('@/components/ShareModal'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

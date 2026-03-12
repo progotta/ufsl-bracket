@@ -8,6 +8,7 @@ import {
   setCache,
   type LiveScoresResponse,
 } from '@/lib/liveScores'
+import { getCached, redisClient } from '@/lib/cache'
 
 const ESPN_SCOREBOARD_URL =
   'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=50&limit=64'
@@ -20,15 +21,35 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const forceMode = searchParams.get('mode') // 'espn' | 'simulation' | 'database'
 
-  // Return cached response if still valid
+  // Return in-memory cached response if still valid (fastest path)
   if (isCacheValid()) {
     const cached = getCache()!
     return NextResponse.json(cached, {
       headers: {
         'Cache-Control': 'public, max-age=30',
         'X-Cache': 'HIT',
+        'X-Cache-Source': 'memory',
       },
     })
+  }
+
+  // Check Redis cache next (shared across serverless instances)
+  if (redisClient) {
+    try {
+      const redisCached = await redisClient.get<LiveScoresResponse>('live-scores')
+      if (redisCached && new Date(redisCached.cachedUntil) > new Date()) {
+        setCache(redisCached, new Date(redisCached.cachedUntil).getTime() - Date.now())
+        return NextResponse.json(redisCached, {
+          headers: {
+            'Cache-Control': 'public, max-age=30',
+            'X-Cache': 'HIT',
+            'X-Cache-Source': 'redis',
+          },
+        })
+      }
+    } catch {
+      // Redis unavailable — proceed to fetch
+    }
   }
 
   const now = new Date().toISOString()
@@ -61,6 +82,12 @@ export async function GET(request: Request) {
         }
 
         setCache(response, hasActiveGames ? ACTIVE_CACHE_TTL : IDLE_CACHE_TTL)
+
+        // Also store in Redis for cross-instance caching
+        if (redisClient) {
+          const redisTtl = hasActiveGames ? 30 : 300
+          redisClient.setex('live-scores', redisTtl, response).catch(() => {})
+        }
 
         return NextResponse.json(response, {
           headers: {
@@ -119,6 +146,12 @@ export async function GET(request: Request) {
     }
 
     setCache(response, hasActiveGames ? ACTIVE_CACHE_TTL : IDLE_CACHE_TTL)
+
+    // Also store in Redis for cross-instance caching
+    if (redisClient) {
+      const redisTtl = hasActiveGames ? 30 : 300
+      redisClient.setex('live-scores', redisTtl, response).catch(() => {})
+    }
 
     return NextResponse.json(response, {
       headers: {

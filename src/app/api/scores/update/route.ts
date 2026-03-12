@@ -5,6 +5,7 @@
  */
 import { NextResponse } from 'next/server'
 import { createRouteClient } from '@/lib/supabase/route'
+import { invalidateCache } from '@/lib/cache'
 
 export async function POST(request: Request) {
   const supabase = createRouteClient()
@@ -49,6 +50,9 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Invalidate live scores and leaderboard caches on score update
+  await invalidateCache('live-scores', 'leaderboard:global:all-time', 'leaderboard:global:this-round', 'leaderboard:global:today')
 
   return NextResponse.json({ success: true })
 }

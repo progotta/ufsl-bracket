@@ -149,6 +149,44 @@ Until Selection Sunday (March 16):
 - ✅ Mobile responsive
 - ✅ Auto-create profile on signup
 
+## Performance & Caching
+
+### Upstash Redis (optional but recommended)
+
+Redis caching reduces Supabase load for leaderboards, live scores, and team data. Without it, caching is in-memory only (per serverless instance — each cold start misses).
+
+1. Create a free database at [upstash.com](https://upstash.com) → Redis
+2. Copy the REST URL and token
+3. Add to `.env.local`:
+   ```
+   UPSTASH_REDIS_REST_URL=https://...upstash.io
+   UPSTASH_REDIS_REST_TOKEN=AX...
+   ```
+
+**Cache TTLs:**
+| Data | TTL |
+|------|-----|
+| Live scores (active games) | 30 seconds |
+| Live scores (no games) | 5 minutes |
+| Leaderboards | 60 seconds |
+| Team data | 1 hour |
+
+Cache is invalidated automatically when scores are updated via `/api/scores/update`.
+
+Monitor cache health at `/api/admin/cache-stats` (commissioners only).
+
+### Supabase Connection Pooling
+
+For production serverless deployments, use the Supabase connection pooler (PgBouncer) to avoid exhausting Postgres connections:
+
+1. Dashboard → Settings → Database → Connection pooling → copy the URI (port 6543)
+2. Add to `.env.local`:
+   ```
+   SUPABASE_DB_URL=postgresql://postgres.[ref]:[pass]@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+   ```
+
+See `src/lib/supabase/config.ts` for details.
+
 ## Roadmap / Future Features
 
 - [ ] Real-time score updates (Supabase Realtime)

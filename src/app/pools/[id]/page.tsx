@@ -2,11 +2,29 @@ import { createServerClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
-import Leaderboard from '@/components/Leaderboard'
-import SmackTalk from '@/components/smack/SmackTalk'
 import ShareButton from '@/components/bracket/ShareButton'
+
+// Lazy-load heavy client components to reduce initial bundle
+const Leaderboard = dynamic(() => import('@/components/Leaderboard'), {
+  loading: () => (
+    <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 min-h-[200px] flex items-center justify-center">
+      <div className="text-brand-muted animate-pulse text-sm">Loading leaderboard…</div>
+    </div>
+  ),
+  ssr: false,
+})
+
+const SmackTalk = dynamic(() => import('@/components/smack/SmackTalk'), {
+  loading: () => (
+    <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 min-h-[120px] flex items-center justify-center">
+      <div className="text-brand-muted animate-pulse text-sm">Loading smack talk…</div>
+    </div>
+  ),
+  ssr: false,
+})
 import { BRACKET_TYPE_META, type BracketType } from '@/lib/secondChance'
 
 interface Props {
