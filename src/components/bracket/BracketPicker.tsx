@@ -13,7 +13,13 @@ import {
   type BracketGame,
   type Region,
 } from '@/lib/bracket'
-import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2 } from 'lucide-react'
+import {
+  generateQuickFillPicks,
+  countPickChanges,
+  FILL_STRATEGY_META,
+  type FillStrategy,
+} from '@/lib/quickFill'
+import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, X } from 'lucide-react'
 import clsx from 'clsx'
 import TeamCard from '@/components/TeamCard'
 import MatchupInsights from '@/components/predictions/MatchupInsights'
@@ -35,6 +41,7 @@ export default function BracketPicker({
   teams = MOCK_TEAMS,
 }: BracketPickerProps) {
   const [picks, setPicks] = useState<Record<string, string>>(initialPicks)
+  const [undoPicks, setUndoPicks] = useState<Record<string, string> | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -42,6 +49,8 @@ export default function BracketPicker({
   const [activeRegion, setActiveRegion] = useState<Region | 'All' | 'Final Four'>('All')
   const [selectedTeam, setSelectedTeam] = useState<BracketTeam | null>(null)
   const [showInsights, setShowInsights] = useState(false)
+  const [showQuickFillMenu, setShowQuickFillMenu] = useState(false)
+  const [pendingFill, setPendingFill] = useState<{ strategy: FillStrategy; newPicks: Record<string, string> } | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -73,6 +82,39 @@ export default function BracketPicker({
     setSelectedTeam(team)
   }, [])
 
+  const handleQuickFill = useCallback(
+    (strategy: FillStrategy | 'clear') => {
+      setShowQuickFillMenu(false)
+      if (isSubmitted) return
+      if (strategy === 'clear') {
+        setPendingFill({ strategy: 'chaos', newPicks: {} })
+      } else {
+        const newPicks = generateQuickFillPicks(baseGames, teams, strategy)
+        setPendingFill({ strategy, newPicks })
+      }
+    },
+    [isSubmitted, baseGames, teams]
+  )
+
+  const confirmQuickFill = useCallback(() => {
+    if (!pendingFill) return
+    setUndoPicks(picks)
+    setPicks(pendingFill.newPicks)
+    setSaved(false)
+    setPendingFill(null)
+  }, [pendingFill, picks])
+
+  const cancelQuickFill = useCallback(() => {
+    setPendingFill(null)
+  }, [])
+
+  const handleUndo = useCallback(() => {
+    if (!undoPicks) return
+    setPicks(undoPicks)
+    setUndoPicks(null)
+    setSaved(false)
+  }, [undoPicks])
+
   const completedPicks = Object.keys(picks).length
   const totalGames = 63
 
@@ -103,16 +145,31 @@ export default function BracketPicker({
   }
 
   const handleReset = () => {
-    if (confirm('Reset all your picks? This cannot be undone.')) {
-      setPicks({})
-      setSaved(false)
-    }
+    setPendingFill({ strategy: 'chaos', newPicks: {} })
   }
+
+  const isClear = pendingFill?.newPicks !== undefined && Object.keys(pendingFill.newPicks).length === 0
+  const pendingMeta = pendingFill && !isClear ? FILL_STRATEGY_META[pendingFill.strategy] : null
+  const fillChanges = pendingFill
+    ? countPickChanges(picks, pendingFill.newPicks)
+    : null
 
   return (
     <div className="flex flex-col h-full">
       {/* Team info card drawer */}
       <TeamCard team={selectedTeam} onClose={() => setSelectedTeam(null)} />
+
+      {/* Quick-fill confirmation modal */}
+      {pendingFill && (
+        <QuickFillModal
+          isClear={isClear}
+          meta={pendingMeta}
+          changes={fillChanges}
+          onConfirm={confirmQuickFill}
+          onCancel={cancelQuickFill}
+        />
+      )}
+
       {/* Toolbar */}
       <div className="sticky top-0 z-20 bg-brand-dark/90 backdrop-blur-xl border-b border-brand-border py-3 px-4">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 flex-wrap">
@@ -136,11 +193,85 @@ export default function BracketPicker({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {/* Progress */}
             <div className="text-sm text-brand-muted hidden sm:block">
               <span className="text-white font-bold">{completedPicks}</span>/{totalGames} picks
             </div>
+
+            {/* Quick-fill dropdown */}
+            {!isSubmitted && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowQuickFillMenu(m => !m)}
+                  className={clsx(
+                    'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border',
+                    showQuickFillMenu
+                      ? 'bg-brand-orange/20 border-brand-orange/40 text-brand-orange'
+                      : 'bg-brand-card border-brand-border text-brand-muted hover:text-white'
+                  )}
+                  title="Quick-fill your bracket"
+                >
+                  <Shuffle size={12} />
+                  <span className="hidden sm:inline">Quick Fill</span>
+                  <ChevronDown size={11} className={clsx('transition-transform', showQuickFillMenu && 'rotate-180')} />
+                </button>
+
+                {showQuickFillMenu && (
+                  <>
+                    {/* Backdrop */}
+                    <div className="fixed inset-0 z-30" onClick={() => setShowQuickFillMenu(false)} />
+                    {/* Dropdown */}
+                    <div className="absolute right-0 top-full mt-1 z-40 bg-brand-card border border-brand-border rounded-xl shadow-xl min-w-[220px] overflow-hidden">
+                      <div className="px-3 py-2 border-b border-brand-border">
+                        <p className="text-xs font-bold text-brand-muted uppercase tracking-wide">Quick Fill</p>
+                      </div>
+                      {(Object.entries(FILL_STRATEGY_META) as [FillStrategy, typeof FILL_STRATEGY_META[FillStrategy]][]).map(
+                        ([strategy, meta]) => (
+                          <button
+                            key={strategy}
+                            onClick={() => handleQuickFill(strategy)}
+                            className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-brand-dark/60 transition-colors text-left group"
+                          >
+                            <span className="text-lg leading-none mt-0.5">{meta.emoji}</span>
+                            <div>
+                              <div className="text-sm font-semibold text-white group-hover:text-brand-orange transition-colors">
+                                {meta.label}
+                              </div>
+                              <div className="text-xs text-brand-muted leading-snug">{meta.description}</div>
+                            </div>
+                          </button>
+                        )
+                      )}
+                      <div className="border-t border-brand-border">
+                        <button
+                          onClick={() => handleQuickFill('clear')}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-950/40 transition-colors text-left group"
+                        >
+                          <Trash2 size={16} className="text-red-400 flex-shrink-0" />
+                          <div>
+                            <div className="text-sm font-semibold text-red-400">Clear All</div>
+                            <div className="text-xs text-brand-muted">Reset bracket to empty</div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Undo button — appears after quick-fill */}
+            {!isSubmitted && undoPicks !== null && (
+              <button
+                onClick={handleUndo}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-card border border-brand-border text-brand-muted hover:text-white transition-all"
+                title="Undo quick-fill"
+              >
+                <Undo2 size={12} />
+                <span className="hidden sm:inline">Undo</span>
+              </button>
+            )}
 
             {/* Zoom controls */}
             <div className="flex items-center gap-1 bg-brand-card rounded-lg border border-brand-border">
@@ -680,6 +811,99 @@ function TeamSlot({
           <CheckCircle size={12} />
         </span>
       )}
+    </div>
+  )
+}
+
+// ============================================
+// Quick-fill confirmation modal
+// ============================================
+function QuickFillModal({
+  isClear,
+  meta,
+  changes,
+  onConfirm,
+  onCancel,
+}: {
+  isClear: boolean
+  meta: typeof FILL_STRATEGY_META[FillStrategy] | null
+  changes: { changed: number; total: number } | null
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="bg-brand-card border border-brand-border rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+          <div className="flex items-center gap-3">
+            {isClear ? (
+              <div className="w-10 h-10 rounded-xl bg-red-900/40 border border-red-700/40 flex items-center justify-center">
+                <Trash2 size={18} className="text-red-400" />
+              </div>
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/30 flex items-center justify-center text-xl">
+                {meta?.emoji}
+              </div>
+            )}
+            <div>
+              <h2 className="text-base font-bold text-white">
+                {isClear ? 'Clear All Picks?' : `${meta?.label}?`}
+              </h2>
+              <p className="text-xs text-brand-muted">
+                {isClear ? 'Reset your bracket to empty' : meta?.description}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onCancel}
+            className="p-1 text-brand-muted hover:text-white transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Warning / preview */}
+        <div className="px-5 pb-4">
+          {changes && changes.changed > 0 ? (
+            <div className={clsx(
+              'rounded-lg px-4 py-3 text-sm',
+              isClear
+                ? 'bg-red-950/40 border border-red-700/30 text-red-300'
+                : 'bg-brand-orange/10 border border-brand-orange/20 text-brand-orange'
+            )}>
+              {isClear
+                ? `This will clear all ${changes.changed} of your picks.`
+                : `This will update ${changes.changed} of your ${changes.total} picks.`}
+            </div>
+          ) : changes && changes.changed === 0 ? (
+            <div className="rounded-lg px-4 py-3 text-sm bg-brand-dark border border-brand-border text-brand-muted">
+              No changes — your picks already match this strategy.
+            </div>
+          ) : null}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3 px-5 pb-5">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold bg-brand-dark border border-brand-border text-brand-muted hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className={clsx(
+              'flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors',
+              isClear
+                ? 'bg-red-600 hover:bg-red-500 text-white'
+                : 'bg-brand-orange hover:bg-brand-orange/90 text-white'
+            )}
+          >
+            {isClear ? 'Clear All' : `Apply ${meta?.label}`}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

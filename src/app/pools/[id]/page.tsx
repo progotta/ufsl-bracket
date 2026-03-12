@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus } from 'lucide-react'
 import InviteButton from '@/components/pools/InviteButton'
 import Leaderboard from '@/components/pools/Leaderboard'
+import SmackTalk from '@/components/smack/SmackTalk'
 
 interface Props {
   params: { id: string }
@@ -157,6 +158,15 @@ export default async function PoolPage({ params }: Props) {
         currentUserId={session.user.id}
         poolStatus={pool.status}
       />
+
+      {/* Smack Talk */}
+      {isMember && (
+        <SmackTalk
+          poolId={params.id}
+          currentUserId={session.user.id}
+          currentUserName={null}
+        />
+      )}
 
       {/* Members */}
       <section>

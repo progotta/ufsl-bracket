@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Plus, Trophy, Users, ArrowRight, Calendar } from 'lucide-react'
 import type { Profile, Bracket, Pool } from '@/types/database'
 import NewsFeed from '@/components/NewsFeed'
+import AllSmack from '@/components/smack/AllSmack'
 
 export default async function DashboardPage() {
   const supabase = createServerClient()
