@@ -6,6 +6,8 @@ import type { Profile, Bracket, Pool, Game } from '@/types/database'
 import NewsFeed from '@/components/NewsFeed'
 import AllSmack from '@/components/smack/AllSmack'
 import RecentAchievements from '@/components/achievements/RecentAchievements'
+import AchievementsPanel from '@/components/achievements/AchievementsPanel'
+import XPBar from '@/components/achievements/XPBar'
 import NotificationPrompt from '@/components/NotificationPrompt'
 import LiveGames from '@/components/LiveGames'
 import {
@@ -308,6 +310,10 @@ export default async function DashboardPage() {
           </div>
         </section>
       )}
+
+      {/* XP & Achievements */}
+      <XPBar userId={session.user.id} />
+      <AchievementsPanel userId={session.user.id} />
 
       {/* Recent Achievements */}
       <RecentAchievements userId={session.user.id} />

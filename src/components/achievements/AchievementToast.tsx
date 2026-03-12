@@ -89,7 +89,7 @@ export default function AchievementToast({ toast, onClose }: AchievementToastPro
           <p className="text-xs text-brand-muted mt-0.5 line-clamp-2 leading-snug">
             {toast.achievement.description}
           </p>
-          <p className="text-xs font-bold text-brand-gold mt-1">+{toast.achievement.points} pts</p>
+          <p className="text-xs font-bold text-brand-gold mt-1">+{toast.achievement.xp_value ?? toast.achievement.points} XP</p>
         </div>
 
         {/* Close hint */}
