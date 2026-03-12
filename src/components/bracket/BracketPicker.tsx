@@ -13,8 +13,11 @@ import {
   type BracketGame,
   type Region,
 } from '@/lib/bracket'
-import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
+import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2 } from 'lucide-react'
 import clsx from 'clsx'
+import TeamCard from '@/components/TeamCard'
+import MatchupInsights from '@/components/predictions/MatchupInsights'
+import { getTeamPrediction } from '@/lib/predictions'
 
 interface BracketPickerProps {
   bracketId: string
@@ -37,6 +40,8 @@ export default function BracketPicker({
   const [submitting, setSubmitting] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [activeRegion, setActiveRegion] = useState<Region | 'All' | 'Final Four'>('All')
+  const [selectedTeam, setSelectedTeam] = useState<BracketTeam | null>(null)
+  const [showInsights, setShowInsights] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -63,6 +68,10 @@ export default function BracketPicker({
     },
     [isSubmitted]
   )
+
+  const handleTeamInfo = useCallback((team: BracketTeam) => {
+    setSelectedTeam(team)
+  }, [])
 
   const completedPicks = Object.keys(picks).length
   const totalGames = 63
@@ -102,6 +111,8 @@ export default function BracketPicker({
 
   return (
     <div className="flex flex-col h-full">
+      {/* Team info card drawer */}
+      <TeamCard team={selectedTeam} onClose={() => setSelectedTeam(null)} />
       {/* Toolbar */}
       <div className="sticky top-0 z-20 bg-brand-dark/90 backdrop-blur-xl border-b border-brand-border py-3 px-4">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 flex-wrap">
@@ -149,6 +160,21 @@ export default function BracketPicker({
                 <ZoomIn size={14} />
               </button>
             </div>
+
+            {/* Insights toggle */}
+            <button
+              onClick={() => setShowInsights(s => !s)}
+              className={clsx(
+                'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border',
+                showInsights
+                  ? 'bg-brand-orange/20 border-brand-orange/40 text-brand-orange'
+                  : 'bg-brand-card border-brand-border text-brand-muted hover:text-white'
+              )}
+              title="Toggle matchup insights (odds, win%, crowd picks)"
+            >
+              <BarChart2 size={12} />
+              <span className="hidden sm:inline">Insights</span>
+            </button>
 
             {/* Reset */}
             {!isSubmitted && completedPicks > 0 && (
@@ -220,6 +246,7 @@ export default function BracketPicker({
               gameMap={gameMap}
               picks={picks}
               onPick={handlePick}
+              onTeamInfo={handleTeamInfo}
               isSubmitted={isSubmitted}
             />
           ) : (
@@ -228,6 +255,7 @@ export default function BracketPicker({
               gameMap={gameMap}
               picks={picks}
               onPick={handlePick}
+              onTeamInfo={handleTeamInfo}
               isSubmitted={isSubmitted}
             />
           )}
@@ -244,25 +272,27 @@ function FullBracket({
   gameMap,
   picks,
   onPick,
+  onTeamInfo,
   isSubmitted,
 }: {
   gameMap: Map<string, BracketGame>
   picks: Record<string, string>
   onPick: (gameId: string, teamId: string) => void
+  onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
 }) {
   return (
     <div className="min-w-[1200px]">
       {/* Top half: East (left), West (right) */}
       <div className="grid grid-cols-[1fr_auto_1fr] gap-4 mb-4">
-        <RegionColumn region="East" side="left" gameMap={gameMap} picks={picks} onPick={onPick} isSubmitted={isSubmitted} />
-        <FinalFourColumn gameMap={gameMap} picks={picks} onPick={onPick} isSubmitted={isSubmitted} />
-        <RegionColumn region="West" side="right" gameMap={gameMap} picks={picks} onPick={onPick} isSubmitted={isSubmitted} />
+        <RegionColumn region="East" side="left" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
+        <FinalFourColumn gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
+        <RegionColumn region="West" side="right" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] gap-4 mt-4">
-        <RegionColumn region="South" side="left" gameMap={gameMap} picks={picks} onPick={onPick} isSubmitted={isSubmitted} />
+        <RegionColumn region="South" side="left" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
         <div /> {/* spacer */}
-        <RegionColumn region="Midwest" side="right" gameMap={gameMap} picks={picks} onPick={onPick} isSubmitted={isSubmitted} />
+        <RegionColumn region="Midwest" side="right" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
       </div>
     </div>
   )
@@ -274,6 +304,7 @@ function RegionColumn({
   gameMap,
   picks,
   onPick,
+  onTeamInfo,
   isSubmitted,
 }: {
   region: Region
@@ -281,6 +312,7 @@ function RegionColumn({
   gameMap: Map<string, BracketGame>
   picks: Record<string, string>
   onPick: (gameId: string, teamId: string) => void
+  onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
 }) {
   const rounds = side === 'left' ? [1, 2, 3, 4] : [4, 3, 2, 1]
@@ -299,6 +331,7 @@ function RegionColumn({
             gameMap={gameMap}
             picks={picks}
             onPick={onPick}
+            onTeamInfo={onTeamInfo}
             isSubmitted={isSubmitted}
           />
         </div>
@@ -314,6 +347,7 @@ function RoundGames({
   gameMap,
   picks,
   onPick,
+  onTeamInfo,
   isSubmitted,
 }: {
   region: Region
@@ -322,6 +356,7 @@ function RoundGames({
   gameMap: Map<string, BracketGame>
   picks: Record<string, string>
   onPick: (gameId: string, teamId: string) => void
+  onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
 }) {
   const games = Array.from(gameMap.values())
@@ -336,6 +371,7 @@ function RoundGames({
           game={game}
           picks={picks}
           onPick={onPick}
+          onTeamInfo={onTeamInfo}
           isSubmitted={isSubmitted}
           side={side}
         />
@@ -348,11 +384,13 @@ function FinalFourColumn({
   gameMap,
   picks,
   onPick,
+  onTeamInfo,
   isSubmitted,
 }: {
   gameMap: Map<string, BracketGame>
   picks: Record<string, string>
   onPick: (gameId: string, teamId: string) => void
+  onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
 }) {
   const ff1 = gameMap.get('ff-r5-g1')
@@ -366,7 +404,7 @@ function FinalFourColumn({
           Final Four
         </div>
         {ff1 && (
-          <GameSlot game={ff1} picks={picks} onPick={onPick} isSubmitted={isSubmitted} side="center" />
+          <GameSlot game={ff1} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" />
         )}
       </div>
 
@@ -375,13 +413,13 @@ function FinalFourColumn({
           🏆 Championship
         </div>
         {championship && (
-          <GameSlot game={championship} picks={picks} onPick={onPick} isSubmitted={isSubmitted} side="center" highlight />
+          <GameSlot game={championship} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" highlight />
         )}
       </div>
 
       <div className="text-center">
         {ff2 && (
-          <GameSlot game={ff2} picks={picks} onPick={onPick} isSubmitted={isSubmitted} side="center" />
+          <GameSlot game={ff2} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" />
         )}
       </div>
     </div>
@@ -394,12 +432,14 @@ function RegionBracket({
   gameMap,
   picks,
   onPick,
+  onTeamInfo,
   isSubmitted,
 }: {
   region: string
   gameMap: Map<string, BracketGame>
   picks: Record<string, string>
   onPick: (gameId: string, teamId: string) => void
+  onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
 }) {
   if (region === 'Final Four') {
@@ -409,10 +449,10 @@ function RegionBracket({
     return (
       <div className="max-w-lg mx-auto space-y-6">
         <SectionHeader title="Final Four" />
-        {ff1 && <GameSlot game={ff1} picks={picks} onPick={onPick} isSubmitted={isSubmitted} side="center" wide />}
-        {ff2 && <GameSlot game={ff2} picks={picks} onPick={onPick} isSubmitted={isSubmitted} side="center" wide />}
+        {ff1 && <GameSlot game={ff1} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" wide />}
+        {ff2 && <GameSlot game={ff2} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" wide />}
         <SectionHeader title="🏆 Championship" />
-        {championship && <GameSlot game={championship} picks={picks} onPick={onPick} isSubmitted={isSubmitted} side="center" highlight wide />}
+        {championship && <GameSlot game={championship} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" highlight wide />}
       </div>
     )
   }
@@ -440,6 +480,7 @@ function RegionBracket({
                   game={game}
                   picks={picks}
                   onPick={onPick}
+                  onTeamInfo={onTeamInfo}
                   isSubmitted={isSubmitted}
                   side="center"
                   wide
@@ -466,6 +507,7 @@ function GameSlot({
   game,
   picks,
   onPick,
+  onTeamInfo,
   isSubmitted,
   side,
   highlight = false,
@@ -474,6 +516,7 @@ function GameSlot({
   game: BracketGame
   picks: Record<string, string>
   onPick: (gameId: string, teamId: string) => void
+  onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
   side: 'left' | 'right' | 'center'
   highlight?: boolean
@@ -496,6 +539,7 @@ function GameSlot({
         isPicked={pickedTeamId === game.team1?.id}
         isWinnerSlot={highlight}
         onClick={() => game.team1 && onPick(game.id, game.team1.id)}
+        onInfo={() => game.team1 && onTeamInfo(game.team1)}
         disabled={isSubmitted || !game.team1}
         isTop
       />
@@ -505,6 +549,7 @@ function GameSlot({
         isPicked={pickedTeamId === game.team2?.id}
         isWinnerSlot={highlight}
         onClick={() => game.team2 && onPick(game.id, game.team2.id)}
+        onInfo={() => game.team2 && onTeamInfo(game.team2)}
         disabled={isSubmitted || !game.team2}
         isTop={false}
       />
@@ -517,6 +562,7 @@ function TeamSlot({
   isPicked,
   isWinnerSlot,
   onClick,
+  onInfo,
   disabled,
   isTop,
 }: {
@@ -524,6 +570,7 @@ function TeamSlot({
   isPicked: boolean
   isWinnerSlot: boolean
   onClick: () => void
+  onInfo: () => void
   disabled: boolean
   isTop: boolean
 }) {
@@ -537,38 +584,61 @@ function TeamSlot({
   }
 
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
+    <div
       className={clsx(
-        'team-slot w-full flex items-center gap-2 px-2 py-2 min-h-[36px] text-left transition-all',
+        'group team-slot w-full flex items-center gap-2 px-2 py-2 min-h-[36px] transition-all',
         isPicked
           ? isWinnerSlot
             ? 'bg-brand-gold/20 winner-glow'
             : 'bg-brand-orange/20'
           : 'bg-brand-card/50 hover:bg-brand-card',
-        disabled && !isPicked && 'opacity-60 cursor-default'
+        disabled && !isPicked && 'opacity-60'
       )}
     >
-      {/* Seed badge */}
-      <span
+      {/* Seed badge — click to open team card */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onInfo() }}
         className={clsx(
-          'w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center flex-shrink-0',
+          'w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center flex-shrink-0 transition-all',
+          'hover:scale-110 hover:ring-1 hover:ring-brand-orange/60',
           isPicked ? 'bg-brand-orange text-white' : 'bg-brand-border text-brand-muted'
         )}
+        title={`View ${team.name} details`}
+        aria-label={`View ${team.name} team info`}
       >
         {team.seed}
-      </span>
+      </button>
 
-      {/* Team name */}
-      <span
+      {/* Team name — click to pick */}
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
         className={clsx(
-          'text-xs font-semibold truncate flex-1',
-          isPicked ? (isWinnerSlot ? 'text-brand-gold' : 'text-brand-orange') : 'text-white'
+          'text-xs font-semibold truncate flex-1 text-left',
+          isPicked ? (isWinnerSlot ? 'text-brand-gold' : 'text-brand-orange') : 'text-white',
+          !disabled && 'cursor-pointer',
+          disabled && !isPicked && 'cursor-default'
         )}
       >
         {team.abbreviation}
-      </span>
+      </button>
+
+      {/* Info icon — visible on hover */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onInfo() }}
+        className={clsx(
+          'flex-shrink-0 text-brand-muted transition-all',
+          'opacity-0 group-hover:opacity-100',
+          'hover:text-brand-orange'
+        )}
+        title={`View ${team.name} details`}
+        aria-label={`View ${team.name} team info`}
+      >
+        <Info size={11} />
+      </button>
 
       {/* Pick indicator */}
       {isPicked && (
@@ -576,6 +646,6 @@ function TeamSlot({
           <CheckCircle size={12} />
         </span>
       )}
-    </button>
+    </div>
   )
 }
