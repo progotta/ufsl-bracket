@@ -478,7 +478,7 @@ export default function BracketImportModal({ onClose, onApply, teams }: BracketI
               <div>
                 <h3 className="text-xl font-bold text-white mb-2">Reading your bracket…</h3>
                 <p className="text-brand-muted text-sm max-w-xs">
-                  GPT-4 Vision is analyzing your screenshot and extracting all 63 picks. This usually takes 10–20 seconds.
+                  Claude Vision is analyzing your screenshot and extracting all 63 picks. This usually takes 10–20 seconds.
                 </p>
               </div>
 

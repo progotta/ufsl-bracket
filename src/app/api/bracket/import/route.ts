@@ -168,29 +168,41 @@ async function extractPicksFromImage(
   imageBase64: string,
   mimeType: string
 ): Promise<{ rawData: Record<string, unknown>; error?: string }> {
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY not configured')
+    throw new Error('ANTHROPIC_API_KEY not configured')
   }
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  // Map mime types to Claude's expected format
+  const mediaTypeMap: Record<string, string> = {
+    'image/jpeg': 'image/jpeg',
+    'image/jpg': 'image/jpeg',
+    'image/png': 'image/png',
+    'image/gif': 'image/gif',
+    'image/webp': 'image/webp',
+  }
+  const mediaType = mediaTypeMap[mimeType] || 'image/jpeg'
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 4096,
       messages: [
         {
           role: 'user',
           content: [
             {
-              type: 'image_url',
-              image_url: {
-                url: `data:${mimeType};base64,${imageBase64}`,
-                detail: 'high',
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType,
+                data: imageBase64,
               },
             },
             {
@@ -206,11 +218,11 @@ async function extractPicksFromImage(
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
     if (response.status === 429) throw new Error('Rate limit reached. Please try again in a moment.')
-    throw new Error(err.error?.message || `OpenAI API error: ${response.status}`)
+    throw new Error(err.error?.message || `Anthropic API error: ${response.status}`)
   }
 
   const data = await response.json()
-  const content = data.choices?.[0]?.message?.content || ''
+  const content = data.content?.[0]?.text || ''
 
   // Extract JSON from response (may be wrapped in markdown code blocks)
   const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, content]
