@@ -23,6 +23,15 @@ _Last updated: 2026-03-11_
 
 ---
 
+## Admin Simulator (Added 2026-03-11)
+
+- **Route:** `/admin/simulator?admin=true`
+- **Protection:** `?admin=true` query param (swap for real auth later)
+- **Features:** sim toggle, time multiplier, simulated date, advance 1 day, play next round, random round, play single game, reset tournament, auto-sim all
+- **Auto-Sim:** Hardcoded 2025 results — Duke beats Houston 77-60 in championship
+- **API routes:** `/api/admin/simulator` (GET/PATCH), `play-round`, `play-game`, `reset`, `auto-sim`, `advance-day`
+- **Requires:** `supabase/migrations/002_test_2025_data.sql` run on test DB (creates simulation_config table + seeds all 2025 bracket data)
+
 ## What's NOT Built / TODO
 
 - [x] ~~Supabase project not created yet~~ — DONE 2026-03-11
