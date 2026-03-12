@@ -53,6 +53,8 @@ export interface Database {
           status: 'draft' | 'open' | 'locked' | 'active' | 'completed'
           bracket_type: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
           locks_at: string | null
+          max_members: number | null
+          join_requires_approval: boolean
         }
         Insert: {
           id?: string
@@ -68,6 +70,8 @@ export interface Database {
           status?: 'draft' | 'open' | 'locked' | 'active' | 'completed'
           bracket_type?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
           locks_at?: string | null
+          max_members?: number | null
+          join_requires_approval?: boolean
         }
         Update: {
           id?: string
@@ -83,6 +87,8 @@ export interface Database {
           status?: 'draft' | 'open' | 'locked' | 'active' | 'completed'
           bracket_type?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
           locks_at?: string | null
+          max_members?: number | null
+          join_requires_approval?: boolean
         }
       }
       pool_members: {
@@ -281,6 +287,29 @@ export interface UserAchievementRow {
   achievement_id: string
   unlocked_at: string
   metadata: Record<string, unknown>
+}
+
+// Referral
+export interface Referral {
+  id: string
+  referrer_id: string | null
+  referred_id: string | null
+  pool_id: string | null
+  invite_code: string
+  created_at: string
+  converted_at: string | null
+}
+
+// Pool join request
+export interface PoolJoinRequest {
+  id: string
+  pool_id: string
+  user_id: string
+  invite_code: string | null
+  message: string | null
+  status: 'pending' | 'approved' | 'denied'
+  created_at: string
+  resolved_at: string | null
 }
 
 // SmackMessage (not in DB types codegen yet — added manually)
