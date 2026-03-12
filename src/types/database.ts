@@ -262,6 +262,27 @@ export interface Database {
   }
 }
 
+// Achievement types (added manually)
+export interface AchievementRow {
+  id: string
+  name: string
+  description: string
+  emoji: string
+  category: 'picks' | 'social' | 'pools' | 'streaks' | 'special'
+  points: number
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+  secret: boolean
+  created_at: string
+}
+
+export interface UserAchievementRow {
+  id: string
+  user_id: string
+  achievement_id: string
+  unlocked_at: string
+  metadata: Record<string, unknown>
+}
+
 // SmackMessage (not in DB types codegen yet — added manually)
 export interface SmackMessage {
   id: string

@@ -11,16 +11,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { inviteCode } = await request.json()
+  const { inviteCode, referralId } = await request.json()
 
   if (!inviteCode) {
     return NextResponse.json({ error: 'Invite code required' }, { status: 400 })
   }
 
   const db = supabase as any
+
   const { data: pool } = await db
     .from('pools')
-    .select('id, name, status')
+    .select('id, name, status, max_members, join_requires_approval')
     .eq('invite_code', inviteCode.toUpperCase())
     .single()
 
@@ -30,6 +31,10 @@ export async function POST(request: Request) {
 
   if (pool.status === 'completed') {
     return NextResponse.json({ error: 'This pool has ended' }, { status: 400 })
+  }
+
+  if (pool.status === 'locked') {
+    return NextResponse.json({ error: 'This pool is locked — picks are closed' }, { status: 400 })
   }
 
   // Check if already a member
@@ -44,6 +49,50 @@ export async function POST(request: Request) {
     return NextResponse.json({ poolId: pool.id, alreadyMember: true })
   }
 
+  // Check max members
+  if (pool.max_members) {
+    const { count } = await db
+      .from('pool_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('pool_id', pool.id)
+
+    if (count >= pool.max_members) {
+      return NextResponse.json({ error: 'This pool is full' }, { status: 400 })
+    }
+  }
+
+  // Handle approval-required pools
+  if (pool.join_requires_approval) {
+    // Check if already requested
+    const { data: existingRequest } = await db
+      .from('pool_join_requests')
+      .select('id, status')
+      .eq('pool_id', pool.id)
+      .eq('user_id', session.user.id)
+      .single()
+
+    if (existingRequest) {
+      return NextResponse.json({
+        requiresApproval: true,
+        requestStatus: existingRequest.status,
+        poolId: pool.id,
+      })
+    }
+
+    const { error: reqError } = await db.from('pool_join_requests').insert({
+      pool_id: pool.id,
+      user_id: session.user.id,
+      invite_code: inviteCode.toUpperCase(),
+    })
+
+    if (reqError) {
+      return NextResponse.json({ error: reqError.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ requiresApproval: true, requestStatus: 'pending', poolId: pool.id })
+  }
+
+  // Direct join
   const { error: joinError } = await db.from('pool_members').insert({
     pool_id: pool.id,
     user_id: session.user.id,
@@ -52,6 +101,24 @@ export async function POST(request: Request) {
 
   if (joinError) {
     return NextResponse.json({ error: joinError.message }, { status: 500 })
+  }
+
+  // Mark referral as converted
+  if (referralId) {
+    await db
+      .from('referrals')
+      .update({ referred_id: session.user.id, converted_at: new Date().toISOString() })
+      .eq('id', referralId)
+      .is('converted_at', null)
+  } else {
+    // Try to find and convert any pending referral for this invite code + user
+    await db
+      .from('referrals')
+      .update({ referred_id: session.user.id, converted_at: new Date().toISOString() })
+      .eq('invite_code', inviteCode.toUpperCase())
+      .is('referred_id', null)
+      .is('converted_at', null)
+      .limit(1)
   }
 
   return NextResponse.json({ poolId: pool.id, poolName: pool.name })

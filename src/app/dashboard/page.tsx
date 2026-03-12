@@ -5,6 +5,9 @@ import { Plus, Trophy, Users, ArrowRight, Calendar, RefreshCw, Zap } from 'lucid
 import type { Profile, Bracket, Pool, Game } from '@/types/database'
 import NewsFeed from '@/components/NewsFeed'
 import AllSmack from '@/components/smack/AllSmack'
+import RecentAchievements from '@/components/achievements/RecentAchievements'
+import NotificationPrompt from '@/components/NotificationPrompt'
+import LiveGames from '@/components/LiveGames'
 import {
   BRACKET_TYPE_META,
   BRACKET_TYPE_ORDER,
@@ -81,6 +84,11 @@ export default async function DashboardPage() {
   const displayName = profile?.display_name || session.user.email?.split('@')[0] || 'Champion'
   const totalScore = brackets.reduce((sum, b) => sum + (b.score || 0), 0)
 
+  // Collect all team IDs the user has picked across all brackets (for live score color coding)
+  const userPickIds = Array.from(new Set(
+    brackets.flatMap(b => Object.values((b.picks || {}) as Record<string, string>))
+  ))
+
   // Group brackets by type
   const bracketsByType: Partial<Record<BracketType, Bracket[]>> = {}
   for (const bracket of brackets) {
@@ -106,6 +114,9 @@ export default async function DashboardPage() {
           Create Pool
         </Link>
       </div>
+
+      {/* Push Notification Prompt */}
+      <NotificationPrompt trigger="first_visit" className="max-w-xl" />
 
       {/* Second Chance Banner — shown when user's bracket is busted and 2nd chance is available */}
       {isFullBracketBusted && hasSecondChanceOpen && (
@@ -144,6 +155,9 @@ export default async function DashboardPage() {
           sublabel="Tip-off"
         />
       </div>
+
+      {/* Live Games Widget */}
+      <LiveGames userPickIds={userPickIds} />
 
       {/* Tournament countdown */}
       <div className="bg-gradient-to-r from-brand-orange/10 to-brand-gold/10 border border-brand-orange/20 rounded-2xl p-6">
@@ -263,6 +277,9 @@ export default async function DashboardPage() {
           </div>
         </section>
       )}
+
+      {/* Recent Achievements */}
+      <RecentAchievements userId={session.user.id} />
 
       {/* All Smack */}
       {poolIds.length > 0 && (

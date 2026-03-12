@@ -6,6 +6,7 @@ import InviteButton from '@/components/pools/InviteButton'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import Leaderboard from '@/components/Leaderboard'
 import SmackTalk from '@/components/smack/SmackTalk'
+import ShareButton from '@/components/bracket/ShareButton'
 import { BRACKET_TYPE_META, type BracketType } from '@/lib/secondChance'
 
 interface Props {
@@ -57,6 +58,18 @@ export default async function PoolPage({ params }: Props) {
   const isCommissioner = pool.commissioner_id === session.user.id
   const isMember = !!membership
   const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${pool.invite_code}`
+
+  // Get current user's profile for share
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', session.user.id)
+    .maybeSingle()
+
+  // Get current user's rank from leaderboard
+  const userLeaderboardEntry = leaderboard?.find(e => e.user_id === session.user.id)
+  const userRank = userLeaderboardEntry?.rank ?? undefined
+  const userName = currentProfile?.display_name || 'Anonymous'
 
   return (
     <div className="space-y-8">
@@ -119,9 +132,23 @@ export default async function PoolPage({ params }: Props) {
                 <span className="text-sm text-brand-muted">Score</span>
                 <span className="text-2xl font-black text-brand-orange">{userBracket.score}</span>
               </div>
-              <Link href={`/brackets/${userBracket.id}`} className="btn-primary w-full text-center block">
-                {userBracket.is_submitted ? 'View Bracket' : 'Continue Picking'}
-              </Link>
+              <div className="flex gap-2">
+                <Link href={`/brackets/${userBracket.id}`} className="btn-primary flex-1 text-center block">
+                  {userBracket.is_submitted ? 'View Bracket' : 'Continue Picking'}
+                </Link>
+                {userBracket.is_submitted && (
+                  <ShareButton
+                    bracketId={userBracket.id}
+                    userName={userName}
+                    poolName={pool.name}
+                    score={userBracket.score || 0}
+                    rank={userRank}
+                    poolStatus={pool.status}
+                    className="btn-secondary flex items-center gap-2 text-sm px-4"
+                    label="Share"
+                  />
+                )}
+              </div>
             </div>
           ) : isMember ? (
             <div className="space-y-2">

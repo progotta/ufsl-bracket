@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import NotificationPrompt from '@/components/NotificationPrompt'
 import {
   buildBracketStructure,
   resolveBracket,
@@ -20,11 +21,15 @@ import {
   FILL_STRATEGY_META,
   type FillStrategy,
 } from '@/lib/quickFill'
-import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, X, Download } from 'lucide-react'
+import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, X, Download, Share2 } from 'lucide-react'
+import { useLiveScores } from '@/hooks/useLiveScores'
+import GameLiveScore from '@/components/bracket/GameLiveScore'
+import type { LiveGameScore } from '@/lib/liveScores'
 import clsx from 'clsx'
 import TeamCard from '@/components/TeamCard'
 import MatchupInsights from '@/components/predictions/MatchupInsights'
 import BracketImportModal from '@/components/bracket/BracketImportModal'
+import ShareModal from '@/components/ShareModal'
 import { getTeamPrediction } from '@/lib/predictions'
 
 interface BracketPickerProps {
@@ -34,6 +39,9 @@ interface BracketPickerProps {
   isSubmitted?: boolean
   teams?: BracketTeam[]
   bracketType?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
+  userName?: string
+  poolName?: string
+  score?: number
 }
 
 export default function BracketPicker({
@@ -43,12 +51,17 @@ export default function BracketPicker({
   isSubmitted = false,
   teams = MOCK_TEAMS,
   bracketType = 'full',
+  userName = 'Anonymous',
+  poolName = 'UFSL Pool',
+  score = 0,
 }: BracketPickerProps) {
   const [picks, setPicks] = useState<Record<string, string>>(initialPicks)
   const [undoPicks, setUndoPicks] = useState<Record<string, string> | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [showSharePrompt, setShowSharePrompt] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [activeRegion, setActiveRegion] = useState<Region | 'All' | 'Final Four'>('All')
   const [selectedTeam, setSelectedTeam] = useState<BracketTeam | null>(null)
@@ -68,6 +81,21 @@ export default function BracketPicker({
   )
 
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams])
+
+  // Live scores — fetch and map by team-pair key for fast bracket lookup
+  const { games: liveGames } = useLiveScores()
+  const liveScoreMap = useMemo(() => {
+    const map = new Map<string, LiveGameScore>()
+    for (const lg of liveGames) {
+      if (lg.status === 'scheduled') continue
+      // Key by sorted team ID pair so lookup is order-independent
+      if (lg.team1.id && lg.team2.id) {
+        const key = [lg.team1.id, lg.team2.id].sort().join('|')
+        map.set(key, lg)
+      }
+    }
+    return map
+  }, [liveGames])
 
   const handlePick = useCallback(
     (gameId: string, teamId: string) => {
@@ -145,7 +173,11 @@ export default function BracketPicker({
 
     if (!error) {
       if (submit) {
-        router.push(`/pools/${poolId}`)
+        // Show share prompt before redirecting
+        setShowSharePrompt(true)
+        setSubmitting(false)
+        setSaving(false)
+        return
       } else {
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
@@ -184,6 +216,54 @@ export default function BracketPicker({
           onApply={handleImportApply}
           teams={teams}
         />
+      )}
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        bracketId={bracketId}
+        userName={userName}
+        poolName={poolName}
+        score={score}
+        poolStatus="open"
+        champion={(() => {
+          const champId = picks['game-63'] || picks['championship']
+          return champId ? teams.find(t => t.id === champId)?.name : undefined
+        })()}
+      />
+
+      {/* Post-submit share prompt */}
+      {showSharePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+          <div className="relative z-10 bg-brand-surface border border-brand-border rounded-3xl shadow-2xl max-w-md w-full mx-4 p-8 text-center">
+            <div className="text-5xl mb-4">🏀</div>
+            <h2 className="text-2xl font-black mb-2">Bracket Submitted!</h2>
+            <p className="text-brand-muted mb-6">
+              Your picks are locked in. Brag to your friends and challenge them to beat you!
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowSharePrompt(false)
+                  setShowShareModal(true)
+                }}
+                className="btn-primary flex items-center justify-center gap-2"
+              >
+                <Share2 size={16} />
+                Share My Bracket
+              </button>
+              <button
+                onClick={() => router.push(`/pools/${poolId}`)}
+                className="btn-secondary"
+              >
+                View Pool Leaderboard
+              </button>
+              <NotificationPrompt trigger="after_bracket" className="text-left" />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Quick-fill confirmation modal */}
@@ -393,10 +473,19 @@ export default function BracketPicker({
               </>
             )}
             {isSubmitted && (
-              <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
-                <CheckCircle size={16} />
-                Submitted
-              </span>
+              <>
+                <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
+                  <CheckCircle size={16} />
+                  Submitted
+                </span>
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="btn-secondary text-sm flex items-center gap-2 py-2"
+                >
+                  <Share2 size={14} />
+                  Share
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -426,6 +515,7 @@ export default function BracketPicker({
               onTeamInfo={handleTeamInfo}
               isSubmitted={isSubmitted}
               showInsights={showInsights}
+              liveScoreMap={liveScoreMap}
             />
           ) : (
             <RegionBracket
@@ -436,6 +526,7 @@ export default function BracketPicker({
               onTeamInfo={handleTeamInfo}
               isSubmitted={isSubmitted}
               showInsights={showInsights}
+              liveScoreMap={liveScoreMap}
             />
           )}
         </div>

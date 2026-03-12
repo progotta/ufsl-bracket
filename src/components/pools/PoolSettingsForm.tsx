@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, CheckCircle, Trash2 } from 'lucide-react'
+import { Loader2, CheckCircle, Trash2, RefreshCw, Link as LinkIcon } from 'lucide-react'
 import type { Pool } from '@/types/database'
 
 interface PoolSettingsFormProps {
-  pool: Pool
+  pool: Pool & { max_members?: number | null; join_requires_approval?: boolean }
 }
 
 export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
@@ -15,6 +15,11 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
   const [description, setDescription] = useState(pool.description || '')
   const [isPublic, setIsPublic] = useState(pool.is_public)
   const [status, setStatus] = useState(pool.status)
+  const [maxMembers, setMaxMembers] = useState<string>(pool.max_members ? String(pool.max_members) : '')
+  const [joinRequiresApproval, setJoinRequiresApproval] = useState(pool.join_requires_approval || false)
+  const [inviteCode, setInviteCode] = useState(pool.invite_code)
+  const [regenerating, setRegenerating] = useState(false)
+  const inviteUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/join/${inviteCode}`
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +34,16 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
 
     const { error: updateError } = await supabase
       .from('pools')
-      .update({ name, description: description || null, is_public: isPublic, status })
+      .update({
+        name,
+        description: description || null,
+        is_public: isPublic,
+        status,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        max_members: maxMembers ? parseInt(maxMembers) : null as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        join_requires_approval: joinRequiresApproval as any,
+      })
       .eq('id', pool.id)
 
     if (updateError) {
@@ -57,12 +71,15 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
 
   const handleRegenerateCode = async () => {
     if (!confirm('Generate a new invite code? The old link will stop working.')) return
-    // Call RPC to regenerate
+    setRegenerating(true)
     const { data } = await supabase.rpc('generate_invite_code')
     if (data) {
-      await supabase.from('pools').update({ invite_code: data }).eq('id', pool.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('pools').update({ invite_code: data }).eq('id', pool.id)
+      setInviteCode(data)
       router.refresh()
     }
+    setRegenerating(false)
   }
 
   return (

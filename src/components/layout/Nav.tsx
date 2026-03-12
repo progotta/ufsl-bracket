@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/ui/Logo'
 import type { Profile } from '@/types/database'
-import { LogOut, User, Trophy, Home, Menu, X, Globe, RefreshCw } from 'lucide-react'
+import { LogOut, User, Trophy, Home, Menu, X, Globe, RefreshCw, Medal, Bell } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
 
@@ -30,6 +30,7 @@ export default function Nav({ profile }: NavProps) {
     { href: '/pools', label: 'Pools', icon: <Trophy size={16} /> },
     { href: '/second-chance', label: '2nd Chance', icon: <RefreshCw size={16} />, badge: true },
     { href: '/leaderboard', label: 'Rankings', icon: <Globe size={16} /> },
+    { href: '/achievements', label: 'Achievements', icon: <Medal size={16} /> },
     { href: '/profile', label: 'Profile', icon: <User size={16} /> },
   ]
 
@@ -82,6 +83,13 @@ export default function Nav({ profile }: NavProps) {
                 {(profile?.display_name || 'C')[0].toUpperCase()}
               </div>
             )}
+            <Link
+              href="/settings/notifications"
+              className="text-brand-muted hover:text-brand-orange transition-colors p-1"
+              title="Notification settings"
+            >
+              <Bell size={16} />
+            </Link>
             <button
               onClick={handleSignOut}
               className="text-brand-muted hover:text-white transition-colors p-1"
@@ -126,6 +134,19 @@ export default function Nav({ profile }: NavProps) {
                 )}
               </Link>
             ))}
+            <Link
+              href="/settings/notifications"
+              onClick={() => setMenuOpen(false)}
+              className={clsx(
+                'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
+                pathname === '/settings/notifications'
+                  ? 'bg-brand-orange/10 text-brand-orange'
+                  : 'text-brand-muted hover:text-white hover:bg-brand-card'
+              )}
+            >
+              <Bell size={16} />
+              Notifications
+            </Link>
             <button
               onClick={handleSignOut}
               className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-brand-muted hover:text-red-400 w-full transition-all"

@@ -2,6 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Nav from '@/components/layout/Nav'
 import ProfileForm from '@/components/profile/ProfileForm'
+import ProfileAchievements from '@/components/achievements/ProfileAchievements'
 
 export default async function ProfilePage() {
   const supabase = createServerClient()
@@ -17,8 +18,9 @@ export default async function ProfilePage() {
   return (
     <div className="min-h-screen bg-brand-dark">
       <Nav profile={profile} />
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-3xl font-black mb-8">Your Profile</h1>
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        <h1 className="text-3xl font-black">Your Profile</h1>
+        <ProfileAchievements userId={session.user.id} />
         <ProfileForm profile={profile} userId={session.user.id} />
       </main>
     </div>
