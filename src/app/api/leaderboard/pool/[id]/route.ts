@@ -1,6 +1,7 @@
 import { createRouteClient } from '@/lib/supabase/route'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCached } from '@/lib/cache'
+import { rateLimit } from '@/lib/ratelimit'
 
 const CACHE_TTL = 60 // 60 seconds
 
@@ -8,6 +9,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const rlResponse = await rateLimit(ip, 'leaderboard', { requests: 30, window: '1 m' })
+  if (rlResponse) return rlResponse
+
   const supabase = createRouteClient()
   const poolId = params.id
 
