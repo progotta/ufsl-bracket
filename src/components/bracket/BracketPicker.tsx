@@ -13,6 +13,7 @@ import {
   type BracketGame,
   type Region,
 } from '@/lib/bracket'
+import { BRACKET_TYPE_META, getRoundsForBracketType } from '@/lib/secondChance'
 import {
   generateQuickFillPicks,
   countPickChanges,
@@ -32,6 +33,7 @@ interface BracketPickerProps {
   initialPicks?: Record<string, string>
   isSubmitted?: boolean
   teams?: BracketTeam[]
+  bracketType?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
 }
 
 export default function BracketPicker({
@@ -40,6 +42,7 @@ export default function BracketPicker({
   initialPicks = {},
   isSubmitted = false,
   teams = MOCK_TEAMS,
+  bracketType = 'full',
 }: BracketPickerProps) {
   const [picks, setPicks] = useState<Record<string, string>>(initialPicks)
   const [undoPicks, setUndoPicks] = useState<Record<string, string> | null>(null)
@@ -117,8 +120,15 @@ export default function BracketPicker({
     setSaved(false)
   }, [undoPicks])
 
-  const completedPicks = Object.keys(picks).length
-  const totalGames = 63
+  // Filter games by bracket type (fresh32 only shows round 2+, etc.)
+  const allowedRounds = useMemo(() => getRoundsForBracketType(bracketType), [bracketType])
+  const bracketTypeMeta = BRACKET_TYPE_META[bracketType]
+
+  const completedPicks = Object.keys(picks).filter(gameId => {
+    const game = resolvedGames.find(g => g.id === gameId)
+    return game && allowedRounds.includes(game.round)
+  }).length
+  const totalGames = bracketTypeMeta.picks
 
   const handleSave = async (submit = false) => {
     if (submit) setSubmitting(true)
@@ -191,6 +201,13 @@ export default function BracketPicker({
       <div className="sticky top-0 z-20 bg-brand-dark/90 backdrop-blur-xl border-b border-brand-border py-3 px-4">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
+            {/* Bracket type badge */}
+            {bracketType !== 'full' && (
+              <div className={`hidden sm:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${bracketTypeMeta.accentBg} border ${bracketTypeMeta.accentBorder} ${bracketTypeMeta.accentText}`}>
+                <span>{bracketTypeMeta.emoji}</span>
+                <span>{bracketTypeMeta.badge}</span>
+              </div>
+            )}
             {/* Region filter */}
             <div className="flex items-center gap-1 overflow-x-auto">
               {(['All', ...REGIONS, 'Final Four'] as const).map(r => (

@@ -6,6 +6,7 @@ import InviteButton from '@/components/pools/InviteButton'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import Leaderboard from '@/components/Leaderboard'
 import SmackTalk from '@/components/smack/SmackTalk'
+import { BRACKET_TYPE_META, type BracketType } from '@/lib/secondChance'
 
 interface Props {
   params: { id: string }
@@ -72,6 +73,14 @@ export default async function PoolPage({ params }: Props) {
             )}
             <div className="flex items-center gap-3 mt-2">
               <PoolStatusBadge status={pool.status} />
+              {pool.bracket_type && pool.bracket_type !== 'full' && (() => {
+                const meta = BRACKET_TYPE_META[pool.bracket_type as BracketType]
+                return (
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${meta.accentBg} ${meta.accentText} border ${meta.accentBorder}`}>
+                    {meta.emoji} {meta.badge}
+                  </span>
+                )
+              })()}
               <span className="text-brand-muted text-sm flex items-center gap-1">
                 <Users size={14} />
                 {members?.length || 0} members

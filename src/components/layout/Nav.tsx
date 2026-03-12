@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/ui/Logo'
 import type { Profile } from '@/types/database'
-import { LogOut, User, Trophy, Home, Menu, X, Globe } from 'lucide-react'
+import { LogOut, User, Trophy, Home, Menu, X, Globe, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
 
@@ -28,6 +28,7 @@ export default function Nav({ profile }: NavProps) {
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: <Home size={16} /> },
     { href: '/pools', label: 'Pools', icon: <Trophy size={16} /> },
+    { href: '/second-chance', label: '2nd Chance', icon: <RefreshCw size={16} />, badge: true },
     { href: '/leaderboard', label: 'Rankings', icon: <Globe size={16} /> },
     { href: '/profile', label: 'Profile', icon: <User size={16} /> },
   ]
@@ -41,12 +42,12 @@ export default function Nav({ profile }: NavProps) {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {links.map(({ href, label, icon }) => (
+          {links.map(({ href, label, icon, badge }) => (
             <Link
               key={href}
               href={href}
               className={clsx(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative',
                 pathname === href || pathname.startsWith(href + '/')
                   ? 'bg-brand-orange/10 text-brand-orange'
                   : 'text-brand-muted hover:text-white hover:bg-brand-card'
@@ -54,6 +55,9 @@ export default function Nav({ profile }: NavProps) {
             >
               {icon}
               {label}
+              {badge && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+              )}
             </Link>
           ))}
         </nav>
@@ -101,7 +105,7 @@ export default function Nav({ profile }: NavProps) {
       {menuOpen && (
         <div className="md:hidden border-t border-brand-border bg-brand-surface animate-slide-up">
           <div className="px-4 py-3 space-y-1">
-            {links.map(({ href, label, icon }) => (
+            {links.map(({ href, label, icon, badge }) => (
               <Link
                 key={href}
                 href={href}
@@ -115,6 +119,11 @@ export default function Nav({ profile }: NavProps) {
               >
                 {icon}
                 {label}
+                {badge && (
+                  <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    NEW
+                  </span>
+                )}
               </Link>
             ))}
             <button

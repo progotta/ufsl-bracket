@@ -1,10 +1,18 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trophy, Users, ArrowRight, Calendar } from 'lucide-react'
-import type { Profile, Bracket, Pool } from '@/types/database'
+import { Plus, Trophy, Users, ArrowRight, Calendar, RefreshCw, Zap } from 'lucide-react'
+import type { Profile, Bracket, Pool, Game } from '@/types/database'
 import NewsFeed from '@/components/NewsFeed'
 import AllSmack from '@/components/smack/AllSmack'
+import {
+  BRACKET_TYPE_META,
+  BRACKET_TYPE_ORDER,
+  isBracketTypeOpen,
+  isBracketBusted,
+  getOpenBracketTypes,
+  type BracketType,
+} from '@/lib/secondChance'
 
 export default async function DashboardPage() {
   const supabase = createServerClient()
@@ -54,8 +62,32 @@ export default async function DashboardPage() {
     : { data: [] }
   const bracketPoolMap = new Map((bracketPoolsRaw || []).map((p: any) => [p.id, p.name]))
 
+  // Fetch games to determine second chance availability and bracket bust status
+  const { data: gamesRaw } = await supabase
+    .from('games')
+    .select('id, round, status, team1_id, team2_id, winner_id, scheduled_at')
+  const games = (gamesRaw || []) as Game[]
+
+  const openBracketTypes = getOpenBracketTypes(games)
+  const hasSecondChanceOpen = openBracketTypes.some(t => t !== 'full')
+
+  // Check if the user's full bracket is busted
+  const fullBrackets = brackets.filter(b => !b.bracket_type || b.bracket_type === 'full')
+  const isFullBracketBusted = fullBrackets.length > 0 && fullBrackets.every(b => {
+    const picks = (b.picks || {}) as Record<string, string>
+    return isBracketBusted(picks, games)
+  })
+
   const displayName = profile?.display_name || session.user.email?.split('@')[0] || 'Champion'
   const totalScore = brackets.reduce((sum, b) => sum + (b.score || 0), 0)
+
+  // Group brackets by type
+  const bracketsByType: Partial<Record<BracketType, Bracket[]>> = {}
+  for (const bracket of brackets) {
+    const type = (bracket.bracket_type || 'full') as BracketType
+    if (!bracketsByType[type]) bracketsByType[type] = []
+    bracketsByType[type]!.push(bracket)
+  }
 
   return (
     <div className="space-y-8">
@@ -74,6 +106,31 @@ export default async function DashboardPage() {
           Create Pool
         </Link>
       </div>
+
+      {/* Second Chance Banner — shown when user's bracket is busted and 2nd chance is available */}
+      {isFullBracketBusted && hasSecondChanceOpen && (
+        <SecondChanceBanner openTypes={openBracketTypes.filter(t => t !== 'full')} />
+      )}
+
+      {/* Second Chance Available banner — shown when new bracket types open even if not busted */}
+      {!isFullBracketBusted && hasSecondChanceOpen && (
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-5">
+          <div className="flex items-center gap-4">
+            <RefreshCw size={24} className="text-blue-400 shrink-0" />
+            <div className="flex-1">
+              <div className="font-bold text-blue-400">2nd Chance Brackets Are Open!</div>
+              <div className="text-sm text-brand-muted mt-0.5">
+                New bracket types are available:{' '}
+                {openBracketTypes.filter(t => t !== 'full').map(t => BRACKET_TYPE_META[t].shortLabel).join(', ')}
+              </div>
+            </div>
+            <Link href="/second-chance" className="btn-secondary text-sm whitespace-nowrap flex items-center gap-1.5">
+              <RefreshCw size={13} />
+              Learn More
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -123,6 +180,8 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {membershipsWithPools.map((m) => {
               const pool = m.pool!
+              const poolType = (pool.bracket_type || 'full') as BracketType
+              const poolMeta = BRACKET_TYPE_META[poolType]
               return (
                 <Link
                   key={pool.id}
@@ -133,7 +192,14 @@ export default async function DashboardPage() {
                     <div className="bg-brand-orange/10 rounded-lg p-2">
                       <Trophy size={20} className="text-brand-orange" />
                     </div>
-                    <PoolStatusBadge status={pool.status} />
+                    <div className="flex items-center gap-2">
+                      {poolType !== 'full' && (
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${poolMeta.accentBg} ${poolMeta.accentText} border ${poolMeta.accentBorder}`}>
+                          {poolMeta.badge}
+                        </span>
+                      )}
+                      <PoolStatusBadge status={pool.status} />
+                    </div>
                   </div>
                   <h3 className="font-bold text-base group-hover:text-brand-orange transition-colors">{pool.name}</h3>
                   {pool.description && (
@@ -149,33 +215,51 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      {/* Brackets section */}
+      {/* Brackets section — grouped by type */}
       {brackets.length > 0 && (
         <section>
           <h2 className="text-xl font-bold mb-4">Your Brackets</h2>
-          <div className="space-y-3">
-            {brackets.map((bracket) => (
-              <Link
-                key={bracket.id}
-                href={`/brackets/${bracket.id}`}
-                className="flex items-center justify-between bg-brand-surface border border-brand-border rounded-xl p-4 hover:border-brand-orange/50 transition-all group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="text-2xl">📋</div>
-                  <div>
-                    <div className="font-semibold group-hover:text-brand-orange transition-colors">{bracket.name}</div>
-                    <div className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
+          <div className="space-y-6">
+            {BRACKET_TYPE_ORDER.filter(type => bracketsByType[type]?.length).map(type => {
+              const meta = BRACKET_TYPE_META[type]
+              const typeBrackets = bracketsByType[type]!
+              return (
+                <div key={type}>
+                  {/* Type header */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">{meta.emoji}</span>
+                    <span className={`font-bold text-sm ${meta.accentText}`}>{meta.label}</span>
+                    <span className="text-xs text-brand-muted">({typeBrackets.length} bracket{typeBrackets.length !== 1 ? 's' : ''})</span>
+                  </div>
+                  <div className="space-y-2">
+                    {typeBrackets.map((bracket) => (
+                      <Link
+                        key={bracket.id}
+                        href={`/brackets/${bracket.id}`}
+                        className={`flex items-center justify-between bg-brand-surface border rounded-xl p-4 hover:border-brand-orange/50 transition-all group ${
+                          type !== 'full' ? meta.accentBorder : 'border-brand-border'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="text-2xl">{meta.emoji}</div>
+                          <div>
+                            <div className="font-semibold group-hover:text-brand-orange transition-colors">{bracket.name}</div>
+                            <div className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="text-xl font-black text-brand-orange">{bracket.score}</div>
+                            <div className="text-xs text-brand-muted">points</div>
+                          </div>
+                          <ArrowRight size={16} className="text-brand-muted group-hover:text-white transition-colors" />
+                        </div>
+                      </Link>
+                    ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-xl font-black text-brand-orange">{bracket.score}</div>
-                    <div className="text-xs text-brand-muted">points</div>
-                  </div>
-                  <ArrowRight size={16} className="text-brand-muted group-hover:text-white transition-colors" />
-                </div>
-              </Link>
-            ))}
+              )
+            })}
           </div>
         </section>
       )}
@@ -193,6 +277,40 @@ export default async function DashboardPage() {
       <section>
         <NewsFeed />
       </section>
+    </div>
+  )
+}
+
+function SecondChanceBanner({ openTypes }: { openTypes: BracketType[] }) {
+  const primary = openTypes[0]
+  const meta = BRACKET_TYPE_META[primary]
+
+  return (
+    <div className={`${meta.accentBg} border-2 ${meta.accentBorder} rounded-2xl p-6`}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="text-4xl">{meta.emoji}</div>
+        <div className="flex-1">
+          <div className={`font-black text-lg ${meta.accentText}`}>
+            💀 Bracket Busted? Start Fresh.
+          </div>
+          <p className="text-brand-muted text-sm mt-1">
+            Your bracket is mathematically eliminated, but the tournament isn&apos;t over.
+            Jump into a {openTypes.map(t => BRACKET_TYPE_META[t].shortLabel).join(' or ')} bracket and get back in the game!
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 shrink-0">
+          <Link
+            href={`/pools/new?bracket_type=${primary}`}
+            className="btn-primary text-sm flex items-center gap-1.5"
+          >
+            <Zap size={14} />
+            Start Fresh
+          </Link>
+          <Link href="/second-chance" className="text-center text-xs text-brand-muted hover:text-white transition-colors">
+            Learn more →
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

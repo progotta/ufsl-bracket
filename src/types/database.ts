@@ -51,6 +51,8 @@ export interface Database {
           scoring_system: Json
           locked_at: string | null
           status: 'draft' | 'open' | 'locked' | 'active' | 'completed'
+          bracket_type: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
+          locks_at: string | null
         }
         Insert: {
           id?: string
@@ -64,6 +66,8 @@ export interface Database {
           scoring_system?: Json
           locked_at?: string | null
           status?: 'draft' | 'open' | 'locked' | 'active' | 'completed'
+          bracket_type?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
+          locks_at?: string | null
         }
         Update: {
           id?: string
@@ -77,6 +81,8 @@ export interface Database {
           scoring_system?: Json
           locked_at?: string | null
           status?: 'draft' | 'open' | 'locked' | 'active' | 'completed'
+          bracket_type?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
+          locks_at?: string | null
         }
       }
       pool_members: {
@@ -196,6 +202,7 @@ export interface Database {
           score: number
           max_possible_score: number
           picks: Json
+          bracket_type: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
         }
         Insert: {
           id?: string
@@ -208,6 +215,7 @@ export interface Database {
           score?: number
           max_possible_score?: number
           picks?: Json
+          bracket_type?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
         }
         Update: {
           id?: string
@@ -220,6 +228,7 @@ export interface Database {
           score?: number
           max_possible_score?: number
           picks?: Json
+          bracket_type?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
         }
       }
     }
@@ -234,6 +243,7 @@ export interface Database {
           bracket_name: string
           score: number
           max_possible_score: number
+          bracket_type: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
           rank: number
         }
       }
