@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Trophy, Users, ArrowRight, Calendar } from 'lucide-react'
 import type { Profile, Bracket, Pool } from '@/types/database'
+import NewsFeed from '@/components/NewsFeed'
 
 export default async function DashboardPage() {
   const supabase = createServerClient()
@@ -177,6 +178,11 @@ export default async function DashboardPage() {
           </div>
         </section>
       )}
+
+      {/* News Feed */}
+      <section>
+        <NewsFeed />
+      </section>
     </div>
   )
 }
