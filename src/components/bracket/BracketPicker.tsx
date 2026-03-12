@@ -248,6 +248,7 @@ export default function BracketPicker({
               onPick={handlePick}
               onTeamInfo={handleTeamInfo}
               isSubmitted={isSubmitted}
+              showInsights={showInsights}
             />
           ) : (
             <RegionBracket
@@ -257,6 +258,7 @@ export default function BracketPicker({
               onPick={handlePick}
               onTeamInfo={handleTeamInfo}
               isSubmitted={isSubmitted}
+              showInsights={showInsights}
             />
           )}
         </div>
@@ -274,25 +276,27 @@ function FullBracket({
   onPick,
   onTeamInfo,
   isSubmitted,
+  showInsights,
 }: {
   gameMap: Map<string, BracketGame>
   picks: Record<string, string>
   onPick: (gameId: string, teamId: string) => void
   onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
+  showInsights: boolean
 }) {
   return (
     <div className="min-w-[1200px]">
       {/* Top half: East (left), West (right) */}
       <div className="grid grid-cols-[1fr_auto_1fr] gap-4 mb-4">
-        <RegionColumn region="East" side="left" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
-        <FinalFourColumn gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
-        <RegionColumn region="West" side="right" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
+        <RegionColumn region="East" side="left" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
+        <FinalFourColumn gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
+        <RegionColumn region="West" side="right" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] gap-4 mt-4">
-        <RegionColumn region="South" side="left" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
+        <RegionColumn region="South" side="left" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
         <div /> {/* spacer */}
-        <RegionColumn region="Midwest" side="right" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} />
+        <RegionColumn region="Midwest" side="right" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
       </div>
     </div>
   )
@@ -306,6 +310,7 @@ function RegionColumn({
   onPick,
   onTeamInfo,
   isSubmitted,
+  showInsights,
 }: {
   region: Region
   side: 'left' | 'right'
@@ -314,13 +319,14 @@ function RegionColumn({
   onPick: (gameId: string, teamId: string) => void
   onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
+  showInsights: boolean
 }) {
   const rounds = side === 'left' ? [1, 2, 3, 4] : [4, 3, 2, 1]
 
   return (
     <div className={`flex gap-1 ${side === 'right' ? 'flex-row-reverse' : ''}`}>
       {rounds.map(round => (
-        <div key={round} className="flex flex-col justify-around gap-2 min-w-[160px]">
+        <div key={round} className={clsx('flex flex-col justify-around gap-2', showInsights && round === 1 ? 'min-w-[180px]' : 'min-w-[160px]')}>
           <div className="text-center text-xs font-bold text-brand-muted uppercase tracking-wide mb-1 px-1">
             {round === 1 ? region : ROUND_NAMES[round]}
           </div>
@@ -333,6 +339,7 @@ function RegionColumn({
             onPick={onPick}
             onTeamInfo={onTeamInfo}
             isSubmitted={isSubmitted}
+            showInsights={showInsights}
           />
         </div>
       ))}
@@ -349,6 +356,7 @@ function RoundGames({
   onPick,
   onTeamInfo,
   isSubmitted,
+  showInsights,
 }: {
   region: Region
   round: number
@@ -358,6 +366,7 @@ function RoundGames({
   onPick: (gameId: string, teamId: string) => void
   onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
+  showInsights: boolean
 }) {
   const games = Array.from(gameMap.values())
     .filter(g => g.region === region && g.round === round)
@@ -374,6 +383,7 @@ function RoundGames({
           onTeamInfo={onTeamInfo}
           isSubmitted={isSubmitted}
           side={side}
+          showInsights={showInsights}
         />
       ))}
     </div>
@@ -386,12 +396,14 @@ function FinalFourColumn({
   onPick,
   onTeamInfo,
   isSubmitted,
+  showInsights,
 }: {
   gameMap: Map<string, BracketGame>
   picks: Record<string, string>
   onPick: (gameId: string, teamId: string) => void
   onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
+  showInsights: boolean
 }) {
   const ff1 = gameMap.get('ff-r5-g1')
   const ff2 = gameMap.get('ff-r5-g2')
@@ -404,7 +416,7 @@ function FinalFourColumn({
           Final Four
         </div>
         {ff1 && (
-          <GameSlot game={ff1} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" />
+          <GameSlot game={ff1} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" showInsights={showInsights} />
         )}
       </div>
 
@@ -413,13 +425,13 @@ function FinalFourColumn({
           🏆 Championship
         </div>
         {championship && (
-          <GameSlot game={championship} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" highlight />
+          <GameSlot game={championship} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" highlight showInsights={showInsights} />
         )}
       </div>
 
       <div className="text-center">
         {ff2 && (
-          <GameSlot game={ff2} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" />
+          <GameSlot game={ff2} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" showInsights={showInsights} />
         )}
       </div>
     </div>
@@ -434,6 +446,7 @@ function RegionBracket({
   onPick,
   onTeamInfo,
   isSubmitted,
+  showInsights,
 }: {
   region: string
   gameMap: Map<string, BracketGame>
@@ -441,6 +454,7 @@ function RegionBracket({
   onPick: (gameId: string, teamId: string) => void
   onTeamInfo: (team: BracketTeam) => void
   isSubmitted: boolean
+  showInsights: boolean
 }) {
   if (region === 'Final Four') {
     const ff1 = gameMap.get('ff-r5-g1')
@@ -449,10 +463,10 @@ function RegionBracket({
     return (
       <div className="max-w-lg mx-auto space-y-6">
         <SectionHeader title="Final Four" />
-        {ff1 && <GameSlot game={ff1} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" wide />}
-        {ff2 && <GameSlot game={ff2} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" wide />}
+        {ff1 && <GameSlot game={ff1} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" wide showInsights={showInsights} />}
+        {ff2 && <GameSlot game={ff2} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" wide showInsights={showInsights} />}
         <SectionHeader title="🏆 Championship" />
-        {championship && <GameSlot game={championship} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" highlight wide />}
+        {championship && <GameSlot game={championship} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} side="center" highlight wide showInsights={showInsights} />}
       </div>
     )
   }
@@ -484,6 +498,7 @@ function RegionBracket({
                   isSubmitted={isSubmitted}
                   side="center"
                   wide
+                  showInsights={showInsights}
                 />
               ))}
             </div>
@@ -512,6 +527,7 @@ function GameSlot({
   side,
   highlight = false,
   wide = false,
+  showInsights = false,
 }: {
   game: BracketGame
   picks: Record<string, string>
@@ -521,8 +537,12 @@ function GameSlot({
   side: 'left' | 'right' | 'center'
   highlight?: boolean
   wide?: boolean
+  showInsights?: boolean
 }) {
   const pickedTeamId = picks[game.id]
+  const bothTeamsKnown = !!game.team1 && !!game.team2
+    && !game.team1.id.startsWith('placeholder') && !game.team2.id.startsWith('placeholder')
+  const hasPredictions = bothTeamsKnown && showInsights && !!getTeamPrediction(game.team1!.id)
 
   return (
     <div
@@ -553,6 +573,20 @@ function GameSlot({
         disabled={isSubmitted || !game.team2}
         isTop={false}
       />
+      {/* Inline matchup insights (compact) */}
+      {hasPredictions && (
+        <>
+          <div className="h-px bg-brand-border/50" />
+          <div className="bg-brand-dark/60">
+            <MatchupInsights
+              team1={game.team1!}
+              team2={game.team2!}
+              gameId={game.id}
+              compact
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }

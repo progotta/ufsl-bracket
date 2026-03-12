@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { X, TrendingUp, TrendingDown, Users, Clock, Award, BarChart2 } from 'lucide-react'
+import { X, TrendingUp, TrendingDown, Users, Clock, Award, BarChart2, Percent } from 'lucide-react'
 import clsx from 'clsx'
 import type { BracketTeam } from '@/lib/bracket'
 import { getTeamDetail, type TeamDetail, type RecentGame } from '@/data/teamDetails'
+import { getTeamPrediction, getSeedMatchupStat, SEED_MATCHUP_STATS } from '@/lib/predictions'
 
 // ─────────────────────────────────────────────────────────────────
 // TeamCard Props
@@ -84,6 +85,7 @@ function TeamCardContent({ detail, onClose }: { detail: TeamDetail; onClose: () 
   const hasStats = detail.stats.ppg > 0
   const hasPlayers = detail.keyPlayers.length > 0
   const hasGames = detail.recentGames.length > 0
+  const prediction = getTeamPrediction(detail.teamId)
 
   return (
     <div className="flex flex-col min-h-full">
@@ -140,6 +142,42 @@ function TeamCardContent({ detail, onClose }: { detail: TeamDetail; onClose: () 
 
       {/* ── Scrollable body ─────────────────────── */}
       <div className="flex-1 overflow-y-auto divide-y divide-brand-border/50">
+
+        {/* Win Probability */}
+        {prediction && (
+          <section className="px-5 py-4">
+            <SectionTitle icon={<Percent size={14} />}>Win Probability</SectionTitle>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-brand-muted">Round 1 win probability</span>
+                <span className="text-xs text-brand-muted">via {prediction.source}</span>
+              </div>
+              <div className="relative h-8 rounded-xl overflow-hidden bg-brand-card border border-brand-border">
+                <div
+                  className="absolute left-0 top-0 bottom-0 flex items-center justify-center transition-all duration-700"
+                  style={{
+                    width: `${prediction.winProbability}%`,
+                    background: prediction.winProbability >= 70
+                      ? 'linear-gradient(90deg, #16a34a, #22c55e)'
+                      : prediction.winProbability >= 50
+                      ? 'linear-gradient(90deg, #ca8a04, #eab308)'
+                      : 'linear-gradient(90deg, #dc2626, #ef4444)',
+                  }}
+                >
+                  <span className="text-white font-black text-sm drop-shadow">
+                    {prediction.winProbability}%
+                  </span>
+                </div>
+              </div>
+              {prediction.rating && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-brand-muted">Efficiency Rating</span>
+                  <span className="font-bold text-white">{prediction.rating.toFixed(1)}</span>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Key Stats */}
         {hasStats ? (
