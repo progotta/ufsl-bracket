@@ -1,11 +1,13 @@
 import webpush from 'web-push'
 
-// Configure VAPID details once
-webpush.setVapidDetails(
-  'mailto:admin@ufsl.net',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+// Configure VAPID details — only if env vars are present (skip during build)
+if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:admin@ufsl.net',
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  )
+}
 
 export type NotificationType =
   | 'game_starting'

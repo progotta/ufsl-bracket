@@ -25,6 +25,13 @@ import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2
 import { useLiveScores } from '@/hooks/useLiveScores'
 import GameLiveScore from '@/components/bracket/GameLiveScore'
 import type { LiveGameScore } from '@/lib/liveScores'
+import { createContext, useContext } from 'react'
+
+// Context to pass live score map and user picks down without prop drilling
+const LiveScoreContext = createContext<{
+  liveScoreMap: Map<string, LiveGameScore>
+  picks: Record<string, string>
+}>({ liveScoreMap: new Map(), picks: {} })
 import clsx from 'clsx'
 import TeamCard from '@/components/TeamCard'
 import MatchupInsights from '@/components/predictions/MatchupInsights'
@@ -503,33 +510,33 @@ export default function BracketPicker({
 
       {/* Bracket canvas */}
       <div className="flex-1 overflow-auto p-4 sm:p-6">
-        <div
-          className="transition-transform origin-top-left"
-          style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
-        >
-          {activeRegion === 'All' ? (
-            <FullBracket
-              gameMap={gameMap}
-              picks={picks}
-              onPick={handlePick}
-              onTeamInfo={handleTeamInfo}
-              isSubmitted={isSubmitted}
-              showInsights={showInsights}
-              liveScoreMap={liveScoreMap}
-            />
-          ) : (
-            <RegionBracket
-              region={activeRegion as string}
-              gameMap={gameMap}
-              picks={picks}
-              onPick={handlePick}
-              onTeamInfo={handleTeamInfo}
-              isSubmitted={isSubmitted}
-              showInsights={showInsights}
-              liveScoreMap={liveScoreMap}
-            />
-          )}
-        </div>
+        <LiveScoreContext.Provider value={{ liveScoreMap, picks }}>
+          <div
+            className="transition-transform origin-top-left"
+            style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
+          >
+            {activeRegion === 'All' ? (
+              <FullBracket
+                gameMap={gameMap}
+                picks={picks}
+                onPick={handlePick}
+                onTeamInfo={handleTeamInfo}
+                isSubmitted={isSubmitted}
+                showInsights={showInsights}
+              />
+            ) : (
+              <RegionBracket
+                region={activeRegion as string}
+                gameMap={gameMap}
+                picks={picks}
+                onPick={handlePick}
+                onTeamInfo={handleTeamInfo}
+                isSubmitted={isSubmitted}
+                showInsights={showInsights}
+              />
+            )}
+          </div>
+        </LiveScoreContext.Provider>
       </div>
     </div>
   )
@@ -812,11 +819,22 @@ function GameSlot({
     && !game.team1.id.startsWith('placeholder') && !game.team2.id.startsWith('placeholder')
   const hasPredictions = bothTeamsKnown && showInsights && !!getTeamPrediction(game.team1!.id)
 
+  // Live score lookup via context
+  const { liveScoreMap } = useContext(LiveScoreContext)
+  const liveScore = bothTeamsKnown
+    ? liveScoreMap.get([game.team1!.id, game.team2!.id].sort().join('|'))
+    : undefined
+  const hasLiveScore = !!liveScore && liveScore.status !== 'scheduled'
+
   return (
     <div
       className={clsx(
         'rounded-xl border overflow-hidden transition-all',
-        highlight
+        hasLiveScore && (liveScore!.status === 'in_progress' || liveScore!.status === 'halftime')
+          ? liveScore!.isClose
+            ? 'border-brand-gold/50 shadow-sm shadow-brand-gold/10'
+            : 'border-red-500/30'
+          : highlight
           ? 'border-brand-gold/40 shadow-lg shadow-brand-gold/10'
           : 'border-brand-border',
         wide ? 'min-w-[240px]' : 'min-w-[150px] max-w-[190px]'
@@ -841,6 +859,19 @@ function GameSlot({
         disabled={isSubmitted || !game.team2}
         isTop={false}
       />
+      {/* Live score inline display */}
+      {hasLiveScore && (
+        <>
+          <div className="h-px bg-brand-border/50" />
+          <div className="px-2 py-1.5 bg-brand-dark/80">
+            <GameLiveScore
+              game={liveScore!}
+              userPickTeamId={pickedTeamId}
+              variant="compact"
+            />
+          </div>
+        </>
+      )}
       {/* Inline matchup insights (compact) */}
       {hasPredictions && (
         <>

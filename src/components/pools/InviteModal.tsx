@@ -98,7 +98,7 @@ export default function InviteModal({
       icon: <MessageSquare size={20} />,
       color: 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20',
       action: () => {
-        if (navigator.share) {
+        if (typeof navigator !== 'undefined' && typeof (navigator as unknown as Record<string, unknown>)['share'] === 'function') {
           handleNativeShare()
         } else {
           window.open(`sms:?body=${encodedText}%20${encodedUrl}`, '_blank')

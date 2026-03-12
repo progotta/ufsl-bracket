@@ -211,6 +211,7 @@ export default function Leaderboard({
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [shareTarget, setShareTarget] = useState<LeaderboardEntry | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -390,14 +391,44 @@ export default function Leaderboard({
           {filtered.length > 0 && (
             <div className="px-5 py-3 border-t border-brand-border bg-brand-card/20 flex items-center justify-between">
               <span className="text-xs text-brand-muted">{filtered.length} player{filtered.length !== 1 ? 's' : ''}</span>
-              {activeTab === 'pool' && (
-                <Link href="/leaderboard" className="text-xs text-brand-orange hover:underline">
-                  View Global Rankings →
-                </Link>
-              )}
+              <div className="flex items-center gap-3">
+                {/* Share my rank button — only if current user is in leaderboard */}
+                {(() => {
+                  const myEntry = filtered.find(e => e.user_id === currentUserId)
+                  if (!myEntry) return null
+                  return (
+                    <button
+                      onClick={() => setShareTarget(myEntry)}
+                      className="text-xs text-brand-orange hover:underline flex items-center gap-1"
+                    >
+                      <Share2 size={12} />
+                      Share my rank
+                    </button>
+                  )
+                })()}
+                {activeTab === 'pool' && (
+                  <Link href="/leaderboard" className="text-xs text-brand-orange hover:underline">
+                    View Global Rankings →
+                  </Link>
+                )}
+              </div>
             </div>
           )}
         </>
+      )}
+
+      {/* Share Modal */}
+      {shareTarget && (
+        <ShareModal
+          isOpen={!!shareTarget}
+          onClose={() => setShareTarget(null)}
+          bracketId={shareTarget.bracket_id || ''}
+          userName={shareTarget.display_name || 'Anonymous'}
+          poolName="UFSL Pool"
+          score={shareTarget.score ?? shareTarget.total_score ?? 0}
+          rank={shareTarget.rank}
+          poolStatus="active"
+        />
       )}
     </div>
   )

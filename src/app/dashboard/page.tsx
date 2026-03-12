@@ -1,7 +1,7 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trophy, Users, ArrowRight, Calendar, RefreshCw, Zap } from 'lucide-react'
+import { Plus, Trophy, Users, ArrowRight, Calendar, RefreshCw, Zap, Share2 } from 'lucide-react'
 import type { Profile, Bracket, Pool, Game } from '@/types/database'
 import NewsFeed from '@/components/NewsFeed'
 import AllSmack from '@/components/smack/AllSmack'
@@ -174,6 +174,37 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Invite nudge — show if any pool has fewer than 5 members */}
+      {(() => {
+        const smallPools = membershipsWithPools.filter(m => {
+          const pool = m.pool!
+          return pool.status !== 'completed' && pool.status !== 'locked'
+        })
+        if (smallPools.length === 0) return null
+        const nudgePool = smallPools[0].pool!
+        const nudgeInviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${nudgePool.invite_code}`
+        return (
+          <div className="bg-gradient-to-r from-blue-500/10 to-brand-orange/10 border border-blue-500/20 rounded-2xl p-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="text-3xl">👥</div>
+              <div className="flex-1">
+                <div className="font-bold text-blue-400">Invite friends to {nudgePool.name}!</div>
+                <p className="text-brand-muted text-sm mt-0.5">
+                  The more the merrier — share your invite link and fill up the pool.
+                </p>
+              </div>
+              <a
+                href={`/pools/${nudgePool.id}`}
+                className="btn-secondary text-sm whitespace-nowrap flex items-center gap-1.5 self-start sm:self-auto"
+              >
+                <Share2 size={14} />
+                Invite Friends
+              </a>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Pools section */}
       <section>

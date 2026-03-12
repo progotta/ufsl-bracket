@@ -4,6 +4,7 @@ import { Metadata } from 'next'
 import Nav from '@/components/layout/Nav'
 import BracketPicker from '@/components/bracket/BracketPicker'
 import ShareButton from '@/components/bracket/ShareButton'
+import PostBracketInviteBanner from '@/components/pools/PostBracketInviteBanner'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { MOCK_TEAMS } from '@/lib/bracket'
@@ -100,12 +101,18 @@ export default async function BracketPage({ params }: Props) {
   
   const bracket = bracketRaw as Bracket
 
-  // Get pool name
+  // Get pool info
   const { data: poolRaw } = await supabase
     .from('pools')
-    .select('name, status, id')
+    .select('name, status, id, invite_code')
     .eq('id', bracket.pool_id)
     .maybeSingle()
+
+  // Get member count for invite banner
+  const { count: memberCount } = await supabase
+    .from('pool_members')
+    .select('id', { count: 'exact', head: true })
+    .eq('pool_id', bracket.pool_id)
 
   // Only the owner or pool members can view
   if (bracket.user_id !== session.user.id) {
@@ -125,7 +132,7 @@ export default async function BracketPage({ params }: Props) {
     : MOCK_TEAMS
 
   const isOwner = bracket.user_id === session.user.id
-  const pool = poolRaw as { name: string; status: string; id: string } | null
+  const pool = poolRaw as { name: string; status: string; id: string; invite_code: string } | null
 
   const userName = profile?.display_name || 'Anonymous'
   const poolStatus = pool?.status || 'open'
@@ -184,6 +191,18 @@ export default async function BracketPage({ params }: Props) {
           score={bracket.score || 0}
         />
       </div>
+
+      {/* Post-bracket invite prompt — only for owner's unsubmitted bracket */}
+      {isOwner && !bracket.is_submitted && pool?.invite_code && (
+        <PostBracketInviteBanner
+          poolId={pool.id}
+          poolName={pool.name}
+          inviteCode={pool.invite_code}
+          inviteUrl={`${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${pool.invite_code}`}
+          inviterName={userName}
+          memberCount={memberCount || 0}
+        />
+      )}
     </div>
   )
 }

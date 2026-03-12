@@ -123,6 +123,36 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
             </button>
           </div>
 
+          <div className="flex items-center justify-between bg-brand-card rounded-xl p-4 border border-brand-border">
+            <div>
+              <div className="font-semibold text-sm">Require Approval</div>
+              <div className="text-xs text-brand-muted mt-0.5">New members need your approval to join</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setJoinRequiresApproval(!joinRequiresApproval)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${joinRequiresApproval ? 'bg-brand-orange' : 'bg-brand-border'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${joinRequiresApproval ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Max Members <span className="text-brand-muted font-normal">(optional)</span>
+            </label>
+            <input
+              type="number"
+              value={maxMembers}
+              onChange={e => setMaxMembers(e.target.value)}
+              min={2}
+              max={1000}
+              placeholder="Unlimited"
+              className="input-base"
+            />
+            <p className="text-xs text-brand-muted mt-1">Leave blank for no limit</p>
+          </div>
+
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">{error}</div>
           )}
@@ -132,6 +162,31 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
             {saved ? 'Saved!' : 'Save Changes'}
           </button>
         </form>
+      </div>
+
+      {/* Invite Link */}
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
+        <h2 className="font-bold text-lg mb-4">Invite Link</h2>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5">
+            <LinkIcon size={14} className="text-brand-muted shrink-0" />
+            <code className="text-xs text-brand-muted flex-1 truncate">{inviteUrl}</code>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="bg-brand-card border border-brand-border rounded-xl px-4 py-2 text-center flex-1">
+              <div className="text-xl font-black text-brand-gold tracking-widest">{inviteCode}</div>
+              <div className="text-xs text-brand-muted">Invite Code</div>
+            </div>
+            <button
+              onClick={handleRegenerateCode}
+              disabled={regenerating}
+              className="btn-secondary text-sm flex items-center gap-2"
+            >
+              {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              New Code
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Status management */}
@@ -144,12 +199,6 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
               🔒 Lock Picks
             </button>
           )}
-          <button
-            onClick={handleRegenerateCode}
-            className="btn-secondary text-sm"
-          >
-            🔄 New Invite Code
-          </button>
         </div>
       </div>
 

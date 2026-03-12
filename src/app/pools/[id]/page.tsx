@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus } from 'lucide-react'
-import InviteButton from '@/components/pools/InviteButton'
+import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import Leaderboard from '@/components/Leaderboard'
 import SmackTalk from '@/components/smack/SmackTalk'
@@ -40,6 +40,12 @@ export default async function PoolPage({ params }: Props) {
     .from('pool_members')
     .select('user_id, role, profiles(display_name, avatar_url)')
     .eq('pool_id', params.id)
+
+  const { data: commissionerProfile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', pool.commissioner_id)
+    .single()
 
   const { data: userBracket } = await supabase
     .from('brackets')
@@ -185,18 +191,14 @@ export default async function PoolPage({ params }: Props) {
               <div className="text-xs text-brand-muted">Share the link to join</div>
             </div>
           </div>
-          <div className="space-y-3">
-            <div className="bg-brand-card rounded-xl p-3 flex items-center gap-2">
-              <code className="text-xs text-brand-muted flex-1 truncate">{inviteUrl}</code>
-            </div>
-            <div className="flex gap-2">
-              <div className="bg-brand-card border border-brand-border rounded-lg px-3 py-2 flex-1 text-center">
-                <div className="text-xl font-black text-brand-gold">{pool.invite_code}</div>
-                <div className="text-xs text-brand-muted">Invite Code</div>
-              </div>
-              <InviteButton inviteUrl={inviteUrl} inviteCode={pool.invite_code} />
-            </div>
-          </div>
+          <InviteSection
+            poolName={pool.name}
+            inviteCode={pool.invite_code}
+            inviteUrl={inviteUrl}
+            inviterName={commissionerProfile?.display_name || undefined}
+            memberCount={members?.length || 0}
+            bracketType={pool.bracket_type}
+          />
         </div>
       </div>
 

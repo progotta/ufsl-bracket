@@ -96,11 +96,13 @@ export async function GET(request: Request) {
       if (g.team2_id) teamIds.add(g.team2_id)
     }
 
-    const { data: teamsRaw } = teamIds.size > 0
-      ? await db.from('teams').select('id, name, abbreviation, seed').in('id', [...teamIds])
+    const teamIdArray = Array.from(teamIds)
+    const { data: teamsRaw } = teamIdArray.length > 0
+      ? await db.from('teams').select('id, name, abbreviation, seed').in('id', teamIdArray)
       : { data: [] }
 
-    const teamsMap = new Map((teamsRaw ?? []).map((t: any) => [t.id, t]))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const teamsMap = new Map<string, any>((teamsRaw ?? []).map((t: any) => [t.id, t]))
     const liveGames = buildSimulationScores(games, teamsMap)
 
     const hasActiveGames = liveGames.some(

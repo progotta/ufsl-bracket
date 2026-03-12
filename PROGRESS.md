@@ -1,6 +1,6 @@
 # UFSL Bracket Challenge — Progress
 
-**Last Updated:** 2026-03-10 (Build complete — Shawn, check this when you get home from poker!)
+**Last Updated:** 2026-03-12 (Push notifications complete!)
 
 ---
 
@@ -16,7 +16,31 @@
 
 ## What's Built
 
-### 1. ✅ Auth (All 5 methods)
+### 17. ✅ Push Notifications
+- **Web Push API** — works Chrome, Firefox, Edge, Safari 16+
+- **Service Worker** (`public/sw.js`) — handles push events + notification clicks with action buttons
+- **VAPID keys** generated and documented in `.env.example`
+- **`web-push` npm package** installed
+- **Database migration** (`supabase/migrations/006_push_notifications.sql`) — `push_subscriptions` + `notification_preferences` tables with RLS
+- **`src/lib/notifications.ts`** — `sendNotification()` + `sendBulkNotification()` with preference checking and expired subscription cleanup
+- **API routes:**
+  - `POST /api/notifications/subscribe` — save push subscription
+  - `POST /api/notifications/unsubscribe` — remove subscription (specific or all)
+  - `GET /api/notifications/preferences` — get user preferences
+  - `PUT /api/notifications/preferences` — update preferences (auto-save)
+  - `POST /api/notifications/send` — internal endpoint (protected by `NOTIFICATION_SECRET`)
+- **`NotificationPrompt` component** — dismissible prompt, respects browser permission state, 7-day "not now" cooldown
+  - Shown on dashboard (first visit)
+  - Shown after bracket submission (in share modal)
+- **`/settings/notifications` page** — full preferences UI with toggles for all 5 alert types, test notification button, subscribe/unsubscribe controls
+- **Nav updated** — Bell icon links to notification settings (desktop + mobile)
+- **6 notification types:** game_starting, upset_alert, pick_eliminated, pool_update, smack_mention, bracket_reminder
+
+---
+
+## What's Built (Previously)
+
+### 1. ✅ Auth (All 5 methods) (Previously built)
 - Google OAuth
 - Apple OAuth  
 - Facebook OAuth
