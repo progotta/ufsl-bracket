@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/ui/Logo'
 import type { Profile } from '@/types/database'
-import { LogOut, User, Trophy, Home, Menu, X } from 'lucide-react'
+import { LogOut, User, Trophy, Home, Menu, X, Globe } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
 
@@ -28,6 +28,7 @@ export default function Nav({ profile }: NavProps) {
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: <Home size={16} /> },
     { href: '/pools', label: 'Pools', icon: <Trophy size={16} /> },
+    { href: '/leaderboard', label: 'Rankings', icon: <Globe size={16} /> },
     { href: '/profile', label: 'Profile', icon: <User size={16} /> },
   ]
 
