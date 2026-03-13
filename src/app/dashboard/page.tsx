@@ -23,6 +23,22 @@ import {
 } from '@/lib/secondChance'
 
 export default async function DashboardPage() {
+  try {
+    return await DashboardPageInner()
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    const stack = err instanceof Error ? err.stack?.split('\n').slice(0,5).join('\n') : ''
+    return (
+      <div className="p-8 bg-red-900/20 border border-red-500/30 rounded-2xl m-4">
+        <h2 className="text-red-400 font-bold text-lg mb-2">Dashboard Error (debug)</h2>
+        <pre className="text-red-300 text-xs whitespace-pre-wrap">{msg}</pre>
+        <pre className="text-red-300/60 text-xs whitespace-pre-wrap mt-2">{stack}</pre>
+      </div>
+    )
+  }
+}
+
+async function DashboardPageInner() {
   const supabase = createServerClient()
   const { data: { session } } = await supabase.auth.getSession()
 
