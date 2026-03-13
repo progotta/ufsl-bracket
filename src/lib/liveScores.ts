@@ -26,6 +26,8 @@ export interface LiveGameScore {
 export interface LiveTeamScore {
   /** Internal team ID from our DB (if matched) */
   id?: string
+  /** ESPN team ID (for logo CDN) */
+  espnTeamId?: string
   name: string
   abbreviation: string
   seed?: number
@@ -84,6 +86,7 @@ export function parseEspnScoreboard(json: any): LiveGameScore[] {
         competitors.push({
           name: c.team?.displayName ?? c.team?.name ?? 'TBD',
           abbreviation: c.team?.abbreviation ?? '???',
+          espnTeamId: c.team?.id ? String(c.team.id) : undefined,
           seed: c.curatedRank?.current ?? undefined,
           score: parseInt(c.score ?? '0', 10),
           isWinning: c.winner === true,
