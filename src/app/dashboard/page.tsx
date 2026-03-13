@@ -219,7 +219,7 @@ export default async function DashboardPage() {
           <div className="space-y-6">
             {BRACKET_TYPE_ORDER.filter(type => bracketsByType[type]?.length).map(type => {
               const meta = BRACKET_TYPE_META[type]
-              const typeBrackets = bracketsByType[type]!
+              const typeBrackets = bracketsByType[type] ?? []
               return (
                 <div key={type}>
                   {BRACKET_TYPE_ORDER.filter(t => bracketsByType[t]?.length).length > 1 && (
