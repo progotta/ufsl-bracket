@@ -45,88 +45,67 @@ async function DashboardPageInner() {
 
   if (!session) redirect('/auth')
 
-  const { data: profileRaw } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', session.user.id)
-    .maybeSingle()
+  // Parallel fetch: profile + brackets + games + teams + memberships all at once
+  const [
+    { data: profileRaw },
+    { data: bracketsRaw },
+    { data: gamesRaw },
+    { data: teamsRaw },
+    { data: membershipsRaw },
+  ] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle(),
+    supabase.from('brackets').select('*').eq('user_id', session.user.id).order('updated_at', { ascending: false }),
+    supabase.from('games').select('id, round, status, game_number, team1_id, team2_id, winner_id, scheduled_at'),
+    supabase.from('teams').select('id, name, abbreviation, seed, region, primary_color, espn_id'),
+    supabase.from('pool_members').select('role, pool_id').eq('user_id', session.user.id),
+  ])
 
   const profile = profileRaw as Profile | null
+  const brackets = (bracketsRaw || []) as Bracket[]
+  const games = (gamesRaw || []) as Game[]
+  const teams = (teamsRaw || []) as Team[]
 
-  const { data: membershipsRaw } = await supabase
-    .from('pool_members')
-    .select('role, pool_id')
-    .eq('user_id', session.user.id)
+  // Second parallel fetch: pools + bracketPools + poolMembers (need IDs from above)
+  const poolIds = (membershipsRaw || []).map(m => m.pool_id)
+  const bracketPoolIds = Array.from(new Set(brackets.map(b => b.pool_id)))
+  const allPoolIds = Array.from(new Set([...poolIds, ...bracketPoolIds]))
 
-  // Fetch pools separately for each membership to avoid join type issues
-  const poolIds = membershipsRaw?.map(m => m.pool_id) || []
-  const { data: poolsRaw } = poolIds.length > 0
-    ? await supabase.from('pools').select('*').in('id', poolIds).order('created_at', { ascending: false })
-    : { data: [] }
+  const [
+    { data: poolsRaw },
+    { data: memberRows },
+    { data: allPoolBracketsRaw },
+  ] = await Promise.all([
+    allPoolIds.length > 0
+      ? supabase.from('pools').select('*').in('id', allPoolIds).order('created_at', { ascending: false })
+      : Promise.resolve({ data: [] }),
+    allPoolIds.length > 0
+      ? supabase.from('pool_members').select('pool_id').in('pool_id', allPoolIds)
+      : Promise.resolve({ data: [] }),
+    bracketPoolIds.length > 0
+      ? supabase.from('brackets').select('*').in('pool_id', bracketPoolIds).not('picks', 'is', null)
+      : Promise.resolve({ data: [] }),
+  ])
 
   const pools = (poolsRaw || []) as Pool[]
-
   const poolMap = new Map(pools.map(p => [p.id, p]))
+  const bracketPoolMap = new Map(pools.map(p => [p.id, p.name]))
   const membershipsWithPools = (membershipsRaw || []).map(m => ({
     role: m.role,
     pool: poolMap.get(m.pool_id),
   })).filter(m => m.pool)
 
-  const { data: bracketsRaw } = await supabase
-    .from('brackets')
-    .select('*')
-    .eq('user_id', session.user.id)
-    .order('updated_at', { ascending: false })
-
-  const brackets = (bracketsRaw || []) as Bracket[]
-
-  // Fetch pool names for brackets
-  const bracketPoolIds = Array.from(new Set(brackets.map(b => b.pool_id)))
-  const { data: bracketPoolsRaw } = bracketPoolIds.length > 0
-    ? await supabase.from('pools').select('id, name').in('id', bracketPoolIds)
-    : { data: [] }
-  const bracketPoolMap = new Map((bracketPoolsRaw || []).map((p: any) => [p.id, p.name]))
-
-  // Fetch games to determine second chance availability and bracket bust status
-  const { data: gamesRaw } = await supabase
-    .from('games')
-    .select('id, round, status, team1_id, team2_id, winner_id, scheduled_at')
-  const games = (gamesRaw || []) as Game[]
-
-  // Fetch teams for intelligence display (abbreviations, etc.)
-  const { data: teamsRaw } = await supabase
-    .from('teams')
-    .select('id, name, abbreviation, seed, region, primary_color, espn_id')
-  const teams = (teamsRaw || []) as Team[]
-
-  // Fetch pool member counts for each pool the user has brackets in
-  const allBracketPoolIds = Array.from(new Set(brackets.map(b => b.pool_id)))
   const poolMemberCounts = new Map<string, number>()
-  if (allBracketPoolIds.length > 0) {
-    // Single query — fetch all pool_members rows for relevant pools, count client-side
-    const { data: memberRows } = await supabase
-      .from('pool_members')
-      .select('pool_id')
-      .in('pool_id', allBracketPoolIds)
-    for (const row of memberRows || []) {
-      poolMemberCounts.set(row.pool_id, (poolMemberCounts.get(row.pool_id) ?? 0) + 1)
-    }
+  for (const row of memberRows || []) {
+    poolMemberCounts.set(row.pool_id, (poolMemberCounts.get(row.pool_id) ?? 0) + 1)
   }
 
-  // Fetch all brackets in each pool (for rank + popularity calculations)
   const allPoolBrackets = new Map<string, Bracket[]>()
-  if (allBracketPoolIds.length > 0) {
-    const { data: poolBracketsRaw } = await supabase
-      .from('brackets')
-      .select('*')
-      .in('pool_id', allBracketPoolIds)
-      .not('picks', 'is', null)  // any bracket with picks counts toward pool standings
-    const poolBracketsAll = (poolBracketsRaw || []) as Bracket[]
-    for (const b of poolBracketsAll) {
-      if (!allPoolBrackets.has(b.pool_id)) allPoolBrackets.set(b.pool_id, [])
-      allPoolBrackets.get(b.pool_id)!.push(b)
-    }
+  for (const b of (allPoolBracketsRaw || []) as Bracket[]) {
+    if (!allPoolBrackets.has(b.pool_id)) allPoolBrackets.set(b.pool_id, [])
+    allPoolBrackets.get(b.pool_id)!.push(b)
   }
+
+
 
   // Compute intelligence for all user brackets
   const bracketIntelligence = computeAllBracketIntelligence(
@@ -295,8 +274,8 @@ async function DashboardPageInner() {
                               </div>
                             </div>
 
-                            {/* Col 2: Round Breakdown — centered, no wrap */}
-                            <div className="min-w-0 overflow-hidden [&>div]:mt-0 [&>div>div]:flex-nowrap [&>div>div]:justify-center [&>div>div]:overflow-hidden">
+                            {/* Col 2: Round Breakdown — centered */}
+                            <div className="[&>div]:mt-0 [&>div>div]:justify-center">
                               <BracketRoundBreakdown picks={picks} games={games} />
                             </div>
 
