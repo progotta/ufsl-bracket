@@ -870,6 +870,7 @@ function GameSlot({
         disabled={isSubmitted || !game.team1}
         isTop
         gameId={game.id}
+        mirrored={side === 'right'}
       />
       <div className="h-px bg-brand-border" />
       <TeamSlot
@@ -881,6 +882,7 @@ function GameSlot({
         disabled={isSubmitted || !game.team2}
         isTop={false}
         gameId={game.id}
+        mirrored={side === 'right'}
       />
       {/* Live score inline display */}
       {hasLiveScore && (
@@ -923,6 +925,7 @@ function TeamSlot({
   disabled,
   isTop,
   gameId,
+  mirrored = false,
 }: {
   team?: BracketTeam
   isPicked: boolean
@@ -932,6 +935,7 @@ function TeamSlot({
   disabled: boolean
   isTop: boolean
   gameId?: string
+  mirrored?: boolean
 }) {
   const { gameResults, eliminatedTeams } = useContext(LiveScoreContext)
 
@@ -954,6 +958,7 @@ function TeamSlot({
     <div
       className={clsx(
         'group team-slot w-full flex items-center gap-2 px-2 py-2 min-h-[36px] transition-all',
+        mirrored && 'flex-row-reverse',
         isCorrect
           ? 'bg-green-500/15 border-l-2 border-green-500/60'
           : isWrong
@@ -1027,7 +1032,8 @@ function TeamSlot({
       {/* Inline score — winner bold, loser muted */}
       {result && (
         <span className={clsx(
-          'text-xs font-mono flex-shrink-0 ml-auto',
+          'text-xs font-mono flex-shrink-0',
+          mirrored ? 'mr-auto' : 'ml-auto',
           result.winnerId === team.id ? 'text-white font-bold' : 'text-brand-muted'
         )}>
           {isTop ? result.team1Score : result.team2Score}
