@@ -84,7 +84,6 @@ export default async function DashboardPage() {
   })
 
   const displayName = profile?.display_name || session.user.email?.split('@')[0] || 'Champion'
-  const totalScore = brackets.reduce((sum, b) => sum + (b.score || 0), 0)
 
   // Collect all team IDs the user has picked across all brackets (for live score color coding)
   const userPickIds = Array.from(new Set(
@@ -147,21 +146,17 @@ export default async function DashboardPage() {
 
       {/* Quick stats */}
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
+        <Link href="/pools" className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1 cursor-pointer hover:bg-white/10 transition-colors">
           <Users size={14} className="text-brand-muted" />
           <span className="font-bold">{membershipsWithPools.length}</span>
           <span className="text-brand-muted">Pools</span>
-        </span>
-        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
+        </Link>
+        <Link href="#brackets" className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1 cursor-pointer hover:bg-white/10 transition-colors">
           <Trophy size={14} className="text-brand-muted" />
           <span className="font-bold">{brackets.length}</span>
           <span className="text-brand-muted">Brackets</span>
-        </span>
-        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
-          <Trophy size={14} className="text-brand-gold" />
-          <span className="font-bold">{totalScore}</span>
-          <span className="text-brand-muted">pts</span>
-        </span>
+
+        </Link>
         <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
           <Calendar size={14} className="text-brand-muted" />
           <span className="font-bold">Mar 19</span>
@@ -275,7 +270,7 @@ export default async function DashboardPage() {
 
       {/* Brackets section — grouped by type */}
       {brackets.length > 0 && (
-        <section>
+        <section id="brackets">
           <h2 className="text-xl font-bold mb-4">Your Brackets</h2>
           <div className="space-y-6">
             {BRACKET_TYPE_ORDER.filter(type => bracketsByType[type]?.length).map(type => {
