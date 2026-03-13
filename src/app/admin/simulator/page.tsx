@@ -96,17 +96,13 @@ function SimulatorContent() {
       const res = await fetch('/api/admin/simulator')
       const data = await res.json()
       if (!res.ok) {
-        showToast(`API error ${res.status}: ${data.error || 'unknown'}`, 'error')
+        showToast(`Failed to load: ${data.error || res.status}`, 'error')
         return
       }
       setConfig(data.config)
       setGames(data.games || [])
       if (data.config?.time_multiplier) {
         setTimeMultiplierInput(String(data.config.time_multiplier))
-      }
-      if (!data.games?.length) {
-        const dbg = data._debug
-        showToast(`No games: url=...${dbg?.supabaseUrl} raw=${JSON.stringify(dbg?.rawDebug).slice(0,80)}`, 'error')
       }
     } catch (e) {
       showToast(`Failed to load: ${e instanceof Error ? e.message : String(e)}`, 'error')
