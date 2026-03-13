@@ -601,7 +601,7 @@ function RegionColumn({
   return (
     <div className={`flex gap-1 ${side === 'right' ? 'flex-row-reverse' : ''}`}>
       {rounds.map(round => (
-        <div key={round} className={clsx('flex flex-col justify-around gap-2', showInsights && round === 1 ? 'min-w-[180px]' : 'min-w-[160px]')}>
+        <div key={round} className={clsx('flex flex-col', showInsights && round === 1 ? 'min-w-[180px]' : 'min-w-[160px]')}>
           <div className="text-center text-xs font-bold text-brand-muted uppercase tracking-wide mb-1 px-1">
             {round === 1 ? region : ROUND_NAMES[round]}
           </div>
@@ -648,7 +648,7 @@ function RoundGames({
     .sort((a, b) => a.gameNumber - b.gameNumber)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col flex-1 justify-around">
       {games.map(game => (
         <GameSlot
           key={game.id}
