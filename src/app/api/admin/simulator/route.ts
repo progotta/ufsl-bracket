@@ -29,6 +29,12 @@ export async function GET() {
   return NextResponse.json({
     config: configResult.data,
     games,
+    _debug: {
+      gamesCount: gamesResult.data?.length ?? null,
+      gamesError: gamesResult.error?.message ?? null,
+      teamsCount: teamsResult.data?.length ?? null,
+      teamsError: teamsResult.error?.message ?? null,
+    },
   })
 }
 

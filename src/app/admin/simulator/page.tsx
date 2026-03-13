@@ -105,7 +105,8 @@ function SimulatorContent() {
         setTimeMultiplierInput(String(data.config.time_multiplier))
       }
       if (!data.games?.length) {
-        showToast(`No games returned (config: ${data.config ? 'ok' : 'missing'})`, 'error')
+        const dbg = data._debug
+        showToast(`No games: err=${dbg?.gamesError ?? 'none'} count=${dbg?.gamesCount ?? '?'} teams=${dbg?.teamsCount ?? '?'} err=${dbg?.teamsError ?? 'none'}`, 'error')
       }
     } catch (e) {
       showToast(`Failed to load: ${e instanceof Error ? e.message : String(e)}`, 'error')
