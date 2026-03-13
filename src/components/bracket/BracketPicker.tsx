@@ -34,6 +34,7 @@ const LiveScoreContext = createContext<{
 }>({ liveScoreMap: new Map(), picks: {} })
 import clsx from 'clsx'
 import TeamCard from '@/components/TeamCard'
+import TeamLogo from '@/components/ui/TeamLogo'
 import MatchupInsights from '@/components/predictions/MatchupInsights'
 import BracketImportModal from '@/components/bracket/BracketImportModal'
 import ShareModal from '@/components/ShareModal'
@@ -942,6 +943,9 @@ function TeamSlot({
       >
         {team.seed}
       </button>
+
+      {/* Team logo */}
+      <TeamLogo espnId={team.espnId} teamName={team.name} size="sm" />
 
       {/* Team name — click to pick */}
       <button
