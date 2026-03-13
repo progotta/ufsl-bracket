@@ -136,16 +136,23 @@ export default async function BracketPage({ params }: Props) {
     if (!membership) redirect('/dashboard')
   }
 
-  // Load completed game results for pick coloring
+  // Load all games: need region/round/game_number for UUID→slug mapping, results for pick coloring
   const { data: completedGames } = await supabase
     .from('games')
-    .select('id, winner_id, team1_id, team2_id, team1_score, team2_score, status')
-    .eq('status', 'completed')
+    .select('id, region, round, game_number, winner_id, team1_id, team2_id, team1_score, team2_score, status')
+
+  // Build UUID → slug mapping so BracketPicker (which uses slugs like "east-r1-g1") can match DB data
+  const gameIdMap = new Map<string, string>() // UUID → slug
+  for (const g of completedGames || []) {
+    const slug = `${(g.region || 'east').toLowerCase()}-r${g.round}-g${g.game_number}`
+    gameIdMap.set(g.id, slug)
+  }
 
   const gameResults: Record<string, { winnerId: string; team1Score?: number; team2Score?: number }> = {}
   for (const g of completedGames || []) {
     if (g.winner_id) {
-      gameResults[g.id] = { winnerId: g.winner_id, team1Score: g.team1_score ?? undefined, team2Score: g.team2_score ?? undefined }
+      const slug = gameIdMap.get(g.id) || g.id
+      gameResults[slug] = { winnerId: g.winner_id, team1Score: g.team1_score ?? undefined, team2Score: g.team2_score ?? undefined }
     }
   }
 
@@ -161,8 +168,22 @@ export default async function BracketPage({ params }: Props) {
   const userName = profile?.display_name || 'Anonymous'
   const poolStatus = pool?.status || 'open'
 
+  // Translate picks from UUID game keys → slug keys (BracketPicker uses slugs)
+  // Also build a full UUID→slug map covering all games
+  const allGameIdMap = new Map<string, string>()
+  for (const g of completedGames || []) {
+    const slug = `${(g.region || 'east').toLowerCase()}-r${g.round}-g${g.game_number}`
+    allGameIdMap.set(g.id, slug)
+  }
+  const rawPicks = (bracket.picks as Record<string, string>) || {}
+  const picks: Record<string, string> = {}
+  for (const [key, val] of Object.entries(rawPicks)) {
+    const slug = allGameIdMap.get(key)
+    picks[slug ?? key] = val // use slug if found, else keep as-is (handles already-slug picks)
+  }
+
   // Determine champion pick from picks (game 63 = championship in full bracket)
-  const picks = (bracket.picks as Record<string, string>) || {}
+
   const championTeamId = picks['game-63'] || picks['championship'] || null
   const championTeam = championTeamId
     ? teams.find(t => t.id === championTeamId)
