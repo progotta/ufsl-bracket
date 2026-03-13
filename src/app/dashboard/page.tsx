@@ -377,16 +377,14 @@ async function DashboardPageInner() {
                       <PoolStatusBadge status={pool.status} />
                     </div>
                   </div>
-                  {lb && (
-                    <PoolLeaderboardPreview
-                      entries={lb.entries}
-                      currentUserId={session.user.id}
-                      currentUserRank={lb.currentUserRank}
-                      currentUserScore={lb.currentUserScore}
-                      totalMembers={lb.totalMembers}
-                      tournamentStarted={tournamentStarted}
-                    />
-                  )}
+                  <PoolLeaderboardPreview
+                    entries={lb?.entries ?? []}
+                    currentUserId={session.user.id}
+                    currentUserRank={lb?.currentUserRank}
+                    currentUserScore={lb?.currentUserScore}
+                    totalMembers={lb?.totalMembers ?? (poolMemberCounts.get(pool.id) ?? 0)}
+                    tournamentStarted={tournamentStarted}
+                  />
                   {/* Inline invite link for non-locked pools */}
                   {pool.status !== 'completed' && pool.status !== 'locked' && (
                     <div className="mt-2 pt-2 border-t border-brand-border/50 flex items-center justify-between">
@@ -459,16 +457,17 @@ function SecondChanceBanner({ openTypes }: { openTypes: BracketType[] }) {
 
 
 function PoolStatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    open: 'bg-green-500/10 text-green-400 border-green-500/20',
-    active: 'bg-brand-orange/10 text-brand-orange border-brand-orange/20',
-    locked: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-    completed: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    draft: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  const config: Record<string, { label: string; style: string }> = {
+    open:      { label: 'Open',       style: 'bg-green-500/10 text-green-400 border-green-500/20' },
+    active:    { label: 'Live 🔴',    style: 'bg-brand-orange/10 text-brand-orange border-brand-orange/20' },
+    locked:    { label: 'Locked',     style: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+    completed: { label: 'Final',      style: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+    draft:     { label: 'Draft',      style: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   }
+  const { label, style } = config[status] || config.open
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${styles[status] || styles.open}`}>
-      {status}
+    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${style}`}>
+      {label}
     </span>
   )
 }
