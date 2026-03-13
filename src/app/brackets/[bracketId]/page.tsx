@@ -136,6 +136,19 @@ export default async function BracketPage({ params }: Props) {
     if (!membership) redirect('/dashboard')
   }
 
+  // Load completed game results for pick coloring
+  const { data: completedGames } = await supabase
+    .from('games')
+    .select('id, winner_id, team1_id, team2_id, team1_score, team2_score, status')
+    .eq('status', 'completed')
+
+  const gameResults: Record<string, { winnerId: string; team1Score?: number; team2Score?: number }> = {}
+  for (const g of completedGames || []) {
+    if (g.winner_id) {
+      gameResults[g.id] = { winnerId: g.winner_id, team1Score: g.team1_score ?? undefined, team2Score: g.team2_score ?? undefined }
+    }
+  }
+
   // Try to load teams from DB; fall back to mock data
   const { data: dbTeams } = await supabase.from('teams').select('*').eq('is_active', true)
   const teams: BracketTeam[] = dbTeams && dbTeams.length >= 64
@@ -198,6 +211,7 @@ export default async function BracketPage({ params }: Props) {
           isSubmitted={bracket.is_submitted || !isOwner}
           teams={teams}
           userName={userName}
+          gameResults={gameResults}
           poolName={pool?.name || 'UFSL Pool'}
           score={bracket.score || 0}
         />
