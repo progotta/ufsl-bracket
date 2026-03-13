@@ -34,16 +34,9 @@ export default function BracketRoundBreakdown({ picks, games, isLeading = false 
   return (
     <div className="mt-2 space-y-1.5">
       {/* Round breakdown row */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+      <div className="flex flex-nowrap items-center gap-x-2 text-xs">
         {breakdown.map((rd) => {
-          if (!rd.started) {
-            return (
-              <span key={rd.round} className="text-gray-600">
-                <span className="font-medium">{rd.label}:</span>{' '}
-                <span>—</span>
-              </span>
-            )
-          }
+          if (!rd.started) return null
 
           const ratio = rd.total > 0 ? rd.correct / rd.total : 0
           const colorClass =

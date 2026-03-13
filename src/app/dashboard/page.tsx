@@ -103,13 +103,13 @@ async function DashboardPageInner() {
   const allBracketPoolIds = Array.from(new Set(brackets.map(b => b.pool_id)))
   const poolMemberCounts = new Map<string, number>()
   if (allBracketPoolIds.length > 0) {
-    // Get counts per pool
-    for (const pid of allBracketPoolIds) {
-      const { count } = await supabase
-        .from('pool_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('pool_id', pid)
-      poolMemberCounts.set(pid, count || 0)
+    // Single query — fetch all pool_members rows for relevant pools, count client-side
+    const { data: memberRows } = await supabase
+      .from('pool_members')
+      .select('pool_id')
+      .in('pool_id', allBracketPoolIds)
+    for (const row of memberRows || []) {
+      poolMemberCounts.set(row.pool_id, (poolMemberCounts.get(row.pool_id) ?? 0) + 1)
     }
   }
 
