@@ -279,7 +279,7 @@ function SimulatorContent() {
                 <Calendar size={14} className="text-amber-400 flex-shrink-0" />
                 <span className="text-sm font-mono font-semibold">
                   {config?.current_simulated_date
-                    ? new Date(config.current_simulated_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    ? new Date(config.current_simulated_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
                     : '—'}
                 </span>
               </div>

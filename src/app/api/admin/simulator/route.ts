@@ -11,19 +11,24 @@ export async function GET() {
   const supabase = createRouteClient()
   const db = supabase as any
 
-  const [configResult, gamesResult] = await Promise.all([
+  const [configResult, gamesResult, teamsResult] = await Promise.all([
     db.from('simulation_config').select('*').limit(1).single(),
-    db.from('games').select(`
-      *,
-      team1:team1_id(id, name, abbreviation, seed, region),
-      team2:team2_id(id, name, abbreviation, seed, region),
-      winner:winner_id(id, name, abbreviation, seed)
-    `).order('round').order('game_number'),
+    db.from('games').select('*').order('round').order('game_number'),
+    db.from('teams').select('id, name, abbreviation, seed, region'),
   ])
+
+  // Join team data client-side to avoid Supabase FK join issues with null team IDs
+  const teamMap = new Map((teamsResult.data || []).map((t: { id: string }) => [t.id, t]))
+  const games = (gamesResult.data || []).map((g: { team1_id?: string; team2_id?: string; winner_id?: string }) => ({
+    ...g,
+    team1: g.team1_id ? teamMap.get(g.team1_id) ?? null : null,
+    team2: g.team2_id ? teamMap.get(g.team2_id) ?? null : null,
+    winner: g.winner_id ? teamMap.get(g.winner_id) ?? null : null,
+  }))
 
   return NextResponse.json({
     config: configResult.data,
-    games: gamesResult.data || [],
+    games,
   })
 }
 
