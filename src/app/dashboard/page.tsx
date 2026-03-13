@@ -1,8 +1,7 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trophy, ArrowRight, RefreshCw, Zap, Share2 } from 'lucide-react'
-import PoolLeaderboardPreview from '@/components/pools/PoolLeaderboardPreview'
+import { Plus, Trophy, Users, ArrowRight, Calendar, RefreshCw, Zap, Share2 } from 'lucide-react'
 import type { Profile, Bracket, Pool, Game, Team } from '@/types/database'
 import NewsFeed from '@/components/NewsFeed'
 import AllSmack from '@/components/smack/AllSmack'
@@ -23,22 +22,6 @@ import {
 } from '@/lib/secondChance'
 
 export default async function DashboardPage() {
-  try {
-    return await DashboardPageInner()
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
-    const stack = err instanceof Error ? err.stack?.split('\n').slice(0,5).join('\n') : ''
-    return (
-      <div className="p-8 bg-red-900/20 border border-red-500/30 rounded-2xl m-4">
-        <h2 className="text-red-400 font-bold text-lg mb-2">Dashboard Error (debug)</h2>
-        <pre className="text-red-300 text-xs whitespace-pre-wrap">{msg}</pre>
-        <pre className="text-red-300/60 text-xs whitespace-pre-wrap mt-2">{stack}</pre>
-      </div>
-    )
-  }
-}
-
-async function DashboardPageInner() {
   const supabase = createServerClient()
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -161,36 +144,6 @@ async function DashboardPageInner() {
     bracketsByType[type]!.push(bracket)
   }
 
-  // Tournament started = any game is completed or in_progress
-  const tournamentStarted = games.some(g => g.status === 'completed' || g.status === 'in_progress')
-
-  // Build pool leaderboard previews from allPoolBrackets
-  // Map poolId -> { entries: top3, currentUserRank, currentUserScore }
-  type PoolLbEntry = { userId: string; displayName: string; score: number; rank: number }
-  const poolLeaderboards = new Map<string, {
-    entries: PoolLbEntry[]
-    currentUserRank?: number
-    currentUserScore?: number
-    totalMembers: number
-  }>()
-  for (const [poolId, poolBrackets] of Array.from(allPoolBrackets.entries())) {
-    const sorted = [...poolBrackets].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    const entries: PoolLbEntry[] = sorted.slice(0, 3).map((b, i) => ({
-      userId: b.user_id,
-      displayName: b.name?.replace(/\'s bracket$/i, '').replace(/\'s 2025$/i, '') || 'Player',
-      score: b.score ?? 0,
-      rank: i + 1,
-    }))
-    const userRank = sorted.findIndex(b => b.user_id === session.user.id)
-    const userBracket = sorted[userRank]
-    poolLeaderboards.set(poolId, {
-      entries,
-      currentUserRank: userRank >= 0 ? userRank + 1 : undefined,
-      currentUserScore: userBracket?.score ?? 0,
-      totalMembers: poolMemberCounts.get(poolId) ?? sorted.length,
-    })
-  }
-
   return (
     <div className="space-y-8">
       {/* Welcome header */}
@@ -209,121 +162,105 @@ async function DashboardPageInner() {
         </Link>
       </div>
 
-      {/* ── PRIORITY 1: Brackets ── */}
-      <section id="brackets">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Your Brackets</h2>
-          {brackets.length > 0 && (
-            <Link href="/pools" className="text-brand-orange text-sm hover:underline flex items-center gap-1">
-              All pools <ArrowRight size={14} />
-            </Link>
-          )}
-        </div>
+      {/* Push Notification Prompt */}
+      <NotificationPrompt trigger="first_visit" className="max-w-xl" />
 
-        {brackets.length === 0 ? (
-          <EmptyState
-            title="No brackets yet"
-            desc="Join or create a pool to start making your picks."
-            action={
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/pools/new" className="btn-primary">Create a Pool</Link>
-                <Link href="/pools" className="btn-secondary">Browse Pools</Link>
+      {/* Second Chance Banner — shown when user's bracket is busted and 2nd chance is available */}
+      {isFullBracketBusted && hasSecondChanceOpen && (
+        <SecondChanceBanner openTypes={openBracketTypes.filter(t => t !== 'full')} />
+      )}
+
+      {/* Second Chance Available banner — shown when new bracket types open even if not busted */}
+      {!isFullBracketBusted && hasSecondChanceOpen && (
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-5">
+          <div className="flex items-center gap-4">
+            <RefreshCw size={24} className="text-blue-400 shrink-0" />
+            <div className="flex-1">
+              <div className="font-bold text-blue-400">2nd Chance Brackets Are Open!</div>
+              <div className="text-sm text-brand-muted mt-0.5">
+                New bracket types are available:{' '}
+                {openBracketTypes.filter(t => t !== 'full').map(t => BRACKET_TYPE_META[t].shortLabel).join(', ')}
               </div>
-            }
-          />
-        ) : (
-          <div className="space-y-6">
-            {BRACKET_TYPE_ORDER.filter(type => bracketsByType[type]?.length).map(type => {
-              const meta = BRACKET_TYPE_META[type]
-              const typeBrackets = bracketsByType[type] ?? []
-              return (
-                <div key={type}>
-                  {BRACKET_TYPE_ORDER.filter(t => bracketsByType[t]?.length).length > 1 && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-lg">{meta.emoji}</span>
-                      <span className={`font-bold text-sm ${meta.accentText}`}>{meta.label}</span>
-                      <span className="text-xs text-brand-muted">({typeBrackets.length})</span>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    {typeBrackets.map((bracket) => {
-                      const picks = (bracket.picks || {}) as Record<string, string>
-                      const intel = bracketIntelligence.get(bracket.id)
-                      return (
-                        <Link
-                          key={bracket.id}
-                          href={`/brackets/${bracket.id}`}
-                          className={`block bg-brand-surface border rounded-xl p-4 hover:border-brand-orange/50 transition-all group ${
-                            type !== 'full' ? meta.accentBorder : 'border-brand-border'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="text-lg shrink-0">{meta.emoji}</div>
-                              <div className="min-w-0">
-                                <div className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.name}</div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
-                                  {intel?.currentRank && (
-                                    <span className="text-xs text-brand-muted">· #{intel.currentRank} of {intel.poolSize}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <div className="text-right">
-                                <div className="text-base font-black text-brand-orange leading-tight">
-                                  {bracket.score ?? 0}
-                                  {intel?.maxPossibleScore != null && (
-                                    <span className="text-brand-muted font-normal text-xs"> / {intel.maxPossibleScore}</span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-brand-muted">pts</div>
-                              </div>
-                              <ArrowRight size={14} className="text-brand-muted group-hover:text-white transition-colors" />
-                            </div>
-                          </div>
-                          <BracketRoundBreakdown picks={picks} games={games} />
-                          {intel && <BracketCardIntelligence intel={intel} />}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
+            </div>
+            <Link href="/second-chance" className="btn-secondary text-sm whitespace-nowrap flex items-center gap-1.5">
+              <RefreshCw size={13} />
+              Learn More
+            </Link>
           </div>
-        )}
-      </section>
+        </div>
+      )}
 
-      {/* ── PRIORITY 2: Live Games (only when something is live) ── */}
+      {/* Quick stats */}
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <Link href="/pools" className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1 cursor-pointer hover:bg-white/10 transition-colors">
+          <Users size={14} className="text-brand-muted" />
+          <span className="font-bold">{membershipsWithPools.length}</span>
+          <span className="text-brand-muted">Pools</span>
+        </Link>
+        <Link href="#brackets" className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1 cursor-pointer hover:bg-white/10 transition-colors">
+          <Trophy size={14} className="text-brand-muted" />
+          <span className="font-bold">{brackets.length}</span>
+          <span className="text-brand-muted">Brackets</span>
+
+        </Link>
+        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
+          <Calendar size={14} className="text-brand-muted" />
+          <span className="font-bold">Mar 19</span>
+          <span className="text-brand-muted">Tip-off</span>
+        </span>
+      </div>
+
+      {/* Live Games Widget */}
       <LiveGames userPickIds={userPickIds} />
 
-      {/* ── PRIORITY 3: Single contextual banner ── */}
-      {isFullBracketBusted && hasSecondChanceOpen ? (
-        <SecondChanceBanner openTypes={openBracketTypes.filter(t => t !== 'full')} />
-      ) : !tournamentStarted ? (
-        /* Slim pre-tournament countdown */
-        <div className="flex items-center justify-between gap-4 bg-brand-orange/5 border border-brand-orange/20 rounded-xl px-4 py-3">
-          <span className="text-sm">🏀 <span className="font-semibold">Selection Sunday Mar 16</span> <span className="text-brand-muted">· Tipoff Mar 19</span></span>
-          <Link href="/pools/new" className="btn-primary text-xs whitespace-nowrap py-1.5 px-3">
+      {/* Tournament countdown */}
+      <div className="bg-gradient-to-r from-brand-orange/10 to-brand-gold/10 border border-brand-orange/20 rounded-2xl p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="text-4xl">🏀</div>
+          <div className="flex-1">
+            <h2 className="text-lg font-bold">Selection Sunday is March 16!</h2>
+            <p className="text-brand-muted text-sm mt-1">
+              The bracket is revealed Sunday evening. Submit your picks before tipoff on March 19.
+            </p>
+          </div>
+          <Link href="/pools/new" className="btn-primary text-sm whitespace-nowrap">
             Start a Pool →
           </Link>
         </div>
-      ) : hasSecondChanceOpen ? (
-        <div className="flex items-center gap-4 bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3">
-          <RefreshCw size={16} className="text-blue-400 shrink-0" />
-          <div className="flex-1 text-sm">
-            <span className="font-bold text-blue-400">2nd Chance Brackets open: </span>
-            <span className="text-brand-muted">{openBracketTypes.filter(t => t !== 'full').map(t => BRACKET_TYPE_META[t].shortLabel).join(', ')}</span>
-          </div>
-          <Link href="/second-chance" className="btn-secondary text-xs whitespace-nowrap py-1.5 px-3 flex items-center gap-1">
-            <RefreshCw size={12} /> Learn More
-          </Link>
-        </div>
-      ) : null}
+      </div>
 
-      {/* ── PRIORITY 4: Pools with leaderboard preview ── */}
+      {/* Invite nudge — show if any pool has fewer than 5 members */}
+      {(() => {
+        const smallPools = membershipsWithPools.filter(m => {
+          const pool = m.pool!
+          return pool.status !== 'completed' && pool.status !== 'locked'
+        })
+        if (smallPools.length === 0) return null
+        const nudgePool = smallPools[0].pool!
+        const nudgeInviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${nudgePool.invite_code}`
+        return (
+          <div className="bg-gradient-to-r from-blue-500/10 to-brand-orange/10 border border-blue-500/20 rounded-2xl p-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="text-3xl">👥</div>
+              <div className="flex-1">
+                <div className="font-bold text-blue-400">Invite friends to {nudgePool.name}!</div>
+                <p className="text-brand-muted text-sm mt-0.5">
+                  The more the merrier — share your invite link and fill up the pool.
+                </p>
+              </div>
+              <a
+                href={`/pools/${nudgePool.id}`}
+                className="btn-secondary text-sm whitespace-nowrap flex items-center gap-1.5 self-start sm:self-auto"
+              >
+                <Share2 size={14} />
+                Invite Friends
+              </a>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Pools section */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Your Pools</h2>
@@ -339,56 +276,37 @@ async function DashboardPageInner() {
             action={<Link href="/pools/new" className="btn-primary">Create Your First Pool</Link>}
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {membershipsWithPools.map((m) => {
               const pool = m.pool!
               const poolType = (pool.bracket_type || 'full') as BracketType
               const poolMeta = BRACKET_TYPE_META[poolType]
-              const lb = poolLeaderboards.get(pool.id)
-              const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${pool.invite_code}`
               return (
                 <Link
                   key={pool.id}
                   href={`/pools/${pool.id}`}
-                  className="bg-brand-surface border border-brand-border rounded-xl p-3 hover:border-brand-orange/50 transition-all group flex flex-col"
+                  className="bg-brand-surface border border-brand-border rounded-xl p-5 hover:border-brand-orange/50 transition-all group"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Trophy size={14} className="text-brand-orange shrink-0" />
-                      <h3 className="font-bold text-sm group-hover:text-brand-orange transition-colors truncate">{pool.name}</h3>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="bg-brand-orange/10 rounded-lg p-2">
+                      <Trophy size={20} className="text-brand-orange" />
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-2">
                       {poolType !== 'full' && (
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${poolMeta.accentBg} ${poolMeta.accentText} border ${poolMeta.accentBorder}`}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${poolMeta.accentBg} ${poolMeta.accentText} border ${poolMeta.accentBorder}`}>
                           {poolMeta.badge}
                         </span>
                       )}
                       <PoolStatusBadge status={pool.status} />
                     </div>
                   </div>
-                  {lb && (
-                    <PoolLeaderboardPreview
-                      entries={lb.entries}
-                      currentUserId={session.user.id}
-                      currentUserRank={lb.currentUserRank}
-                      currentUserScore={lb.currentUserScore}
-                      totalMembers={lb.totalMembers}
-                      tournamentStarted={tournamentStarted}
-                    />
+                  <h3 className="font-bold text-base group-hover:text-brand-orange transition-colors">{pool.name}</h3>
+                  {pool.description && (
+                    <p className="text-brand-muted text-xs mt-1 line-clamp-2">{pool.description}</p>
                   )}
-                  {/* Inline invite link for non-locked pools */}
-                  {pool.status !== 'completed' && pool.status !== 'locked' && (
-                    <div className="mt-2 pt-2 border-t border-brand-border/50 flex items-center justify-between">
-                      <span className="text-[10px] text-brand-muted">{m.role === 'commissioner' ? '👑 Commissioner' : '👤 Member'}</span>
-                      <a
-                        href={inviteUrl}
-                        onClick={e => e.stopPropagation()}
-                        className="text-[10px] text-brand-orange hover:underline flex items-center gap-1"
-                      >
-                        <Share2 size={10} /> Invite
-                      </a>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3 mt-3">
+                    <span className="text-xs text-brand-muted">{m.role === 'commissioner' ? '👑 Commissioner' : '👤 Member'}</span>
+                  </div>
                 </Link>
               )
             })}
@@ -396,10 +314,70 @@ async function DashboardPageInner() {
         )}
       </section>
 
-      {/* ── BOTTOM: Social / ambient content ── */}
+      {/* Brackets section — grouped by type */}
+      {brackets.length > 0 && (
+        <section id="brackets">
+          <h2 className="text-xl font-bold mb-4">Your Brackets</h2>
+          <div className="space-y-6">
+            {BRACKET_TYPE_ORDER.filter(type => bracketsByType[type]?.length).map(type => {
+              const meta = BRACKET_TYPE_META[type]
+              const typeBrackets = bracketsByType[type]!
+              return (
+                <div key={type}>
+                  {/* Type header */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">{meta.emoji}</span>
+                    <span className={`font-bold text-sm ${meta.accentText}`}>{meta.label}</span>
+                    <span className="text-xs text-brand-muted">({typeBrackets.length} bracket{typeBrackets.length !== 1 ? 's' : ''})</span>
+                  </div>
+                  <div className="space-y-2">
+                    {typeBrackets.map((bracket) => {
+                      const picks = (bracket.picks || {}) as Record<string, string>
+                      const intel = bracketIntelligence.get(bracket.id)
+                      return (
+                        <Link
+                          key={bracket.id}
+                          href={`/brackets/${bracket.id}`}
+                          className={`block bg-brand-surface border rounded-xl p-4 hover:border-brand-orange/50 transition-all group ${
+                            type !== 'full' ? meta.accentBorder : 'border-brand-border'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="text-2xl">{meta.emoji}</div>
+                              <div>
+                                <div className="font-semibold group-hover:text-brand-orange transition-colors">{bracket.name}</div>
+                                <div className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <div className="text-xl font-black text-brand-orange">{bracket.score}</div>
+                                <div className="text-xs text-brand-muted">points</div>
+                              </div>
+                              <ArrowRight size={16} className="text-brand-muted group-hover:text-white transition-colors" />
+                            </div>
+                          </div>
+                          <BracketRoundBreakdown picks={picks} games={games} />
+                          {intel && <BracketCardIntelligence intel={intel} />}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* XP & Achievements */}
       <AchievementsPanel userId={session.user.id} />
+
+      {/* Recent Achievements */}
       <RecentAchievements userId={session.user.id} />
 
+      {/* All Smack */}
       {poolIds.length > 0 && (
         <AllSmack
           poolIds={poolIds}
@@ -408,12 +386,10 @@ async function DashboardPageInner() {
         />
       )}
 
+      {/* News Feed */}
       <section>
         <NewsFeed />
       </section>
-
-      {/* Notification prompt — low priority, bottom of page */}
-      <NotificationPrompt trigger="first_visit" className="max-w-xl" />
     </div>
   )
 }
