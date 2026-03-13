@@ -597,7 +597,7 @@ function RegionColumn({
   isSubmitted: boolean
   showInsights: boolean
 }) {
-  const rounds = side === 'left' ? [1, 2, 3, 4] : [4, 3, 2, 1]
+  const rounds = [1, 2, 3, 4]
 
   return (
     <div className={`flex gap-1 ${side === 'right' ? 'flex-row-reverse' : ''}`}>
