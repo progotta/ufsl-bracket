@@ -259,7 +259,7 @@ async function DashboardPageInner() {
                           }`}
                         >
                           {/* Row 1: Name/Pool | Round Breakdown | Score */}
-                          <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-1 items-start">
+                          <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-1">
                             {/* Col 1: Icon + Name + Pool/Rank */}
                             <div className="flex items-start gap-2 min-w-0">
                               <span className="text-lg shrink-0 mt-0.5">{meta.emoji}</span>
@@ -295,8 +295,8 @@ async function DashboardPageInner() {
                               </div>
                             </div>
 
-                            {/* Col 2: Round Breakdown — strip internal mt-2 so it top-aligns */}
-                            <div className="[&>div]:mt-0">
+                            {/* Col 2: Round Breakdown — centered vertically in the card */}
+                            <div className="self-center [&>div]:mt-0">
                               <BracketRoundBreakdown picks={picks} games={games} />
                             </div>
 
