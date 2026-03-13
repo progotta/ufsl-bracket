@@ -39,8 +39,9 @@ export async function GET() {
       winner: g.winner_id ? teamMap.get(g.winner_id) ?? null : null,
     }))
 
-    // Also try raw fetch as fallback
+    // Raw fetch fallback
     let rawGames: unknown[] = games
+    let rawDebug: unknown = 'skipped'
     if (!games.length) {
       try {
         const r = await fetch(
@@ -48,6 +49,7 @@ export async function GET() {
           { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}` } }
         )
         const rawData = await r.json()
+        rawDebug = { status: r.status, isArray: Array.isArray(rawData), len: Array.isArray(rawData) ? rawData.length : null, sample: Array.isArray(rawData) ? null : JSON.stringify(rawData).slice(0, 200) }
         if (Array.isArray(rawData)) {
           const tm = new Map((teamsResult.data || []).map((t: { id: string }) => [t.id, t]))
           rawGames = rawData.map((g: { team1_id?: string; team2_id?: string; winner_id?: string }) => ({
@@ -57,7 +59,7 @@ export async function GET() {
             winner: g.winner_id ? tm.get(g.winner_id) ?? null : null,
           }))
         }
-      } catch { /* ignore */ }
+      } catch (e) { rawDebug = `fetch threw: ${e}` }
     }
 
     return NextResponse.json({
@@ -69,6 +71,7 @@ export async function GET() {
         teamsCount: teamsResult.data?.length ?? null,
         teamsError: teamsResult.error?.message ?? null,
         rawFallback: !games.length,
+        rawDebug,
       },
     })
   } catch (e: unknown) {

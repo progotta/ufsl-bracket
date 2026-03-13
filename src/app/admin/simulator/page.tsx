@@ -106,7 +106,7 @@ function SimulatorContent() {
       }
       if (!data.games?.length) {
         const dbg = data._debug
-        showToast(`No games: err=${dbg?.gamesError ?? 'none'} count=${dbg?.gamesCount ?? '?'} teams=${dbg?.teamsCount ?? '?'} err=${dbg?.teamsError ?? 'none'}`, 'error')
+        showToast(`No games: jsErr=${dbg?.gamesError ?? 'none'} raw=${JSON.stringify(dbg?.rawDebug).slice(0,120)}`, 'error')
       }
     } catch (e) {
       showToast(`Failed to load: ${e instanceof Error ? e.message : String(e)}`, 'error')
