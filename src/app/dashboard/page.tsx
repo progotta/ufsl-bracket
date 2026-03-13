@@ -22,10 +22,12 @@ import {
 } from '@/lib/secondChance'
 
 export default async function DashboardPage() {
+  console.error('[DASHBOARD] page render start')
   const supabase = createServerClient()
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) redirect('/auth')
+  console.error('[DASHBOARD] session ok, user:', session.user.id)
 
   const { data: profileRaw } = await supabase
     .from('profiles')
@@ -143,6 +145,8 @@ export default async function DashboardPage() {
     if (!bracketsByType[type]) bracketsByType[type] = []
     bracketsByType[type]!.push(bracket)
   }
+
+  console.error('[DASHBOARD] data fetching done, brackets:', brackets.length, 'pools:', pools.length, 'games:', games.length)
 
   return (
     <div className="space-y-8">
