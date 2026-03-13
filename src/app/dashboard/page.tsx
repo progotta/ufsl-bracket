@@ -281,6 +281,17 @@ async function DashboardPageInner() {
                                     <span className="text-xs text-brand-muted">· #{intel.currentRank} of {intel.poolSize}</span>
                                   )}
                                 </div>
+                                {intel?.championAbbreviation && (
+                                  <div className="flex items-center gap-1 mt-0.5 text-xs text-brand-muted">
+                                    <span>🏆</span>
+                                    <span className={intel.championAlive === false ? 'line-through opacity-50' : intel.championAlive ? 'text-green-400' : ''}>
+                                      {intel.championAbbreviation}
+                                    </span>
+                                    {intel.championPopularity != null && (
+                                      <span className="opacity-50">· {intel.championPopularity}% picked</span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -300,24 +311,9 @@ async function DashboardPageInner() {
                               <div className="text-[10px] text-brand-muted">pts</div>
                             </div>
 
-                            {/* Row 2: always render all 3 cells to preserve grid alignment */}
-                            {/* Col 1: blank */}
+                            {/* Row 2: col 1 + col 2 blank, col 3 has next game */}
                             <div />
-
-                            {/* Col 2: Champion pick (below round breakdown) */}
-                            <div className="text-xs text-brand-muted flex items-center gap-1 mt-1">
-                              {intel?.championAbbreviation ? (
-                                <>
-                                  <span>🏆</span>
-                                  <span className={intel.championAlive === false ? 'line-through opacity-50' : intel.championAlive ? 'text-green-400' : ''}>
-                                    {intel.championAbbreviation}
-                                  </span>
-                                  {intel.championPopularity != null && (
-                                    <span className="opacity-50">· {intel.championPopularity}% picked</span>
-                                  )}
-                                </>
-                              ) : null}
-                            </div>
+                            <div />
 
                             {/* Col 3: Next game (hide when both teams TBD) */}
                             <div className="text-[10px] text-brand-muted text-right mt-1">
