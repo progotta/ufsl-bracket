@@ -39,14 +39,36 @@ export async function GET() {
       winner: g.winner_id ? teamMap.get(g.winner_id) ?? null : null,
     }))
 
+    // Also try raw fetch as fallback
+    let rawGames: unknown[] = games
+    if (!games.length) {
+      try {
+        const r = await fetch(
+          `${url}/rest/v1/games?select=*&order=round.asc,game_number.asc`,
+          { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}` } }
+        )
+        const rawData = await r.json()
+        if (Array.isArray(rawData)) {
+          const tm = new Map((teamsResult.data || []).map((t: { id: string }) => [t.id, t]))
+          rawGames = rawData.map((g: { team1_id?: string; team2_id?: string; winner_id?: string }) => ({
+            ...g,
+            team1: g.team1_id ? tm.get(g.team1_id) ?? null : null,
+            team2: g.team2_id ? tm.get(g.team2_id) ?? null : null,
+            winner: g.winner_id ? tm.get(g.winner_id) ?? null : null,
+          }))
+        }
+      } catch { /* ignore */ }
+    }
+
     return NextResponse.json({
       config: configResult.data,
-      games,
+      games: rawGames,
       _debug: {
         gamesCount: gamesResult.data?.length ?? null,
         gamesError: gamesResult.error?.message ?? null,
         teamsCount: teamsResult.data?.length ?? null,
         teamsError: teamsResult.error?.message ?? null,
+        rawFallback: !games.length,
       },
     })
   } catch (e: unknown) {
