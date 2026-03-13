@@ -77,24 +77,7 @@ export default function BracketRoundBreakdown({ picks, games, isLeading = false 
         </div>
       )}
 
-      {/* Progress bar */}
-      {totalPossible > 0 && (
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${pct}%`,
-                backgroundColor:
-                  pct >= 75 ? '#22c55e' :
-                  pct >= 50 ? '#eab308' :
-                  '#ef4444',
-              }}
-            />
-          </div>
-          <span className="text-[10px] text-brand-muted font-medium">{pct}%</span>
-        </div>
-      )}
+
     </div>
   )
 }

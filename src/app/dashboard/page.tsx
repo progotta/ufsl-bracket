@@ -285,26 +285,23 @@ export default async function DashboardPage() {
                 <Link
                   key={pool.id}
                   href={`/pools/${pool.id}`}
-                  className="bg-brand-surface border border-brand-border rounded-xl p-5 hover:border-brand-orange/50 transition-all group"
+                  className="bg-brand-surface border border-brand-border rounded-xl p-3 hover:border-brand-orange/50 transition-all group"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="bg-brand-orange/10 rounded-lg p-2">
-                      <Trophy size={20} className="text-brand-orange" />
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Trophy size={14} className="text-brand-orange shrink-0" />
+                      <h3 className="font-bold text-sm group-hover:text-brand-orange transition-colors truncate">{pool.name}</h3>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {poolType !== 'full' && (
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${poolMeta.accentBg} ${poolMeta.accentText} border ${poolMeta.accentBorder}`}>
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${poolMeta.accentBg} ${poolMeta.accentText} border ${poolMeta.accentBorder}`}>
                           {poolMeta.badge}
                         </span>
                       )}
                       <PoolStatusBadge status={pool.status} />
                     </div>
                   </div>
-                  <h3 className="font-bold text-base group-hover:text-brand-orange transition-colors">{pool.name}</h3>
-                  {pool.description && (
-                    <p className="text-brand-muted text-xs mt-1 line-clamp-2">{pool.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-3">
+                  <div className="flex items-center gap-2 mt-1.5">
                     <span className="text-xs text-brand-muted">{m.role === 'commissioner' ? '👑 Commissioner' : '👤 Member'}</span>
                   </div>
                 </Link>
@@ -342,20 +339,30 @@ export default async function DashboardPage() {
                             type !== 'full' ? meta.accentBorder : 'border-brand-border'
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="text-2xl">{meta.emoji}</div>
-                              <div>
-                                <div className="font-semibold group-hover:text-brand-orange transition-colors">{bracket.name}</div>
-                                <div className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="text-lg shrink-0">{meta.emoji}</div>
+                              <div className="min-w-0">
+                                <div className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.name}</div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
+                                  {intel?.currentRank && (
+                                    <span className="text-xs text-brand-muted">· #{intel.currentRank} of {intel.poolSize}</span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 shrink-0">
                               <div className="text-right">
-                                <div className="text-xl font-black text-brand-orange">{bracket.score}</div>
-                                <div className="text-xs text-brand-muted">points</div>
+                                <div className="text-base font-black text-brand-orange leading-tight">
+                                  {bracket.score ?? 0}
+                                  {intel?.maxPossibleScore != null && (
+                                    <span className="text-brand-muted font-normal text-xs"> / {intel.maxPossibleScore}</span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-brand-muted">pts</div>
                               </div>
-                              <ArrowRight size={16} className="text-brand-muted group-hover:text-white transition-colors" />
+                              <ArrowRight size={14} className="text-brand-muted group-hover:text-white transition-colors" />
                             </div>
                           </div>
                           <BracketRoundBreakdown picks={picks} games={games} />
