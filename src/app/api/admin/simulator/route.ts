@@ -1,15 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createRouteClient } from '@/lib/supabase/route'
+import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/adminAuth'
 import { NextResponse } from 'next/server'
+
+// Admin client — bypasses RLS for read-heavy admin operations
+function createAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+}
 
 // GET: fetch sim config + games with team info
 export async function GET() {
   const authError = await requireAdmin()
   if (authError) return authError
 
-  const supabase = createRouteClient()
-  const db = supabase as any
+  // Use service role for reads (bypasses RLS — admin only after requireAdmin check above)
+  const db = createAdminClient() as any
 
   const [configResult, gamesResult, teamsResult] = await Promise.all([
     db.from('simulation_config').select('*').limit(1).single(),
@@ -43,8 +51,7 @@ export async function PATCH(request: Request) {
   const authError = await requireAdmin()
   if (authError) return authError
 
-  const supabase = createRouteClient()
-  const db = supabase as any
+  const db = createAdminClient() as any
   const body = await request.json()
 
   // Get the config row id first
