@@ -895,6 +895,22 @@ function GameSlot({
           </div>
         </>
       )}
+      {/* Final score for completed games */}
+      {!hasLiveScore && bothTeamsKnown && (() => {
+        const { gameResults } = useContext(LiveScoreContext)
+        const result = gameResults[game.id]
+        if (!result || result.team1Score == null || result.team2Score == null) return null
+        return (
+          <>
+            <div className="h-px bg-brand-border/50" />
+            <div className="px-2 py-1 bg-brand-dark/60 flex items-center justify-between text-[10px] text-brand-muted">
+              <span className={result.winnerId === game.team1?.id ? 'text-white font-bold' : ''}>{result.team1Score}</span>
+              <span className="opacity-40">Final</span>
+              <span className={result.winnerId === game.team2?.id ? 'text-white font-bold' : ''}>{result.team2Score}</span>
+            </div>
+          </>
+        )
+      })()}
       {/* Inline matchup insights (compact) */}
       {hasPredictions && (
         <>
