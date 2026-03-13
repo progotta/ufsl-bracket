@@ -295,8 +295,8 @@ async function DashboardPageInner() {
                               </div>
                             </div>
 
-                            {/* Col 2: Round Breakdown — horizontally centered */}
-                            <div className="[&>div]:mt-0 [&>div>div]:justify-center">
+                            {/* Col 2: Round Breakdown — centered, no wrap */}
+                            <div className="min-w-0 overflow-hidden [&>div]:mt-0 [&>div>div]:flex-nowrap [&>div>div]:justify-center [&>div>div]:overflow-hidden">
                               <BracketRoundBreakdown picks={picks} games={games} />
                             </div>
 
