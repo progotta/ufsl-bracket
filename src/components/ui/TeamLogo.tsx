@@ -5,6 +5,7 @@ import Image from 'next/image'
 import clsx from 'clsx'
 
 const SIZES = {
+  xs: 16,
   sm: 20,
   md: 32,
   lg: 48,
@@ -34,6 +35,7 @@ export default function TeamLogo({ espnId, teamName, size = 'sm', className }: T
       <span
         className={clsx(
           'inline-flex items-center justify-center rounded-sm bg-brand-border/60 text-brand-muted font-bold flex-shrink-0',
+          size === 'xs' && 'text-[6px]',
           size === 'sm' && 'text-[7px]',
           size === 'md' && 'text-[9px]',
           size === 'lg' && 'text-xs',
