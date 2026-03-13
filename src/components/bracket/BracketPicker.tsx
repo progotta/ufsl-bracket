@@ -31,7 +31,9 @@ import { createContext, useContext } from 'react'
 const LiveScoreContext = createContext<{
   liveScoreMap: Map<string, LiveGameScore>
   picks: Record<string, string>
-}>({ liveScoreMap: new Map(), picks: {} })
+  gameResults: Record<string, { winnerId: string; team1Score?: number; team2Score?: number }>
+  eliminatedTeams: Set<string>
+}>({ liveScoreMap: new Map(), picks: {}, gameResults: {}, eliminatedTeams: new Set() })
 import clsx from 'clsx'
 import TeamCard from '@/components/TeamCard'
 import TeamLogo from '@/components/ui/TeamLogo'
@@ -39,6 +41,12 @@ import MatchupInsights from '@/components/predictions/MatchupInsights'
 import BracketImportModal from '@/components/bracket/BracketImportModal'
 import ShareModal from '@/components/ShareModal'
 import { getTeamPrediction } from '@/lib/predictions'
+
+interface GameResult {
+  winnerId: string
+  team1Score?: number
+  team2Score?: number
+}
 
 interface BracketPickerProps {
   bracketId: string
@@ -50,6 +58,7 @@ interface BracketPickerProps {
   userName?: string
   poolName?: string
   score?: number
+  gameResults?: Record<string, GameResult>
 }
 
 export default function BracketPicker({
@@ -62,6 +71,7 @@ export default function BracketPicker({
   userName = 'Anonymous',
   poolName = 'UFSL Pool',
   score = 0,
+  gameResults = {},
 }: BracketPickerProps) {
   const [picks, setPicks] = useState<Record<string, string>>(initialPicks)
   const [undoPicks, setUndoPicks] = useState<Record<string, string> | null>(null)
@@ -511,7 +521,17 @@ export default function BracketPicker({
 
       {/* Bracket canvas */}
       <div className="flex-1 overflow-auto p-4 sm:p-6">
-        <LiveScoreContext.Provider value={{ liveScoreMap, picks }}>
+        <LiveScoreContext.Provider value={{ liveScoreMap, picks, gameResults, eliminatedTeams: (() => {
+          // Build set of team IDs that have lost a completed game
+          const eliminated = new Set<string>()
+          for (const [gameId, result] of Object.entries(gameResults)) {
+            const g = gameMap.get(gameId)
+            if (!g) continue
+            if (g.team1?.id && g.team1.id !== result.winnerId) eliminated.add(g.team1.id)
+            if (g.team2?.id && g.team2.id !== result.winnerId) eliminated.add(g.team2.id)
+          }
+          return eliminated
+        })() }}>
           <div
             className="transition-transform origin-top-left"
             style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
@@ -849,6 +869,7 @@ function GameSlot({
         onInfo={() => game.team1 && onTeamInfo(game.team1)}
         disabled={isSubmitted || !game.team1}
         isTop
+        gameId={game.id}
       />
       <div className="h-px bg-brand-border" />
       <TeamSlot
@@ -859,6 +880,7 @@ function GameSlot({
         onInfo={() => game.team2 && onTeamInfo(game.team2)}
         disabled={isSubmitted || !game.team2}
         isTop={false}
+        gameId={game.id}
       />
       {/* Live score inline display */}
       {hasLiveScore && (
@@ -899,6 +921,7 @@ function TeamSlot({
   onInfo,
   disabled,
   isTop,
+  gameId,
 }: {
   team?: BracketTeam
   isPicked: boolean
@@ -907,7 +930,10 @@ function TeamSlot({
   onInfo: () => void
   disabled: boolean
   isTop: boolean
+  gameId?: string
 }) {
+  const { gameResults, eliminatedTeams } = useContext(LiveScoreContext)
+
   if (!team) {
     return (
       <div className="flex items-center gap-2 px-2 py-2 bg-brand-card/30 min-h-[36px]">
@@ -917,16 +943,26 @@ function TeamSlot({
     )
   }
 
+  // Result state for this specific game slot
+  const result = gameId ? gameResults[gameId] : undefined
+  const isCorrect = isPicked && result && result.winnerId === team.id
+  const isWrong = isPicked && result && result.winnerId !== team.id
+  const isEliminated = eliminatedTeams.has(team.id)
+
   return (
     <div
       className={clsx(
         'group team-slot w-full flex items-center gap-2 px-2 py-2 min-h-[36px] transition-all',
-        isPicked
+        isCorrect
+          ? 'bg-green-500/15 border-l-2 border-green-500/60'
+          : isWrong
+          ? 'bg-red-500/10 border-l-2 border-red-500/40'
+          : isPicked
           ? isWinnerSlot
             ? 'bg-brand-gold/20 winner-glow'
             : 'bg-brand-orange/20'
           : 'bg-brand-card/50 hover:bg-brand-card',
-        disabled && !isPicked && 'opacity-60'
+        (disabled && !isPicked) && 'opacity-60'
       )}
     >
       {/* Seed badge — click to open team card */}
@@ -954,6 +990,9 @@ function TeamSlot({
         disabled={disabled}
         className={clsx(
           'text-xs font-semibold truncate flex-1 text-left',
+          isCorrect ? 'text-green-400' :
+          isWrong ? 'text-red-400 line-through opacity-70' :
+          isEliminated && !result ? 'text-red-400/70 line-through opacity-60' :
           isPicked ? (isWinnerSlot ? 'text-brand-gold' : 'text-brand-orange') : 'text-white',
           !disabled && 'cursor-pointer',
           disabled && !isPicked && 'cursor-default'

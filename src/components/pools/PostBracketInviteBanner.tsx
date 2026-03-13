@@ -45,7 +45,7 @@ export default function PostBracketInviteBanner({
           <div className="flex items-start gap-3 pr-6">
             <div className="text-2xl">🎉</div>
             <div className="flex-1">
-              <div className="font-bold text-sm mb-0.5">Bracket saved!</div>
+              <div className="font-bold text-sm mb-0.5">Invite your crew 🏀</div>
               <p className="text-xs text-brand-muted mb-3">
                 Invite friends to {poolName} and trash talk your way to the top!
               </p>
