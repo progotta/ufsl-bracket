@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Trophy, Users, ArrowRight, Calendar, RefreshCw, Zap, Share2 } from 'lucide-react'
-import type { Profile, Bracket, Pool, Game } from '@/types/database'
+import type { Profile, Bracket, Pool, Game, Team } from '@/types/database'
 import NewsFeed from '@/components/NewsFeed'
 import AllSmack from '@/components/smack/AllSmack'
 import RecentAchievements from '@/components/achievements/RecentAchievements'
@@ -10,6 +10,8 @@ import AchievementsPanel from '@/components/achievements/AchievementsPanel'
 import NotificationPrompt from '@/components/NotificationPrompt'
 import LiveGames from '@/components/LiveGames'
 import BracketRoundBreakdown from '@/components/BracketRoundBreakdown'
+import BracketCardIntelligence from '@/components/BracketCardIntelligence'
+import { computeAllBracketIntelligence } from '@/lib/bracketIntelligence'
 import {
   BRACKET_TYPE_META,
   BRACKET_TYPE_ORDER,
@@ -72,6 +74,50 @@ export default async function DashboardPage() {
     .from('games')
     .select('id, round, status, team1_id, team2_id, winner_id, scheduled_at')
   const games = (gamesRaw || []) as Game[]
+
+  // Fetch teams for intelligence display (abbreviations, etc.)
+  const { data: teamsRaw } = await supabase
+    .from('teams')
+    .select('id, name, abbreviation, seed, region, primary_color, espn_id')
+  const teams = (teamsRaw || []) as Team[]
+
+  // Fetch pool member counts for each pool the user has brackets in
+  const allBracketPoolIds = Array.from(new Set(brackets.map(b => b.pool_id)))
+  const poolMemberCounts = new Map<string, number>()
+  if (allBracketPoolIds.length > 0) {
+    // Get counts per pool
+    for (const pid of allBracketPoolIds) {
+      const { count } = await supabase
+        .from('pool_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('pool_id', pid)
+      poolMemberCounts.set(pid, count || 0)
+    }
+  }
+
+  // Fetch all brackets in each pool (for rank + popularity calculations)
+  const allPoolBrackets = new Map<string, Bracket[]>()
+  if (allBracketPoolIds.length > 0) {
+    const { data: poolBracketsRaw } = await supabase
+      .from('brackets')
+      .select('*')
+      .in('pool_id', allBracketPoolIds)
+      .eq('is_submitted', true)
+    const poolBracketsAll = (poolBracketsRaw || []) as Bracket[]
+    for (const b of poolBracketsAll) {
+      if (!allPoolBrackets.has(b.pool_id)) allPoolBrackets.set(b.pool_id, [])
+      allPoolBrackets.get(b.pool_id)!.push(b)
+    }
+  }
+
+  // Compute intelligence for all user brackets
+  const bracketIntelligence = computeAllBracketIntelligence(
+    brackets,
+    allPoolBrackets,
+    games,
+    teams,
+    poolMemberCounts,
+  )
 
   const openBracketTypes = getOpenBracketTypes(games)
   const hasSecondChanceOpen = openBracketTypes.some(t => t !== 'full')
@@ -287,6 +333,7 @@ export default async function DashboardPage() {
                   <div className="space-y-2">
                     {typeBrackets.map((bracket) => {
                       const picks = (bracket.picks || {}) as Record<string, string>
+                      const intel = bracketIntelligence.get(bracket.id)
                       return (
                         <Link
                           key={bracket.id}
@@ -300,7 +347,7 @@ export default async function DashboardPage() {
                               <div className="text-2xl">{meta.emoji}</div>
                               <div>
                                 <div className="font-semibold group-hover:text-brand-orange transition-colors">{bracket.name}</div>
-                                <div className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
+                                <div className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
                               </div>
                             </div>
                             <div className="flex items-center gap-4">
@@ -312,6 +359,7 @@ export default async function DashboardPage() {
                             </div>
                           </div>
                           <BracketRoundBreakdown picks={picks} games={games} />
+                          {intel && <BracketCardIntelligence intel={intel} />}
                         </Link>
                       )
                     })}
