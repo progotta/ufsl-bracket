@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
+
 import { ROUND_NAMES } from '@/lib/bracket'
 import {
   Activity, Play, SkipForward, RefreshCw, Zap, Calendar,
@@ -77,9 +77,6 @@ export default function SimulatorPage() {
 }
 
 function SimulatorContent() {
-  const searchParams = useSearchParams()
-  const isAdmin = searchParams.get('admin') === 'true'
-
   const [config, setConfig] = useState<SimConfig | null>(null)
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
@@ -174,24 +171,6 @@ function SimulatorContent() {
   )
   const completedCount = games.filter(g => g.status === 'completed').length
   const totalGames = games.length
-
-  // ── Guard ────────────────────────────────────────────────────
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6">
-        <div className="bg-brand-surface border border-red-500/30 rounded-2xl p-10 max-w-md w-full text-center space-y-4">
-          <AlertTriangle size={40} className="text-red-400 mx-auto" />
-          <h1 className="text-2xl font-black text-white">Access Denied</h1>
-          <p className="text-brand-muted text-sm">
-            This page requires admin access. Add{' '}
-            <code className="bg-brand-card px-1 py-0.5 rounded text-amber-400">?admin=true</code>{' '}
-            to the URL.
-          </p>
-        </div>
-      </div>
-    )
-  }
 
   if (loading) {
     return (
