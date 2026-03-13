@@ -7,7 +7,6 @@ import NewsFeed from '@/components/NewsFeed'
 import AllSmack from '@/components/smack/AllSmack'
 import RecentAchievements from '@/components/achievements/RecentAchievements'
 import AchievementsPanel from '@/components/achievements/AchievementsPanel'
-import XPBar from '@/components/achievements/XPBar'
 import NotificationPrompt from '@/components/NotificationPrompt'
 import LiveGames from '@/components/LiveGames'
 import BracketRoundBreakdown from '@/components/BracketRoundBreakdown'
@@ -325,7 +324,6 @@ export default async function DashboardPage() {
       )}
 
       {/* XP & Achievements */}
-      <XPBar userId={session.user.id} />
       <AchievementsPanel userId={session.user.id} />
 
       {/* Recent Achievements */}
