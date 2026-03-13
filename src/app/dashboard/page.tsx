@@ -295,8 +295,8 @@ async function DashboardPageInner() {
                               </div>
                             </div>
 
-                            {/* Col 2: Round Breakdown */}
-                            <div className="pt-0.5">
+                            {/* Col 2: Round Breakdown — strip internal mt-2 so it top-aligns */}
+                            <div className="[&>div]:mt-0">
                               <BracketRoundBreakdown picks={picks} games={games} />
                             </div>
 
