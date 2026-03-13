@@ -166,7 +166,7 @@ function CardTeamRow({
         : 'bg-transparent'
     )}>
       <div className="flex items-center gap-2">
-        {team.seed && (
+        {team.seed && team.seed >= 1 && team.seed <= 16 && (
           <span className="text-xs text-brand-muted w-4 text-right">{team.seed}</span>
         )}
         <span className={clsx(

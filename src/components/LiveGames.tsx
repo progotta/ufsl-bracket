@@ -193,7 +193,7 @@ function TeamRow({
     )}>
       <div className="flex items-center gap-1 min-w-0">
         <TeamLogo espnId={team.espnTeamId} teamName={team.name} size="xs" />
-        {team.seed && (
+        {team.seed && team.seed >= 1 && team.seed <= 16 && (
           <span className="text-[9px] text-brand-muted w-3 text-right flex-shrink-0">{team.seed}</span>
         )}
         <span className={clsx(
