@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { X, TrendingUp, TrendingDown, Users, Clock, Award, BarChart2, Percent } from 'lucide-react'
 import clsx from 'clsx'
 import type { BracketTeam } from '@/lib/bracket'
+import TeamLogo from '@/components/ui/TeamLogo'
 import { getTeamDetail, type TeamDetail, type RecentGame } from '@/data/teamDetails'
 import { getTeamPrediction, getSeedMatchupStat, SEED_MATCHUP_STATS } from '@/lib/predictions'
 
@@ -71,7 +72,7 @@ export default function TeamCard({ team, onClose }: TeamCardProps) {
           'flex flex-col'
         )}
       >
-        <TeamCardContent detail={detail} onClose={onClose} />
+        <TeamCardContent detail={detail} team={team} onClose={onClose} />
       </div>
     </>
   )
@@ -80,7 +81,7 @@ export default function TeamCard({ team, onClose }: TeamCardProps) {
 // ─────────────────────────────────────────────────────────────────
 // Main content
 // ─────────────────────────────────────────────────────────────────
-function TeamCardContent({ detail, onClose }: { detail: TeamDetail; onClose: () => void }) {
+function TeamCardContent({ detail, team, onClose }: { detail: TeamDetail; team: BracketTeam | null; onClose: () => void }) {
   const seedPct = Math.round(detail.seedHistory.winPctRound1 * 100)
   const hasStats = detail.stats.ppg > 0
   const hasPlayers = detail.keyPlayers.length > 0
@@ -106,13 +107,12 @@ function TeamCardContent({ detail, onClose }: { detail: TeamDetail; onClose: () 
         </button>
 
         <div className="flex items-start gap-4 pr-8">
-          {/* Color swatch / logo placeholder */}
+          {/* Team logo */}
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-lg"
-            style={{ backgroundColor: detail.primaryColor }}
-            aria-hidden="true"
+            className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden"
+            style={{ backgroundColor: detail.primaryColor + '30' }}
           >
-            {detail.seed}
+            <TeamLogo espnId={team?.espnId} teamName={detail.name} size="lg" />
           </div>
 
           <div className="min-w-0">

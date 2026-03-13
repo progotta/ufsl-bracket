@@ -33,6 +33,7 @@ function teamToPickerTeam(t: Team): BracketTeam {
     seed: t.seed || 1,
     region: t.region || 'East',
     primaryColor: t.primary_color || undefined,
+    espnId: t.espn_id || undefined,
   }
 }
 

@@ -125,6 +125,7 @@ export interface Database {
           primary_color: string | null
           secondary_color: string | null
           is_active: boolean
+          espn_id: number | null
         }
         Insert: {
           id?: string
@@ -136,6 +137,7 @@ export interface Database {
           primary_color?: string | null
           secondary_color?: string | null
           is_active?: boolean
+          espn_id?: number | null
         }
         Update: {
           id?: string
@@ -147,6 +149,7 @@ export interface Database {
           primary_color?: string | null
           secondary_color?: string | null
           is_active?: boolean
+          espn_id?: number | null
         }
       }
       games: {
