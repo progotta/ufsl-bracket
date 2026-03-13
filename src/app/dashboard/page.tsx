@@ -258,9 +258,11 @@ async function DashboardPageInner() {
                             type !== 'full' ? meta.accentBorder : 'border-brand-border'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="text-lg shrink-0">{meta.emoji}</div>
+                          {/* Row 1: Name/Pool | Round Breakdown | Score */}
+                          <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-1 items-start">
+                            {/* Col 1: Icon + Name + Pool/Rank */}
+                            <div className="flex items-start gap-2 min-w-0">
+                              <span className="text-lg shrink-0 mt-0.5">{meta.emoji}</span>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                   <span className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.name}</span>
@@ -273,8 +275,7 @@ async function DashboardPageInner() {
                                     }`}>{intel.source}</span>
                                   )}
                                 </div>
-                                <BracketRoundBreakdown picks={picks} games={games} />
-                                <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                   <span className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
                                   {intel?.currentRank && intel.poolSize > 0 && (
                                     <span className="text-xs text-brand-muted">· #{intel.currentRank} of {intel.poolSize}</span>
@@ -282,20 +283,52 @@ async function DashboardPageInner() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <div className="text-right">
-                                <div className="text-base font-black text-brand-orange leading-tight">
-                                  {bracket.score ?? 0}
-                                  {intel?.maxPossibleScore != null && intel.maxPossibleScore > (bracket.score ?? 0) && (
-                                    <span className="text-brand-muted font-normal text-xs"> / {intel.maxPossibleScore}</span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-brand-muted">pts</div>
-                              </div>
-                              <ArrowRight size={14} className="text-brand-muted group-hover:text-white transition-colors" />
+
+                            {/* Col 2: Round Breakdown */}
+                            <div className="pt-0.5">
+                              <BracketRoundBreakdown picks={picks} games={games} />
                             </div>
+
+                            {/* Col 3: Score */}
+                            <div className="text-right shrink-0">
+                              <div className="text-base font-black text-brand-orange leading-tight">
+                                {bracket.score ?? 0}
+                                {intel?.maxPossibleScore != null && intel.maxPossibleScore > (bracket.score ?? 0) && (
+                                  <span className="text-brand-muted font-normal text-xs"> / {intel.maxPossibleScore}</span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-brand-muted">pts</div>
+                            </div>
+
+                            {/* Row 2 Col 1: Champion pick */}
+                            {intel?.championAbbreviation && (
+                              <div className="text-xs text-brand-muted flex items-center gap-1 mt-1">
+                                <span>🏆</span>
+                                <span className={intel.championAlive === false ? 'line-through opacity-50' : intel.championAlive ? 'text-green-400' : ''}>
+                                  {intel.championAbbreviation}
+                                </span>
+                                {intel.championPopularity != null && (
+                                  <span className="opacity-50">· {intel.championPopularity}% picked</span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Row 2 Col 2: blank */}
+                            {intel?.championAbbreviation && <div />}
+
+                            {/* Row 2 Col 3: Next game */}
+                            {intel?.nextGame && (
+                              <div className="text-[10px] text-brand-muted text-right mt-1">
+                                {intel.nextGame.isLive && <span className="text-red-400 font-bold">LIVE · </span>}
+                                {intel.nextGame.team1Abbr} vs {intel.nextGame.team2Abbr}
+                                {intel.nextGame.scheduledAt && !intel.nextGame.isLive && (
+                                  <span className="block opacity-70">
+                                    {new Date(intel.nextGame.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
-                          {intel && <BracketCardIntelligence intel={intel} />}
                         </Link>
                       )
                     })}
