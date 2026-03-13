@@ -300,34 +300,39 @@ async function DashboardPageInner() {
                               <div className="text-[10px] text-brand-muted">pts</div>
                             </div>
 
-                            {/* Row 2 Col 1: Champion pick */}
-                            {intel?.championAbbreviation && (
-                              <div className="text-xs text-brand-muted flex items-center gap-1 mt-1">
-                                <span>🏆</span>
-                                <span className={intel.championAlive === false ? 'line-through opacity-50' : intel.championAlive ? 'text-green-400' : ''}>
-                                  {intel.championAbbreviation}
-                                </span>
-                                {intel.championPopularity != null && (
-                                  <span className="opacity-50">· {intel.championPopularity}% picked</span>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Row 2 Col 2: blank */}
-                            {intel?.championAbbreviation && <div />}
-
-                            {/* Row 2 Col 3: Next game */}
-                            {intel?.nextGame && (
-                              <div className="text-[10px] text-brand-muted text-right mt-1">
-                                {intel.nextGame.isLive && <span className="text-red-400 font-bold">LIVE · </span>}
-                                {intel.nextGame.team1Abbr} vs {intel.nextGame.team2Abbr}
-                                {intel.nextGame.scheduledAt && !intel.nextGame.isLive && (
-                                  <span className="block opacity-70">
-                                    {new Date(intel.nextGame.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            {/* Row 2: always render all 3 cells to preserve grid alignment */}
+                            {/* Col 1: Champion pick */}
+                            <div className="text-xs text-brand-muted flex items-center gap-1 mt-1">
+                              {intel?.championAbbreviation ? (
+                                <>
+                                  <span>🏆</span>
+                                  <span className={intel.championAlive === false ? 'line-through opacity-50' : intel.championAlive ? 'text-green-400' : ''}>
+                                    {intel.championAbbreviation}
                                   </span>
-                                )}
-                              </div>
-                            )}
+                                  {intel.championPopularity != null && (
+                                    <span className="opacity-50">· {intel.championPopularity}% picked</span>
+                                  )}
+                                </>
+                              ) : null}
+                            </div>
+
+                            {/* Col 2: blank */}
+                            <div />
+
+                            {/* Col 3: Next game (hide when both teams TBD) */}
+                            <div className="text-[10px] text-brand-muted text-right mt-1">
+                              {intel?.nextGame && (intel.nextGame.team1Abbr !== 'TBD' || intel.nextGame.team2Abbr !== 'TBD') && (
+                                <>
+                                  {intel.nextGame.isLive && <span className="text-red-400 font-bold">LIVE · </span>}
+                                  {intel.nextGame.team1Abbr} vs {intel.nextGame.team2Abbr}
+                                  {intel.nextGame.scheduledAt && !intel.nextGame.isLive && (
+                                    <span className="block opacity-70">
+                                      {new Date(intel.nextGame.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
                         </Link>
                       )

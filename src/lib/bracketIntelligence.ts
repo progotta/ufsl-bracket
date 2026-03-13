@@ -38,9 +38,23 @@ const CHAMPIONSHIP_GAME_ID = 'championship-r6-g1'
 
 /**
  * Get the team ID the user picked to win the championship.
+ * Falls back to a Final Four pick if no round-6 game exists yet.
  */
-function getChampionPick(picks: Record<string, string>): string | null {
-  return picks[CHAMPIONSHIP_GAME_ID] || null
+function getChampionPick(picks: Record<string, string>, games: Game[]): string | null {
+  // Try hardcoded slug first (legacy/imported brackets)
+  if (picks[CHAMPIONSHIP_GAME_ID]) return picks[CHAMPIONSHIP_GAME_ID]
+
+  // Try actual round-6 game from DB
+  const r6 = games.find(g => g.round === 6)
+  if (r6 && picks[r6.id]) return picks[r6.id]
+
+  // Fall back to round-5 picks (Final Four) — pick the one with lower game number
+  const r5games = games.filter(g => g.round === 5).sort((a, b) => a.game_number - b.game_number)
+  for (const g of r5games) {
+    if (picks[g.id]) return picks[g.id]
+  }
+
+  return null
 }
 
 /**
@@ -162,7 +176,7 @@ export function computeAllBracketIntelligence(
     const isEliminated = maxPossibleScore < leaderScore && poolSize > 1
 
     // Champion pick
-    const championTeamId = getChampionPick(picks)
+    const championTeamId = getChampionPick(picks, games)
     const championTeam = championTeamId ? teamMap.get(championTeamId) : null
     const championAlive = championTeamId ? isTeamAlive(championTeamId, games) : null
 
