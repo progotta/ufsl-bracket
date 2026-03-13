@@ -262,7 +262,17 @@ async function DashboardPageInner() {
                             <div className="flex items-center gap-2 min-w-0">
                               <div className="text-lg shrink-0">{meta.emoji}</div>
                               <div className="min-w-0">
-                                <div className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.name}</div>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.name}</span>
+                                  {intel?.source && (
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 ${
+                                      intel.source === 'ESPN' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                      intel.source === 'CBS' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                                      intel.source === 'Yahoo' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
+                                      'bg-brand-orange/20 text-brand-orange border-brand-orange/30'
+                                    }`}>{intel.source}</span>
+                                  )}
+                                </div>
                                 <BracketRoundBreakdown picks={picks} games={games} />
                                 <div className="flex items-center gap-2 flex-wrap mt-0.5">
                                   <span className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>

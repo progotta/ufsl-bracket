@@ -47,11 +47,8 @@ export default function BracketCardIntelligence({ intel }: { intel: BracketIntel
 
   return (
     <div className="mt-2 space-y-1.5">
-      {/* Row 1: Source badge + pool size */}
-      <div className="flex items-center justify-between">
-        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${SOURCE_STYLES[source]}`}>
-          {source}
-        </span>
+      {/* Row 1: Pool size */}
+      <div className="flex items-center justify-end">
         <span className="text-[10px] text-brand-muted">
           {memberCount} player{memberCount !== 1 ? 's' : ''}
         </span>
