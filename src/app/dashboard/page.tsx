@@ -10,6 +10,7 @@ import AchievementsPanel from '@/components/achievements/AchievementsPanel'
 import XPBar from '@/components/achievements/XPBar'
 import NotificationPrompt from '@/components/NotificationPrompt'
 import LiveGames from '@/components/LiveGames'
+import BracketRoundBreakdown from '@/components/BracketRoundBreakdown'
 import {
   BRACKET_TYPE_META,
   BRACKET_TYPE_ORDER,
@@ -285,30 +286,36 @@ export default async function DashboardPage() {
                     <span className="text-xs text-brand-muted">({typeBrackets.length} bracket{typeBrackets.length !== 1 ? 's' : ''})</span>
                   </div>
                   <div className="space-y-2">
-                    {typeBrackets.map((bracket) => (
-                      <Link
-                        key={bracket.id}
-                        href={`/brackets/${bracket.id}`}
-                        className={`flex items-center justify-between bg-brand-surface border rounded-xl p-4 hover:border-brand-orange/50 transition-all group ${
-                          type !== 'full' ? meta.accentBorder : 'border-brand-border'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="text-2xl">{meta.emoji}</div>
-                          <div>
-                            <div className="font-semibold group-hover:text-brand-orange transition-colors">{bracket.name}</div>
-                            <div className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
+                    {typeBrackets.map((bracket) => {
+                      const picks = (bracket.picks || {}) as Record<string, string>
+                      return (
+                        <Link
+                          key={bracket.id}
+                          href={`/brackets/${bracket.id}`}
+                          className={`block bg-brand-surface border rounded-xl p-4 hover:border-brand-orange/50 transition-all group ${
+                            type !== 'full' ? meta.accentBorder : 'border-brand-border'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="text-2xl">{meta.emoji}</div>
+                              <div>
+                                <div className="font-semibold group-hover:text-brand-orange transition-colors">{bracket.name}</div>
+                                <div className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <div className="text-xl font-black text-brand-orange">{bracket.score}</div>
+                                <div className="text-xs text-brand-muted">points</div>
+                              </div>
+                              <ArrowRight size={16} className="text-brand-muted group-hover:text-white transition-colors" />
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="text-xl font-black text-brand-orange">{bracket.score}</div>
-                            <div className="text-xs text-brand-muted">points</div>
-                          </div>
-                          <ArrowRight size={16} className="text-brand-muted group-hover:text-white transition-colors" />
-                        </div>
-                      </Link>
-                    ))}
+                          <BracketRoundBreakdown picks={picks} games={games} />
+                        </Link>
+                      )
+                    })}
                   </div>
                 </div>
               )
