@@ -171,9 +171,10 @@ async function extractPicksFromImage(
   imageBase64: string,
   mimeType: string
 ): Promise<{ rawData: Record<string, unknown>; error?: string }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.AWS_BEDROCK_API_KEY
+  const region = process.env.AWS_BEDROCK_REGION || 'us-west-2'
   if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY not configured')
+    throw new Error('AWS_BEDROCK_API_KEY not configured')
   }
 
   // Map mime types to Claude's expected format
@@ -186,15 +187,17 @@ async function extractPicksFromImage(
   }
   const mediaType = mediaTypeMap[mimeType] || 'image/jpeg'
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const modelId = 'anthropic.claude-3-5-sonnet-20241022-v2:0'
+  const bedrockUrl = `https://bedrock-runtime.${region}.amazonaws.com/model/${encodeURIComponent(modelId)}/invoke`
+
+  const response = await fetch(bedrockUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      anthropic_version: 'bedrock-2023-05-31',
       max_tokens: 4096,
       messages: [
         {
@@ -221,7 +224,7 @@ async function extractPicksFromImage(
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
     if (response.status === 429) throw new Error('Rate limit reached. Please try again in a moment.')
-    throw new Error(err.error?.message || `Anthropic API error: ${response.status}`)
+    throw new Error(err.message || `AWS Bedrock API error: ${response.status}`)
   }
 
   const data = await response.json()
@@ -361,7 +364,7 @@ export async function POST(req: NextRequest) {
           }))
         : MOCK_TEAMS
 
-    // Call GPT-4 Vision
+    // Call Claude Vision via AWS Bedrock
     let rawData: Record<string, unknown>
     let extractionError: string | undefined
     try {
