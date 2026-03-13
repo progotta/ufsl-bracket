@@ -13,37 +13,48 @@ function createAdminClient() {
 
 // GET: fetch sim config + games with team info
 export async function GET() {
-  const authError = await requireAdmin()
-  if (authError) return authError
+  try {
+    const authError = await requireAdmin()
+    if (authError) return authError
 
-  // Use service role for reads (bypasses RLS — admin only after requireAdmin check above)
-  const db = createAdminClient() as any
+    const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!svcKey || !url) {
+      return NextResponse.json({ error: `Missing env: url=${!!url} key=${!!svcKey}` }, { status: 500 })
+    }
 
-  const [configResult, gamesResult, teamsResult] = await Promise.all([
-    db.from('simulation_config').select('*').limit(1).single(),
-    db.from('games').select('*').order('round').order('game_number'),
-    db.from('teams').select('id, name, abbreviation, seed, region'),
-  ])
+    // Use service role for reads (bypasses RLS — admin only after requireAdmin check above)
+    const db = createAdminClient() as any
 
-  // Join team data client-side to avoid Supabase FK join issues with null team IDs
-  const teamMap = new Map((teamsResult.data || []).map((t: { id: string }) => [t.id, t]))
-  const games = (gamesResult.data || []).map((g: { team1_id?: string; team2_id?: string; winner_id?: string }) => ({
-    ...g,
-    team1: g.team1_id ? teamMap.get(g.team1_id) ?? null : null,
-    team2: g.team2_id ? teamMap.get(g.team2_id) ?? null : null,
-    winner: g.winner_id ? teamMap.get(g.winner_id) ?? null : null,
-  }))
+    const [configResult, gamesResult, teamsResult] = await Promise.all([
+      db.from('simulation_config').select('*').limit(1).single(),
+      db.from('games').select('*').order('round').order('game_number'),
+      db.from('teams').select('id, name, abbreviation, seed, region'),
+    ])
 
-  return NextResponse.json({
-    config: configResult.data,
-    games,
-    _debug: {
-      gamesCount: gamesResult.data?.length ?? null,
-      gamesError: gamesResult.error?.message ?? null,
-      teamsCount: teamsResult.data?.length ?? null,
-      teamsError: teamsResult.error?.message ?? null,
-    },
-  })
+    // Join team data client-side to avoid Supabase FK join issues with null team IDs
+    const teamMap = new Map((teamsResult.data || []).map((t: { id: string }) => [t.id, t]))
+    const games = (gamesResult.data || []).map((g: { team1_id?: string; team2_id?: string; winner_id?: string }) => ({
+      ...g,
+      team1: g.team1_id ? teamMap.get(g.team1_id) ?? null : null,
+      team2: g.team2_id ? teamMap.get(g.team2_id) ?? null : null,
+      winner: g.winner_id ? teamMap.get(g.winner_id) ?? null : null,
+    }))
+
+    return NextResponse.json({
+      config: configResult.data,
+      games,
+      _debug: {
+        gamesCount: gamesResult.data?.length ?? null,
+        gamesError: gamesResult.error?.message ?? null,
+        teamsCount: teamsResult.data?.length ?? null,
+        teamsError: teamsResult.error?.message ?? null,
+      },
+    })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: `Crash: ${msg}`, games: [] }, { status: 500 })
+  }
 }
 
 // PATCH: update simulation config
