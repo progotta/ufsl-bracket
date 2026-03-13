@@ -84,7 +84,6 @@ export default async function DashboardPage() {
   })
 
   const displayName = profile?.display_name || session.user.email?.split('@')[0] || 'Champion'
-  const totalScore = brackets.reduce((sum, b) => sum + (b.score || 0), 0)
 
   // Collect all team IDs the user has picked across all brackets (for live score color coding)
   const userPickIds = Array.from(new Set(
@@ -156,12 +155,8 @@ export default async function DashboardPage() {
           <Trophy size={14} className="text-brand-muted" />
           <span className="font-bold">{brackets.length}</span>
           <span className="text-brand-muted">Brackets</span>
+
         </Link>
-        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1" title="Combined score across all brackets">
-          <Trophy size={14} className="text-brand-gold" />
-          <span className="font-bold">{totalScore}</span>
-          <span className="text-brand-muted">total pts</span>
-        </span>
         <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
           <Calendar size={14} className="text-brand-muted" />
           <span className="font-bold">Mar 19</span>
