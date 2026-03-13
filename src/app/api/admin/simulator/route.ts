@@ -44,9 +44,13 @@ export async function GET() {
     let rawDebug: unknown = 'skipped'
     if (!games.length) {
       try {
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         const r = await fetch(
-          `${url}/rest/v1/games?select=*&order=round.asc,game_number.asc`,
-          { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}` } }
+          `${url}/rest/v1/games?select=id,round,game_number,status`,
+          { 
+            cache: 'no-store',
+            headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}`, 'Prefer': 'count=none' }
+          }
         )
         const rawData = await r.json()
         rawDebug = { status: r.status, isArray: Array.isArray(rawData), len: Array.isArray(rawData) ? rawData.length : null, sample: Array.isArray(rawData) ? null : JSON.stringify(rawData).slice(0, 200) }
