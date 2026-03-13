@@ -295,8 +295,8 @@ async function DashboardPageInner() {
                               </div>
                             </div>
 
-                            {/* Col 2: Round Breakdown — centered vertically in the card */}
-                            <div className="self-center [&>div]:mt-0">
+                            {/* Col 2: Round Breakdown — horizontally centered */}
+                            <div className="flex justify-center [&>div]:mt-0">
                               <BracketRoundBreakdown picks={picks} games={games} />
                             </div>
 
