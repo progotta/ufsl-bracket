@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/adminAuth'
 import { NextResponse } from 'next/server'
 import { simulateGame } from '@/lib/simulator'
 import { ROUND_POINTS } from '@/lib/bracket'
+import { advanceWinner } from '@/lib/bracketAdvancement'
 
 export async function POST(request: Request) {
   const authError = await requireAdmin()
@@ -38,6 +39,9 @@ export async function POST(request: Request) {
   }).eq('id', gameId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Advance winner to next bracket slot
+  await advanceWinner(db, game.game_number, result.winnerId)
 
   // Update bracket scores
   const { data: brackets } = await db.from('brackets').select('id, picks, score')
