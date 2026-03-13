@@ -72,6 +72,7 @@ export async function GET() {
         teamsError: teamsResult.error?.message ?? null,
         rawFallback: !games.length,
         rawDebug,
+        supabaseUrl: url?.slice(-20), // last 20 chars to identify which project
       },
     })
   } catch (e: unknown) {
