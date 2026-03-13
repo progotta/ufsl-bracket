@@ -120,7 +120,7 @@ async function DashboardPageInner() {
       .from('brackets')
       .select('*')
       .in('pool_id', allBracketPoolIds)
-      .eq('is_submitted', true)
+      .not('picks', 'is', null)  // any bracket with picks counts toward pool standings
     const poolBracketsAll = (poolBracketsRaw || []) as Bracket[]
     for (const b of poolBracketsAll) {
       if (!allPoolBrackets.has(b.pool_id)) allPoolBrackets.set(b.pool_id, [])
@@ -263,9 +263,10 @@ async function DashboardPageInner() {
                               <div className="text-lg shrink-0">{meta.emoji}</div>
                               <div className="min-w-0">
                                 <div className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.name}</div>
-                                <div className="flex items-center gap-2 flex-wrap">
+                                <BracketRoundBreakdown picks={picks} games={games} />
+                                <div className="flex items-center gap-2 flex-wrap mt-0.5">
                                   <span className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
-                                  {intel?.currentRank && (
+                                  {intel?.currentRank && intel.poolSize > 0 && (
                                     <span className="text-xs text-brand-muted">· #{intel.currentRank} of {intel.poolSize}</span>
                                   )}
                                 </div>
@@ -275,7 +276,7 @@ async function DashboardPageInner() {
                               <div className="text-right">
                                 <div className="text-base font-black text-brand-orange leading-tight">
                                   {bracket.score ?? 0}
-                                  {intel?.maxPossibleScore != null && (
+                                  {intel?.maxPossibleScore != null && intel.maxPossibleScore > (bracket.score ?? 0) && (
                                     <span className="text-brand-muted font-normal text-xs"> / {intel.maxPossibleScore}</span>
                                   )}
                                 </div>
@@ -284,7 +285,6 @@ async function DashboardPageInner() {
                               <ArrowRight size={14} className="text-brand-muted group-hover:text-white transition-colors" />
                             </div>
                           </div>
-                          <BracketRoundBreakdown picks={picks} games={games} />
                           {intel && <BracketCardIntelligence intel={intel} />}
                         </Link>
                       )
