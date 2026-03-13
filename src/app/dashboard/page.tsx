@@ -146,16 +146,27 @@ export default async function DashboardPage() {
       )}
 
       {/* Quick stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Pools" value={membershipsWithPools.length} icon={<Users size={20} />} />
-        <StatCard label="Brackets" value={brackets.length} icon={<Trophy size={20} />} />
-        <StatCard label="Total Points" value={totalScore} icon={<Trophy size={20} className="text-brand-gold" />} />
-        <StatCard
-          label="Tournament"
-          value="Mar 19"
-          icon={<Calendar size={20} />}
-          sublabel="Tip-off"
-        />
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
+          <Users size={14} className="text-brand-muted" />
+          <span className="font-bold">{membershipsWithPools.length}</span>
+          <span className="text-brand-muted">Pools</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
+          <Trophy size={14} className="text-brand-muted" />
+          <span className="font-bold">{brackets.length}</span>
+          <span className="text-brand-muted">Brackets</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
+          <Trophy size={14} className="text-brand-gold" />
+          <span className="font-bold">{totalScore}</span>
+          <span className="text-brand-muted">pts</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5 bg-brand-surface border border-brand-border rounded-full px-3 py-1">
+          <Calendar size={14} className="text-brand-muted" />
+          <span className="font-bold">Mar 19</span>
+          <span className="text-brand-muted">Tip-off</span>
+        </span>
       </div>
 
       {/* Live Games Widget */}
@@ -369,27 +380,6 @@ function SecondChanceBanner({ openTypes }: { openTypes: BracketType[] }) {
   )
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-  sublabel,
-}: {
-  label: string
-  value: string | number
-  icon: React.ReactNode
-  sublabel?: string
-}) {
-  return (
-    <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-brand-muted">{icon}</span>
-      </div>
-      <div className="text-2xl font-black">{value}</div>
-      <div className="text-xs text-brand-muted">{sublabel || label}</div>
-    </div>
-  )
-}
 
 function PoolStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
