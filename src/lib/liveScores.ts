@@ -87,7 +87,13 @@ export function parseEspnScoreboard(json: any): LiveGameScore[] {
           name: c.team?.displayName ?? c.team?.name ?? 'TBD',
           abbreviation: c.team?.abbreviation ?? '???',
           espnTeamId: c.team?.id ? String(c.team.id) : undefined,
-          seed: c.curatedRank?.current ?? undefined,
+          seed: (() => {
+            // ESPN curatedRank is AP poll ranking (99 = unranked), not tournament seed.
+            // Prefer the actual tournament seed from linescores/notes, fall back to
+            // curatedRank only if it's a valid tournament seed (1-16).
+            const rank = c.curatedRank?.current
+            return rank && rank >= 1 && rank <= 16 ? rank : undefined
+          })(),
           score: parseInt(c.score ?? '0', 10),
           isWinning: c.winner === true,
         })
