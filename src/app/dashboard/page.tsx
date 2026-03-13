@@ -276,7 +276,7 @@ async function DashboardPageInner() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                  <span className="text-xs text-brand-muted">🏆 {bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
+                                  <span className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
                                   {intel?.currentRank && intel.poolSize > 0 && (
                                     <span className="text-xs text-brand-muted">· #{intel.currentRank} of {intel.poolSize}</span>
                                   )}
@@ -301,7 +301,10 @@ async function DashboardPageInner() {
                             </div>
 
                             {/* Row 2: always render all 3 cells to preserve grid alignment */}
-                            {/* Col 1: Champion pick */}
+                            {/* Col 1: blank */}
+                            <div />
+
+                            {/* Col 2: Champion pick (below round breakdown) */}
                             <div className="text-xs text-brand-muted flex items-center gap-1 mt-1">
                               {intel?.championAbbreviation ? (
                                 <>
@@ -315,9 +318,6 @@ async function DashboardPageInner() {
                                 </>
                               ) : null}
                             </div>
-
-                            {/* Col 2: blank */}
-                            <div />
 
                             {/* Col 3: Next game (hide when both teams TBD) */}
                             <div className="text-[10px] text-brand-muted text-right mt-1">
