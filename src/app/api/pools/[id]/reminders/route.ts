@@ -1,6 +1,7 @@
 import { createRouteClient } from '@/lib/supabase/route'
 import { createReadClient } from '@/lib/supabase/server'
 import { notify } from '@/lib/notify'
+import { sendBracketReminderEmail, sendPaymentReminderEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
 
 export async function POST(
@@ -54,6 +55,21 @@ export async function POST(
         message: `${pool.name}: Submit your bracket before picks lock`,
         action_url: `/brackets/new?pool=${params.id}`,
       })
+
+      // Also email if they have an email address
+      const { data: profile } = await adminDb
+        .from('profiles')
+        .select('email')
+        .eq('id', member.user_id)
+        .single()
+
+      if (profile?.email) {
+        sendBracketReminderEmail(
+          profile.email,
+          pool.name,
+          `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ufsl-bracket.vercel.app'}/brackets/new?pool=${params.id}`
+        ).catch(err => console.error('[email] bracket reminder failed:', err))
+      }
     }
 
     return NextResponse.json({ sent: needsReminder.length })
@@ -78,6 +94,23 @@ export async function POST(
         message: `${pool.name}: $${entryFee} entry fee is still owed`,
         action_url: `/pools/${params.id}`,
       })
+
+      // Also email if they have an email address
+      const { data: profile } = await adminDb
+        .from('profiles')
+        .select('email')
+        .eq('id', member.user_id)
+        .single()
+
+      if (profile?.email) {
+        sendPaymentReminderEmail(
+          profile.email,
+          pool.name,
+          entryFee,
+          'Contact the commissioner for payment details.',
+          `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ufsl-bracket.vercel.app'}/pools/${params.id}`
+        ).catch(err => console.error('[email] payment reminder failed:', err))
+      }
     }
 
     return NextResponse.json({ sent: needsReminder.length })

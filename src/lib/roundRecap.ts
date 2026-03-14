@@ -43,22 +43,51 @@ export async function sendRoundRecap(poolId: string, round: number) {
         .limit(1)
 
       if (winners && winners.length > 0 && winners[0].seed && winners[0].seed > 8) {
-        biggestUpset = `Biggest upset: ${winners[0].seed}-seed ${winners[0].name}`
+        biggestUpset = `#${winners[0].seed} ${winners[0].name}`
       }
     }
   }
 
-  const roundName = ROUND_NAMES[round] || `Round ${round}`
-  const leaderLine = top3?.length
-    ? top3.map((e, i) => `${['🥇', '🥈', '🥉'][i]} ${e.display_name} (${e.score}pts)`).join(' ')
-    : ''
+  // Count eliminated brackets (max_possible_score < 4th place score)
+  let eliminatedCount = 0
+  const { data: allBrackets } = await supabase
+    .from('brackets')
+    .select('score, max_possible_score')
+    .eq('pool_id', poolId)
+    .order('score', { ascending: false })
 
-  const parts = [leaderLine, biggestUpset].filter(Boolean)
-  const recap = parts.join(' | ') || 'Check the leaderboard for standings!'
+  if (allBrackets && allBrackets.length > 3) {
+    const fourthPlaceScore = allBrackets[3]?.score || 0
+    eliminatedCount = allBrackets.filter(
+      b => b.max_possible_score !== null && b.max_possible_score < fourthPlaceScore
+    ).length
+  }
+
+  const roundName = ROUND_NAMES[round] || `Round ${round}`
+
+  // Build message
+  const parts: string[] = []
+
+  if (top3?.length) {
+    const standings = top3
+      .map((e, i) => `${['🥇', '🥈', '🥉'][i]} ${e.display_name} (${e.score}pts)`)
+      .join(' ')
+    parts.push(`📊 Standings: ${standings}`)
+  }
+
+  if (biggestUpset) {
+    parts.push(`😱 Biggest upset: ${biggestUpset}`)
+  }
+
+  if (eliminatedCount > 0) {
+    parts.push(`💀 ${eliminatedCount} bracket${eliminatedCount === 1 ? '' : 's'} already eliminated`)
+  }
+
+  const recap = parts.join('\n') || 'Check the leaderboard for standings!'
 
   await notifyPoolMembers(poolId, {
     type: 'round_complete',
-    title: `🏀 ${roundName} complete!`,
+    title: `🏀 ${roundName} Complete!`,
     message: recap,
     action_url: `/pools/${poolId}`,
   })

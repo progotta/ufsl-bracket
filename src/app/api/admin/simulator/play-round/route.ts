@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { simulateGame } from '@/lib/simulator'
 import { ROUND_POINTS } from '@/lib/bracket'
 import { advanceWinner } from '@/lib/bracketAdvancement'
+import { sendRoundRecap } from '@/lib/roundRecap'
 
 export async function POST(request: Request) {
   try {
@@ -66,6 +67,21 @@ export async function POST(request: Request) {
       await advanceWinner(db, game.game_number, result.winnerId)
       // Update bracket scores
       await updateBracketScores(db, game.id, result.winnerId, game.round)
+    }
+  }
+
+  // Check if the round is fully complete (all games played)
+  const allRoundGames = games.filter((g: any) => g.round === nextRound)
+  const allCompleted = allRoundGames.every((g: any) => g.status === 'completed' || played.includes(g.id))
+  if (allCompleted) {
+    // Send round recap to all pools
+    const { data: pools } = await db.from('pools').select('id').in('status', ['active', 'open', 'locked'])
+    if (pools) {
+      for (const pool of pools) {
+        sendRoundRecap(pool.id, nextRound).catch(err =>
+          console.error('[roundRecap] Failed for pool', pool.id, err)
+        )
+      }
     }
   }
 

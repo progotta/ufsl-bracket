@@ -1,12 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Trophy, Layout, BarChart2, User } from 'lucide-react'
+import { Home, Trophy, Layout, BarChart2, User, Shield } from 'lucide-react'
 
 const tabs = [
   { href: '/dashboard', icon: Home, label: 'Home' },
   { href: '/pools', icon: Trophy, label: 'Pools' },
-  { href: '/brackets', icon: Layout, label: 'Brackets' },
+  { href: '/commissioner', icon: Shield, label: 'My Leagues' },
   { href: '/leaderboard', icon: BarChart2, label: 'Rankings' },
   { href: '/profile', icon: User, label: 'Profile' },
 ]
