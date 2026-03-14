@@ -71,6 +71,9 @@ export interface Database {
           payout_structure: Json | null
           payment_instructions: string | null
           payment_methods: Json
+          max_brackets_per_member: number
+          fee_per_bracket: boolean
+          one_payout_per_person: boolean
         }
         Insert: {
           id?: string
@@ -92,6 +95,9 @@ export interface Database {
           payout_structure?: Json | null
           payment_instructions?: string | null
           payment_methods?: Json
+          max_brackets_per_member?: number
+          fee_per_bracket?: boolean
+          one_payout_per_person?: boolean
         }
         Update: {
           id?: string
@@ -113,6 +119,9 @@ export interface Database {
           payout_structure?: Json | null
           payment_instructions?: string | null
           payment_methods?: Json
+          max_brackets_per_member?: number
+          fee_per_bracket?: boolean
+          one_payout_per_person?: boolean
         }
       }
       pool_members: {
@@ -378,6 +387,25 @@ export interface SmackMessage {
     display_name: string | null
     avatar_url: string | null
   } | null
+}
+
+// Payment type (payments table)
+export interface Payment {
+  id: string
+  created_at: string
+  updated_at: string
+  pool_id: string
+  user_id: string
+  bracket_id: string | null
+  amount: number
+  status: 'unpaid' | 'pending_verification' | 'paid' | 'waived' | 'refunded'
+  payment_method: string | null
+  payment_platform: string | null
+  stripe_session_id: string | null
+  stripe_payment_intent_id: string | null
+  paypal_order_id: string | null
+  payment_date: string | null
+  payment_note: string | null
 }
 
 // Convenience types

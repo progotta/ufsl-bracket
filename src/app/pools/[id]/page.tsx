@@ -515,34 +515,68 @@ export default async function PoolPage({ params }: Props) {
           <div className="space-y-2">
             {members?.map((member: any) => {
               const profile = member.profiles as any
+              const memberPayments = (payments || []).filter((p: any) => p.user_id === member.user_id)
+              const displayName = profile?.display_name || 'Anonymous'
+
               return (
-                <div key={member.user_id} className="flex items-center justify-between bg-brand-surface border border-brand-border rounded-xl p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-sm font-bold text-brand-orange">
-                      {(profile?.display_name || '?')[0].toUpperCase()}
+                <div key={member.user_id} className="bg-brand-surface border border-brand-border rounded-xl p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-sm font-bold text-brand-orange">
+                        {displayName[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{displayName}</p>
+                        {!feePerBracket && member.payment_date && (
+                          <p className="text-xs text-brand-muted">
+                            Paid {new Date(member.payment_date).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{profile?.display_name || 'Anonymous'}</p>
-                      {member.payment_date && (
-                        <p className="text-xs text-brand-muted">
-                          Paid {new Date(member.payment_date).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
+                    {/* For flat-fee pools or single-bracket, show the toggle directly */}
+                    {(!feePerBracket || maxBracketsPerMember === 1) && (
+                      <div className="flex items-center gap-2">
+                        {member.payment_status === 'waived' ? (
+                          <span className="text-xs text-brand-muted bg-brand-surface px-2 py-1 rounded-full border border-brand-border">Waived</span>
+                        ) : (
+                          <PaymentToggle
+                            memberId={member.id}
+                            status={member.payment_status || 'unpaid'}
+                            poolId={pool.id}
+                            fee={entryFee}
+                            memberName={displayName}
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {member.payment_status === 'waived' ? (
-                      <span className="text-xs text-brand-muted bg-brand-surface px-2 py-1 rounded-full border border-brand-border">Waived</span>
-                    ) : (
+
+                  {/* Per-bracket payment breakdown (fee_per_bracket + multi-bracket) */}
+                  {feePerBracket && maxBracketsPerMember > 1 && memberPayments.length > 0 && (
+                    <div className="mt-2 ml-11 space-y-1">
+                      {memberPayments.map((payment: any, idx: number) => (
+                        <div key={payment.id} className="flex items-center justify-between text-sm">
+                          <span className="text-brand-muted text-xs">
+                            {payment.status === 'paid' ? '✅' : '⏳'} Bracket {idx + 1} — ${entryFee} {payment.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Flat fee with per-bracket: just show main toggle */}
+                  {feePerBracket && maxBracketsPerMember > 1 && memberPayments.length === 0 && (
+                    <div className="mt-2 ml-11">
                       <PaymentToggle
                         memberId={member.id}
                         status={member.payment_status || 'unpaid'}
                         poolId={pool.id}
                         fee={entryFee}
-                        memberName={profile?.display_name || undefined}
+                        memberName={displayName}
                       />
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )
             })}

@@ -99,5 +99,16 @@ export async function POST(req: Request) {
     .update({ stripe_session_id: checkoutSession.id })
     .eq('id', member.id)
 
+  // Create a pending payment record in payments table
+  await adminDb.from('payments').insert({
+    pool_id,
+    user_id: session.user.id,
+    amount: pool.entry_fee,
+    status: 'unpaid',
+    payment_method: 'stripe',
+    payment_platform: 'stripe',
+    stripe_session_id: checkoutSession.id,
+  })
+
   return NextResponse.json({ url: checkoutSession.url })
 }

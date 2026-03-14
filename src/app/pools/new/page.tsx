@@ -22,6 +22,9 @@ export default function NewPoolPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [games, setGames] = useState<Game[]>([])
+  const [maxBrackets, setMaxBrackets] = useState(1)
+  const [feePerBracket, setFeePerBracket] = useState(true)
+  const [onePayoutPerPerson, setOnePayoutPerPerson] = useState(false)
   const [hasFee, setHasFee] = useState(false)
   const [entryFee, setEntryFee] = useState('')
   const [payoutPreset, setPayoutPreset] = useState(JSON.stringify(PRESET_PAYOUTS[0].value))
@@ -92,6 +95,9 @@ export default function NewPoolPage() {
         payout_structure: hasFee && entryFee ? JSON.parse(payoutPreset) : null,
         payment_instructions: hasFee && paymentInstructions.trim() ? paymentInstructions.trim() : null,
         payment_methods: paymentMethods,
+        max_brackets_per_member: maxBrackets,
+        fee_per_bracket: feePerBracket,
+        one_payout_per_person: onePayoutPerPerson,
       } as any)
       .select()
       .single()
@@ -263,6 +269,69 @@ export default function NewPoolPage() {
                 }`}
               />
             </button>
+          </div>
+
+          {/* Multi-bracket settings */}
+          <div className="space-y-4">
+            <h3 className="font-bold text-sm">Bracket Rules</h3>
+
+            <div>
+              <label className="text-sm text-brand-muted mb-2 block">
+                Max brackets per person
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 5].map(n => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setMaxBrackets(n)}
+                    className={`px-4 py-2 rounded-xl font-bold text-sm transition-colors ${
+                      maxBrackets === n
+                        ? 'bg-brand-orange text-white'
+                        : 'bg-brand-surface text-brand-muted hover:text-white'
+                    }`}
+                  >
+                    {n === 5 ? '5+' : n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {maxBrackets > 1 && hasFee && (
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={feePerBracket}
+                  onChange={e => setFeePerBracket(e.target.checked)}
+                  className="w-4 h-4 rounded"
+                />
+                <div>
+                  <span className="font-medium text-sm">Charge per bracket</span>
+                  <p className="text-xs text-brand-muted">
+                    {feePerBracket
+                      ? `$${entryFee || '0'} x brackets submitted (2 brackets = $${Number(entryFee || 0) * 2})`
+                      : `Flat $${entryFee || '0'} per person regardless of bracket count`}
+                  </p>
+                </div>
+              </label>
+            )}
+
+            {maxBrackets > 1 && (
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={onePayoutPerPerson}
+                  onChange={e => setOnePayoutPerPerson(e.target.checked)}
+                  className="w-4 h-4 rounded"
+                />
+                <div>
+                  <span className="font-medium text-sm">One payout per person</span>
+                  <p className="text-xs text-brand-muted">
+                    If someone has multiple brackets, only their best one is eligible for prizes
+                  </p>
+                </div>
+              </label>
+            )}
           </div>
 
           {/* Entry Fee (optional) */}

@@ -1,5 +1,6 @@
 import { capturePayPalOrder, PAYPAL_CONFIGURED } from '@/lib/paypal'
 import { createRouteClient } from '@/lib/supabase/route'
+import { createReadClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 // POST { orderID, pool_id }
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
 
   const capture = await capturePayPalOrder(orderID)
   if (capture?.status === 'COMPLETED') {
+    // Update pool_members (backward compat)
     await supabase
       .from('pool_members')
       .update({
@@ -32,6 +34,26 @@ export async function POST(req: Request) {
       } as any)
       .eq('pool_id', pool_id)
       .eq('user_id', session.user.id)
+
+    // Insert into payments table
+    const adminDb = createReadClient()
+    const { data: pool } = await adminDb
+      .from('pools')
+      .select('entry_fee')
+      .eq('id', pool_id)
+      .single()
+
+    await adminDb.from('payments').insert({
+      pool_id,
+      user_id: session.user.id,
+      amount: Number(pool?.entry_fee) || 0,
+      status: 'paid',
+      payment_method: 'paypal',
+      payment_platform: 'paypal',
+      paypal_order_id: orderID,
+      payment_date: new Date().toISOString(),
+      payment_note: `Paid via PayPal (${orderID})`,
+    })
 
     return NextResponse.json({ success: true })
   }

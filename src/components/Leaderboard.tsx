@@ -18,11 +18,13 @@ export interface LeaderboardEntry {
   // Pool-specific
   bracket_id?: string
   bracket_name?: string
+  bracket_number?: number
   score?: number
   correct_picks?: number
   max_possible_score?: number
   rank: number
   movement?: number | null
+  is_best_bracket?: boolean
   // Global/Friends
   total_score?: number
   total_correct_picks?: number
@@ -47,6 +49,8 @@ interface LeaderboardProps {
   showTabs?: boolean
   entryFee?: number
   payouts?: PayoutInfo[]
+  maxBracketsPerMember?: number
+  onePayoutPerPerson?: boolean
 }
 
 // ─── Podium Component (top 3) ─────────────────────────────────────────────────
@@ -151,12 +155,14 @@ function MovementBadge({ movement }: { movement: number | null | undefined }) {
 
 // ─── Table Row ────────────────────────────────────────────────────────────────
 
-function TableRow({ entry, isMe, isGlobal, onClick, payouts }: {
+function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePayoutPerPerson }: {
   entry: LeaderboardEntry
   isMe: boolean
   isGlobal: boolean
   onClick: () => void
   payouts?: PayoutInfo[]
+  multiBracket?: boolean
+  onePayoutPerPerson?: boolean
 }) {
   const score = isGlobal ? (entry.total_score ?? 0) : (entry.score ?? 0)
   const correctPicks = isGlobal ? (entry.total_correct_picks ?? 0) : (entry.correct_picks ?? 0)
@@ -186,11 +192,21 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts }: {
           </div>
         )}
         <div className="min-w-0">
-          <div className={`font-semibold text-sm truncate ${isMe ? 'text-brand-orange' : 'group-hover:text-white'}`}>
-            {display}
-            {isMe && <span className="text-xs ml-1 text-brand-muted">(you)</span>}
+          <div className="flex items-center gap-2">
+            <span className={`font-semibold text-sm truncate ${isMe ? 'text-brand-orange' : 'group-hover:text-white'}`}>
+              {display}
+              {isMe && <span className="text-xs ml-1 text-brand-muted">(you)</span>}
+            </span>
+            {multiBracket && !isGlobal && (
+              <span className="text-xs text-brand-muted bg-brand-surface px-2 py-0.5 rounded-full flex-shrink-0">
+                {entry.bracket_name || `Bracket ${entry.bracket_number || 1}`}
+              </span>
+            )}
+            {onePayoutPerPerson && !isGlobal && entry.is_best_bracket === false && (
+              <span className="text-xs text-brand-muted flex-shrink-0">(not eligible)</span>
+            )}
           </div>
-          {!isGlobal && entry.bracket_name && (
+          {!multiBracket && !isGlobal && entry.bracket_name && (
             <div className="text-xs text-brand-muted truncate">{entry.bracket_name}</div>
           )}
           {isGlobal && (
@@ -240,6 +256,8 @@ export default function Leaderboard({
   showTabs = true,
   entryFee = 0,
   payouts: payoutsProp,
+  maxBracketsPerMember = 1,
+  onePayoutPerPerson = false,
 }: LeaderboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab)
   const [globalFilter, setGlobalFilter] = useState<GlobalFilter>('all-time')
@@ -404,23 +422,27 @@ export default function Leaderboard({
           {search ? (
             filtered.map(entry => (
               <TableRow
-                key={entry.user_id}
+                key={entry.bracket_id || entry.user_id}
                 entry={entry}
                 isMe={entry.user_id === currentUserId}
                 isGlobal={isGlobal}
                 onClick={() => handleClickUser(entry.user_id, entry.bracket_id)}
                 payouts={activeTab === 'pool' ? payoutsProp : undefined}
+                multiBracket={maxBracketsPerMember > 1}
+                onePayoutPerPerson={onePayoutPerPerson}
               />
             ))
           ) : (
             rest.map(entry => (
               <TableRow
-                key={entry.user_id}
+                key={entry.bracket_id || entry.user_id}
                 entry={entry}
                 isMe={entry.user_id === currentUserId}
                 isGlobal={isGlobal}
                 onClick={() => handleClickUser(entry.user_id, entry.bracket_id)}
                 payouts={activeTab === 'pool' ? payoutsProp : undefined}
+                multiBracket={maxBracketsPerMember > 1}
+                onePayoutPerPerson={onePayoutPerPerson}
               />
             ))
           )}

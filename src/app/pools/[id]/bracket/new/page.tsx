@@ -1,6 +1,5 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { MOCK_TEAMS } from '@/lib/bracket'
 
 interface Props {
   params: { id: string }
@@ -29,17 +28,29 @@ export default async function NewBracketPage({ params }: Props) {
 
   if (!membership) redirect(`/pools/${params.id}`)
 
-  // Check if bracket already exists
-  const { data: existing } = await supabase
+  // Check how many brackets this user already has in this pool
+  const { data: existingBrackets, count: bracketCount } = await supabase
     .from('brackets')
-    .select('id')
+    .select('id', { count: 'exact' })
     .eq('pool_id', params.id)
     .eq('user_id', session.user.id)
-    .single()
 
-  if (existing) {
-    redirect(`/brackets/${existing.id}`)
+  const maxBrackets = (pool as any).max_brackets_per_member || 1
+
+  // If single-bracket pool and bracket exists, redirect to it
+  if (maxBrackets === 1 && existingBrackets && existingBrackets.length > 0) {
+    redirect(`/brackets/${existingBrackets[0].id}`)
   }
+
+  // Enforce max brackets limit
+  if (bracketCount !== null && bracketCount >= maxBrackets) {
+    // Redirect to pool page — they've hit the limit
+    redirect(`/pools/${params.id}?error=max_brackets`)
+  }
+
+  // Determine bracket name
+  const bracketNumber = (bracketCount || 0) + 1
+  const bracketName = bracketNumber === 1 ? 'My Bracket' : `Bracket ${bracketNumber}`
 
   // Create the bracket
   const { data: bracket, error } = await supabase
@@ -47,7 +58,7 @@ export default async function NewBracketPage({ params }: Props) {
     .insert({
       pool_id: params.id,
       user_id: session.user.id,
-      name: 'My Bracket',
+      name: bracketName,
       picks: {},
       is_submitted: false,
       score: 0,
