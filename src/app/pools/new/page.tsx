@@ -26,6 +26,10 @@ export default function NewPoolPage() {
   const [entryFee, setEntryFee] = useState('')
   const [payoutPreset, setPayoutPreset] = useState(JSON.stringify(PRESET_PAYOUTS[0].value))
   const [paymentInstructions, setPaymentInstructions] = useState('')
+  const [methods, setMethods] = useState({ stripe: false, paypal: false, manual: false })
+  const [manualPlatform, setManualPlatform] = useState('')
+  const [manualHandle, setManualHandle] = useState('')
+  const [manualMemo, setManualMemo] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -59,6 +63,22 @@ export default function NewPoolPage() {
       return
     }
 
+    // Build payment_methods JSONB array
+    const paymentMethods: any[] = []
+    if (hasFee) {
+      if (methods.stripe) paymentMethods.push({ type: 'stripe' })
+      if (methods.paypal) paymentMethods.push({ type: 'paypal' })
+      if (methods.manual && manualPlatform) {
+        paymentMethods.push({
+          type: 'manual',
+          platform: manualPlatform,
+          handle: manualHandle.trim() || undefined,
+          link: undefined,
+          instructions: manualMemo.trim() || undefined,
+        })
+      }
+    }
+
     // Create the pool
     const { data: pool, error: poolError } = await supabase
       .from('pools')
@@ -71,6 +91,7 @@ export default function NewPoolPage() {
         entry_fee: hasFee && entryFee ? parseFloat(entryFee) : 0,
         payout_structure: hasFee && entryFee ? JSON.parse(payoutPreset) : null,
         payment_instructions: hasFee && paymentInstructions.trim() ? paymentInstructions.trim() : null,
+        payment_methods: paymentMethods,
       } as any)
       .select()
       .single()
@@ -282,16 +303,60 @@ export default function NewPoolPage() {
                 </div>
 
                 <div>
-                  <label className="text-sm text-brand-muted mb-2 block">
-                    How to collect payment (shown to members)
+                  <label className="text-sm text-brand-muted mb-3 block font-medium">
+                    How will you collect payment? (pick any)
                   </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Venmo @yourname with 'bracket' in memo"
-                    value={paymentInstructions}
-                    onChange={e => setPaymentInstructions(e.target.value)}
-                    className="input-base w-full"
-                  />
+                  <div className="space-y-2">
+                    {/* Stripe */}
+                    <label className="flex items-start gap-3 p-3 rounded-xl border border-brand-border cursor-pointer hover:bg-brand-surface/50">
+                      <input type="checkbox" checked={methods.stripe} onChange={e => setMethods(m => ({...m, stripe: e.target.checked}))} className="mt-0.5" />
+                      <div>
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <span>Credit/Debit Card</span>
+                          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Auto-verified</span>
+                        </div>
+                        <p className="text-xs text-brand-muted mt-0.5">Credit/debit cards, Apple Pay, Google Pay via Stripe</p>
+                      </div>
+                    </label>
+
+                    {/* PayPal */}
+                    <label className="flex items-start gap-3 p-3 rounded-xl border border-brand-border cursor-pointer hover:bg-brand-surface/50">
+                      <input type="checkbox" checked={methods.paypal} onChange={e => setMethods(m => ({...m, paypal: e.target.checked}))} className="mt-0.5" />
+                      <div>
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <span>PayPal</span>
+                          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Auto-verified</span>
+                        </div>
+                        <p className="text-xs text-brand-muted mt-0.5">PayPal balance or any card</p>
+                      </div>
+                    </label>
+
+                    {/* Manual */}
+                    <label className="flex items-start gap-3 p-3 rounded-xl border border-brand-border cursor-pointer hover:bg-brand-surface/50">
+                      <input type="checkbox" checked={methods.manual} onChange={e => setMethods(m => ({...m, manual: e.target.checked}))} className="mt-0.5" />
+                      <div>
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <span>Other (Venmo, Cash App, Zelle...)</span>
+                          <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">Manual tracking</span>
+                        </div>
+                        <p className="text-xs text-brand-muted mt-0.5">You track payments manually — members click &quot;I&apos;ve paid&quot;</p>
+                      </div>
+                    </label>
+
+                    {methods.manual && (
+                      <div className="pl-7 space-y-2">
+                        <select value={manualPlatform} onChange={e => setManualPlatform(e.target.value)} className="input-base w-full">
+                          <option value="">Select platform...</option>
+                          <option value="Venmo">Venmo</option>
+                          <option value="Cash App">Cash App</option>
+                          <option value="Zelle">Zelle</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        <input type="text" placeholder="@handle or link (e.g. venmo.com/yourname)" value={manualHandle} onChange={e => setManualHandle(e.target.value)} className="input-base w-full" />
+                        <input type="text" placeholder='Memo instructions (e.g. "bracket + your name")' value={manualMemo} onChange={e => setManualMemo(e.target.value)} className="input-base w-full" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

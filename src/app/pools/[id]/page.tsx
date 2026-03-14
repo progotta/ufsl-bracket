@@ -9,7 +9,7 @@ import ShareButton from '@/components/bracket/ShareButton'
 import CommissionerActions from '@/components/pools/CommissionerActions'
 import PaymentToggle from '@/components/pools/PaymentToggle'
 import StripeConnectSection from '@/components/pools/StripeConnectSection'
-import PayWithStripe from '@/components/pools/PayWithStripe'
+import PaymentOptions from '@/components/pools/PaymentOptions'
 import StripeStatusBanner from '@/components/pools/StripeStatusBanner'
 import Nav from '@/components/layout/Nav'
 import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
@@ -72,7 +72,7 @@ export default async function PoolPage({ params }: Props) {
 
   const { data: commissionerProfile } = await adminDb
     .from('profiles')
-    .select('display_name, stripe_account_id, stripe_onboarded')
+    .select('display_name, stripe_account_id, stripe_onboarded, paypal_merchant_id, paypal_onboarded')
     .eq('id', pool.commissioner_id)
     .single()
 
@@ -97,6 +97,8 @@ export default async function PoolPage({ params }: Props) {
   // Current user's payment status + commissioner Stripe status
   const currentMember = members?.find((m: any) => m.user_id === session.user.id)
   const commissionerStripeReady = !!commissionerProfile?.stripe_onboarded && !!commissionerProfile?.stripe_account_id
+  const commissionerPaypalReady = !!(commissionerProfile as any)?.paypal_onboarded && !!(commissionerProfile as any)?.paypal_merchant_id
+  const poolPaymentMethods = ((pool as any).payment_methods || []) as any[]
 
   // Get current user's profile for share + nav
   const { data: currentProfile } = await supabase
@@ -358,24 +360,64 @@ export default async function PoolPage({ params }: Props) {
         </div>
       )}
 
-      {/* Stripe Connect — commissioner only */}
+      {/* Payment connect — commissioner only */}
       {isCommissioner && entryFee > 0 && (
-        <StripeConnectSection
-          poolId={params.id}
-          stripeOnboarded={!!commissionerProfile?.stripe_onboarded}
-          stripeAccountId={commissionerProfile?.stripe_account_id || null}
-        />
+        <div className="space-y-3">
+          {poolPaymentMethods.some((m: any) => m.type === 'stripe') && (
+            <StripeConnectSection
+              poolId={params.id}
+              stripeOnboarded={!!commissionerProfile?.stripe_onboarded}
+              stripeAccountId={commissionerProfile?.stripe_account_id || null}
+            />
+          )}
+          {poolPaymentMethods.some((m: any) => m.type === 'paypal') && (
+            commissionerPaypalReady ? (
+              <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex items-center gap-3">
+                <span className="text-green-400 text-lg">&#127359;&#65039;</span>
+                <div className="flex-1">
+                  <p className="font-bold text-sm text-green-400">PayPal Connected</p>
+                  <p className="text-xs text-brand-muted mt-0.5">Members can pay via PayPal — auto-tracked.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-brand-surface border border-brand-border rounded-xl p-4 flex items-center gap-3">
+                <span className="text-brand-orange text-lg">&#127359;&#65039;</span>
+                <div className="flex-1">
+                  <p className="font-bold text-sm">Connect PayPal to Accept Payments</p>
+                  <p className="text-xs text-brand-muted mt-0.5">Members pay via PayPal, auto-tracked. No chasing.</p>
+                </div>
+                <a
+                  href={`/api/paypal/connect?pool_id=${params.id}`}
+                  className="bg-[#0070ba] text-white font-bold text-sm px-4 py-2 rounded-xl hover:bg-[#005ea6] transition-colors whitespace-nowrap"
+                >
+                  Connect PayPal
+                </a>
+              </div>
+            )
+          )}
+        </div>
       )}
 
       {/* Pay entry fee — member only */}
-      {!isCommissioner && isMember && entryFee > 0 && currentMember?.payment_status === 'unpaid' && commissionerStripeReady && (
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <p className="font-bold text-sm">Entry Fee Required</p>
-            <p className="text-xs text-brand-muted mt-0.5">Pay ${entryFee} to lock in your spot</p>
+      {!isCommissioner && isMember && entryFee > 0 && (currentMember?.payment_status === 'unpaid' || currentMember?.payment_status === 'pending_verification') && poolPaymentMethods.length > 0 && (
+        currentMember?.payment_status === 'pending_verification' ? (
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
+            <span className="text-xl">&#9203;</span>
+            <div>
+              <p className="font-bold text-sm text-yellow-400">Payment Pending Verification</p>
+              <p className="text-xs text-brand-muted mt-0.5">The commissioner will confirm your payment.</p>
+            </div>
           </div>
-          <PayWithStripe poolId={params.id} entryFee={entryFee} />
-        </div>
+        ) : (
+          <PaymentOptions
+            poolId={params.id}
+            entryFee={entryFee}
+            paymentMethods={poolPaymentMethods}
+            commissionerStripeReady={commissionerStripeReady}
+            commissionerPaypalReady={commissionerPaypalReady}
+            memberId={currentMember?.id || ''}
+          />
+        )
       )}
 
       {/* Commissioner Actions */}
@@ -441,6 +483,7 @@ export default async function PoolPage({ params }: Props) {
                         status={member.payment_status || 'unpaid'}
                         poolId={pool.id}
                         fee={entryFee}
+                        memberName={profile?.display_name || undefined}
                       />
                     )}
                   </div>

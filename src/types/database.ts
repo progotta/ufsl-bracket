@@ -20,6 +20,8 @@ export interface Database {
           email: string | null
           stripe_account_id: string | null
           stripe_onboarded: boolean
+          paypal_merchant_id: string | null
+          paypal_onboarded: boolean
         }
         Insert: {
           id: string
@@ -31,6 +33,8 @@ export interface Database {
           email?: string | null
           stripe_account_id?: string | null
           stripe_onboarded?: boolean
+          paypal_merchant_id?: string | null
+          paypal_onboarded?: boolean
         }
         Update: {
           id?: string
@@ -42,6 +46,8 @@ export interface Database {
           email?: string | null
           stripe_account_id?: string | null
           stripe_onboarded?: boolean
+          paypal_merchant_id?: string | null
+          paypal_onboarded?: boolean
         }
       }
       pools: {
@@ -64,6 +70,7 @@ export interface Database {
           entry_fee: number | null
           payout_structure: Json | null
           payment_instructions: string | null
+          payment_methods: Json
         }
         Insert: {
           id?: string
@@ -84,6 +91,7 @@ export interface Database {
           entry_fee?: number | null
           payout_structure?: Json | null
           payment_instructions?: string | null
+          payment_methods?: Json
         }
         Update: {
           id?: string
@@ -104,6 +112,7 @@ export interface Database {
           entry_fee?: number | null
           payout_structure?: Json | null
           payment_instructions?: string | null
+          payment_methods?: Json
         }
       }
       pool_members: {
@@ -113,11 +122,12 @@ export interface Database {
           pool_id: string
           user_id: string
           role: 'commissioner' | 'member'
-          payment_status: 'unpaid' | 'paid' | 'waived'
+          payment_status: 'unpaid' | 'paid' | 'waived' | 'pending_verification'
           payment_date: string | null
           payment_note: string | null
           stripe_session_id: string | null
           stripe_payment_intent_id: string | null
+          paypal_order_id: string | null
         }
         Insert: {
           id?: string
@@ -125,11 +135,12 @@ export interface Database {
           pool_id: string
           user_id: string
           role?: 'commissioner' | 'member'
-          payment_status?: 'unpaid' | 'paid' | 'waived'
+          payment_status?: 'unpaid' | 'paid' | 'waived' | 'pending_verification'
           payment_date?: string | null
           payment_note?: string | null
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          paypal_order_id?: string | null
         }
         Update: {
           id?: string
@@ -137,11 +148,12 @@ export interface Database {
           pool_id?: string
           user_id?: string
           role?: 'commissioner' | 'member'
-          payment_status?: 'unpaid' | 'paid' | 'waived'
+          payment_status?: 'unpaid' | 'paid' | 'waived' | 'pending_verification'
           payment_date?: string | null
           payment_note?: string | null
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          paypal_order_id?: string | null
         }
       }
       teams: {

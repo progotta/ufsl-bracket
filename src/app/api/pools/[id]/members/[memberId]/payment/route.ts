@@ -20,14 +20,28 @@ export async function PATCH(
     .eq('id', params.id)
     .single()
 
-  if (!pool || pool.commissioner_id !== session.user.id) {
-    return NextResponse.json({ error: 'Only the commissioner can update payment status' }, { status: 403 })
-  }
-
   const body = await req.json()
   const { status, note } = body
 
-  if (!['paid', 'unpaid', 'waived'].includes(status)) {
+  const isCommissioner = pool?.commissioner_id === session.user.id
+
+  // Members can only set pending_verification on their own record
+  if (!isCommissioner) {
+    if (status !== 'pending_verification') {
+      return NextResponse.json({ error: 'Only the commissioner can update payment status' }, { status: 403 })
+    }
+    // Verify this member record belongs to the requesting user
+    const { data: memberRecord } = await adminDb
+      .from('pool_members')
+      .select('user_id')
+      .eq('id', params.memberId)
+      .single()
+    if (!memberRecord || memberRecord.user_id !== session.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
+  if (!['paid', 'unpaid', 'waived', 'pending_verification'].includes(status)) {
     return NextResponse.json({ error: 'Invalid payment status' }, { status: 400 })
   }
 
