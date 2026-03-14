@@ -256,9 +256,6 @@ async function DashboardPageInner() {
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                   <span className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
-                                  {intel?.currentRank && intel.poolSize > 0 && (
-                                    <span className="text-xs text-brand-muted">· #{intel.currentRank} of {intel.poolSize}</span>
-                                  )}
                                 </div>
                                 {intel?.championAbbreviation && (
                                   <div className="flex items-center gap-1 mt-0.5 text-xs text-brand-muted">
@@ -279,15 +276,23 @@ async function DashboardPageInner() {
                               <BracketRoundBreakdown picks={picks} games={games} />
                             </div>
 
-                            {/* Col 3: Score */}
-                            <div className="text-right shrink-0">
-                              <div className="text-base font-black text-brand-orange leading-tight">
-                                {bracket.score ?? 0}
-                                {intel?.maxPossibleScore != null && intel.maxPossibleScore > (bracket.score ?? 0) && (
-                                  <span className="text-brand-muted font-normal text-xs"> / {intel.maxPossibleScore}</span>
-                                )}
+                            {/* Col 3: Rank + Score */}
+                            <div className="text-right shrink-0 flex items-center gap-3">
+                              {intel?.currentRank && intel.poolSize > 0 && (
+                                <div className="flex flex-col items-center">
+                                  <span className="text-2xl font-black text-white leading-none">#{intel.currentRank}</span>
+                                  <span className="text-[10px] text-brand-muted">of {intel.poolSize}</span>
+                                </div>
+                              )}
+                              <div>
+                                <div className="text-base font-black text-brand-orange leading-tight">
+                                  {bracket.score ?? 0}
+                                  {intel?.maxPossibleScore != null && intel.maxPossibleScore > (bracket.score ?? 0) && (
+                                    <span className="text-brand-muted font-normal text-xs"> / {intel.maxPossibleScore}</span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-brand-muted">pts</div>
                               </div>
-                              <div className="text-[10px] text-brand-muted">pts</div>
                             </div>
 
                             {/* Row 2: col 1 + col 2 blank, col 3 has next game */}

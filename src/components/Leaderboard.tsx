@@ -147,7 +147,7 @@ function TableRow({ entry, isMe, isGlobal, onClick }: {
     <button
       onClick={onClick}
       className={`w-full grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-3 items-center px-4 py-3 border-t border-brand-border text-left cursor-pointer ${
-        isMe ? 'bg-brand-orange/5 hover:bg-brand-orange/10' : 'hover:bg-brand-card/50'
+        isMe ? 'bg-brand-orange/10 border-l-2 border-l-brand-orange hover:bg-brand-orange/15' : 'hover:bg-brand-card/50'
       } transition-colors group`}
     >
       {/* Rank */}
@@ -193,8 +193,8 @@ function TableRow({ entry, isMe, isGlobal, onClick }: {
       {/* Score */}
       <div className="text-right">
         <div className={`text-lg font-black ${isMe ? 'text-brand-orange' : 'text-white'}`}>{score}</div>
-        {!isGlobal && (
-          <div className="text-xs text-brand-muted">/{maxPossible}</div>
+        {!isGlobal && maxPossible > 0 && (
+          <div className="text-[10px] text-brand-muted">max {maxPossible}</div>
         )}
       </div>
 

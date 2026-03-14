@@ -96,6 +96,7 @@ export default function AuthForm() {
       {step === 'choose' && (
         <div className="space-y-6">
           <h1 className="text-2xl font-bold text-center">Sign In</h1>
+          <p className="text-white/50 text-sm text-center -mt-3">Sign in or create your free account</p>
 
           {/* OAuth Buttons */}
           <div className="space-y-3">

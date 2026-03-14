@@ -155,6 +155,12 @@ export default function AllSmack({ poolIds, poolNames, currentUserId }: AllSmack
         <div className="bg-brand-surface border border-dashed border-brand-border rounded-2xl p-8 text-center">
           <span className="text-3xl">🤐</span>
           <p className="text-brand-muted text-sm mt-2">No smack talk yet across your pools.</p>
+          <a
+            href="/pools"
+            className="inline-block mt-3 text-sm px-4 py-1.5 rounded-lg border border-brand-border bg-brand-card hover:border-brand-orange/50 text-white/80 hover:text-white transition-colors"
+          >
+            💬 Start the trash talk
+          </a>
         </div>
       ) : (
         <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden divide-y divide-brand-border">

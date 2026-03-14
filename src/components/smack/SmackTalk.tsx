@@ -56,6 +56,7 @@ function Avatar({ profile, userId }: { profile: SmackProfile | null; userId: str
 export default function SmackTalk({ poolId, currentUserId, currentUserName }: SmackTalkProps) {
   const [messages, setMessages] = useState<SmackMessage[]>([])
   const [input, setInput] = useState('')
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -246,6 +247,12 @@ export default function SmackTalk({ poolId, currentUserId, currentUserName }: Sm
             <span className="text-3xl mb-2">🏀</span>
             <p className="text-sm font-medium">No smack yet.</p>
             <p className="text-xs mt-1">Be the first to talk trash.</p>
+            <button
+              onClick={() => inputRef.current?.focus()}
+              className="mt-3 text-sm px-4 py-1.5 rounded-lg border border-brand-border bg-brand-card hover:border-brand-orange/50 text-white/80 hover:text-white transition-colors"
+            >
+              💬 Start the trash talk
+            </button>
           </div>
         ) : (
           messages.map((msg) => {
@@ -315,6 +322,7 @@ export default function SmackTalk({ poolId, currentUserId, currentUserName }: Sm
         <div className="flex items-end gap-2">
           <div className="flex-1 relative">
             <textarea
+              ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => {
