@@ -3,6 +3,7 @@ import { createRouteClient } from '@/lib/supabase/route'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { notifyCommissioner } from '@/lib/notify'
+import { rateLimit } from '@/lib/ratelimit'
 
 // POST /api/pools/join — join via invite code
 export async function POST(request: Request) {
@@ -12,6 +13,10 @@ export async function POST(request: Request) {
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // Rate limit: 20 joins per user per hour
+  const rlResponse = await rateLimit(session.user.id, 'pool-join', { requests: 20, window: '1 h' })
+  if (rlResponse) return rlResponse
 
   const { inviteCode, referralId } = await request.json()
 

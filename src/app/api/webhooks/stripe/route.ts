@@ -38,6 +38,12 @@ export async function POST(req: Request) {
     const session = event.data.object as Stripe.Checkout.Session
     const { pool_id, user_id } = session.metadata || {}
 
+    // Validate metadata UUIDs to prevent injection
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (pool_id && user_id && (!UUID_REGEX.test(pool_id) || !UUID_REGEX.test(user_id))) {
+      return Response.json({ error: 'Invalid metadata' }, { status: 400 })
+    }
+
     if (pool_id && user_id) {
       // Update pool_members (backward compat)
       await supabase

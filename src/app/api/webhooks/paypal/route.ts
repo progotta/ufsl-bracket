@@ -25,7 +25,20 @@ export async function POST(req: Request) {
   if (event.event_type === 'CHECKOUT.ORDER.APPROVED' || event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
     const customId = event.resource?.purchase_units?.[0]?.custom_id
     if (customId) {
-      const { pool_id, user_id } = JSON.parse(customId)
+      let parsed: { pool_id?: string; user_id?: string }
+      try {
+        parsed = JSON.parse(customId)
+      } catch {
+        return Response.json({ error: 'Invalid custom_id' }, { status: 400 })
+      }
+      const { pool_id, user_id } = parsed
+
+      // Validate metadata UUIDs to prevent injection
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (!pool_id || !user_id || !UUID_REGEX.test(pool_id) || !UUID_REGEX.test(user_id)) {
+        return Response.json({ error: 'Invalid metadata' }, { status: 400 })
+      }
+
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!

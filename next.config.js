@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 
 const securityHeaders = [
+  // Enable DNS prefetch for performance
+  { key: 'X-DNS-Prefetch-Control', value: 'on' },
   // Prevent clickjacking
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
   // Prevent MIME-type sniffing
