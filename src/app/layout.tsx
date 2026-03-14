@@ -5,12 +5,12 @@ import SimBanner from '@/components/SimBanner'
 import MobileNav from '@/components/layout/MobileNav'
 
 export const metadata: Metadata = {
-  title: 'UFSL Bracket Challenge',
-  description: 'March Madness bracket pool for UFSL.net — pick your bracket, beat your friends.',
+  title: 'UFSL — Ultimate Fantasy Sports League',
+  description: 'The last league platform you\'ll ever need. Run any pool, any sport, any league. Automatic payments, real-time updates, zero chasing. Start with March Madness.',
   openGraph: {
-    title: 'UFSL Bracket Challenge',
-    description: 'March Madness bracket pool for UFSL.net',
-    siteName: 'UFSL Bracket Challenge',
+    title: 'UFSL — Ultimate Fantasy Sports League',
+    description: 'Run any league. Any sport. Any pool. We handle the rest.',
+    siteName: 'UFSL',
   },
 }
 

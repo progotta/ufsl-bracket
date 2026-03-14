@@ -29,17 +29,17 @@ export default function LandingPage() {
         </div>
 
         <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-          Run the pool.<br />
-          <span className="text-brand-orange">We handle everything else.</span>
+          The last league platform<br />
+          <span className="text-brand-orange">you&apos;ll ever need.</span>
         </h1>
 
-        <p className="text-xl text-brand-muted max-w-2xl mb-10">
-          The bracket platform for pools that actually matter.
+        <p className="text-xl text-brand-muted max-w-2xl mb-6">
+          Run any league. Any sport. Any pool.
           Automatic payments, real-time updates, and zero chasing —
-          you get the credit, we do the work.
+          for commissioners who want to look like heroes and players who want to have fun.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-16">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Link
             href="/auth?mode=commissioner"
             className="bg-brand-orange text-white font-black text-lg px-8 py-4 rounded-2xl hover:bg-brand-orange/90 transition-colors text-center"
@@ -56,6 +56,9 @@ export default function LandingPage() {
 
         <p className="text-brand-muted text-sm">
           No credit card required · Free to run · Players join in under a minute
+        </p>
+        <p className="text-brand-muted text-sm mt-4">
+          🏀 Starting with March Madness · 🏈 Fantasy Football coming · ⛳ Golf pools · 🏆 More every season
         </p>
       </section>
 
@@ -86,8 +89,8 @@ export default function LandingPage() {
       {/* Features */}
       <section className="relative z-10 py-20 px-6 bg-brand-surface/30">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl font-black text-center mb-4">Everything your pool needs</h2>
-          <p className="text-brand-muted text-center mb-16">Built for commissioners. Loved by players.</p>
+          <h2 className="text-4xl font-black text-center mb-4">Built for every league you run</h2>
+          <p className="text-brand-muted text-center mb-16">Whether it&apos;s bracket pools, fantasy leagues, or survivor — one platform, zero hassle.</p>
 
           <div className="grid md:grid-cols-2 gap-8">
             {[
@@ -134,10 +137,39 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Coming Soon Sports */}
+      <section className="relative z-10 py-16 px-6 border-t border-brand-border">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-brand-muted text-sm font-medium uppercase tracking-wider mb-6">Starting with March Madness · More coming soon</p>
+          <div className="flex flex-wrap justify-center gap-4">
+            {[
+              { emoji: '🏀', label: 'Bracket Pools', status: 'live' },
+              { emoji: '🏈', label: 'Fantasy Football', status: 'soon' },
+              { emoji: '⛳', label: 'Golf Pools', status: 'soon' },
+              { emoji: '🏒', label: 'Hockey Pools', status: 'soon' },
+              { emoji: '⚾', label: 'Baseball', status: 'soon' },
+              { emoji: '🎯', label: 'Survivor Pools', status: 'soon' },
+              { emoji: '🏆', label: 'More Sports', status: 'soon' },
+            ].map(({ emoji, label, status }) => (
+              <div key={label} className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium ${
+                status === 'live'
+                  ? 'border-brand-orange bg-brand-orange/10 text-brand-orange'
+                  : 'border-brand-border text-brand-muted'
+              }`}>
+                <span>{emoji}</span>
+                <span>{label}</span>
+                {status === 'live' && <span className="text-xs bg-brand-orange text-white px-1.5 py-0.5 rounded-full">Live</span>}
+                {status === 'soon' && <span className="text-xs text-brand-muted">Soon</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* vs. Competitors */}
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-4xl font-black text-center mb-4">Why not ESPN or Yahoo?</h2>
+          <h2 className="text-4xl font-black text-center mb-4">Why commissioners switch to UFSL</h2>
           <p className="text-brand-muted text-center mb-12">They&apos;re fine for free fun. You need more.</p>
 
           <div className="overflow-x-auto">
@@ -159,6 +191,7 @@ export default function LandingPage() {
                   ['Round recaps', '✅ Automatic', '❌ You do it'],
                   ['Custom payout splits', '✅ Yes', '❌ No'],
                   ['Works on mobile', '✅ App-quality', '⚠️ Clunky'],
+                  ['Works for any sport/pool type', '✅ Built for it', '❌ Sport-specific only'],
                 ].map(([feature, us, them]) => (
                   <tr key={feature}>
                     <td className="py-3 text-sm text-brand-muted">{feature}</td>
@@ -196,11 +229,11 @@ export default function LandingPage() {
       <section className="relative z-10 py-20 px-6 text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-4xl font-black mb-4">
-            Selection Sunday is March 16.<br />
-            <span className="text-brand-orange">Be ready.</span>
+            Your league deserves better.<br />
+            <span className="text-brand-orange">Start with March Madness.</span>
           </h2>
           <p className="text-brand-muted mb-10">
-            Free to start. Your players will thank you.
+            Free to start. Your players will love it. And next season — we&apos;ll have even more for you.
           </p>
           <Link
             href="/auth?mode=commissioner"
