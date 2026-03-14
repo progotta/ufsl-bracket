@@ -74,12 +74,6 @@ export default function BracketPicker({
   gameResults = {},
 }: BracketPickerProps) {
   const [picks, setPicks] = useState<Record<string, string>>(initialPicks)
-  if (typeof window !== 'undefined') {
-    const r2keys = Object.keys(initialPicks).filter(k => k.includes('r2'))
-    const r3keys = Object.keys(initialPicks).filter(k => k.includes('r3'))
-    // eslint-disable-next-line no-console
-    console.log('[BP] r2 picks:', r2keys, '| r3 picks:', r3keys, '| east-r2-g1:', initialPicks['east-r2-g1']?.slice(0,8))
-  }
   const [undoPicks, setUndoPicks] = useState<Record<string, string> | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
