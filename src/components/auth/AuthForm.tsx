@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Mail, Phone, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
 import clsx from 'clsx'
@@ -15,7 +15,34 @@ export default function AuthForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [resendCountdown, setResendCountdown] = useState(0)
   const supabase = createClient()
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return
+    const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [resendCountdown])
+
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    if (digits.length === 0) return ''
+    // If starts with 1 and has 11 digits, format as +1 (XXX) XXX-XXXX
+    if (digits.startsWith('1') && digits.length <= 11) {
+      const rest = digits.slice(1)
+      if (rest.length <= 3) return `+1 (${rest}`
+      if (rest.length <= 6) return `+1 (${rest.slice(0, 3)}) ${rest.slice(3)}`
+      return `+1 (${rest.slice(0, 3)}) ${rest.slice(3, 6)}-${rest.slice(6, 10)}`
+    }
+    // 10 digits or less — assume US
+    if (digits.length <= 10) {
+      if (digits.length <= 3) return `(${digits}`
+      if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`
+    }
+    // International: just prefix with +
+    return '+' + digits
+  }
 
   const handleOAuthLogin = async (provider: 'google' | 'apple' | 'facebook') => {
     setLoading(true)
@@ -47,6 +74,7 @@ export default function AuthForm() {
     } else {
       setStep('otp-email')
       setSuccess(`We sent a code to ${email}`)
+      setResendCountdown(60)
     }
     setLoading(false)
   }
@@ -65,6 +93,7 @@ export default function AuthForm() {
     } else {
       setStep('otp-phone')
       setSuccess(`We sent a code to ${formatted}`)
+      setResendCountdown(60)
     }
     setLoading(false)
   }
@@ -101,13 +130,13 @@ export default function AuthForm() {
           {/* OAuth Buttons */}
           <div className="space-y-3">
             <OAuthButton
-              provider="google"
-              onClick={() => handleOAuthLogin('google')}
+              provider="apple"
+              onClick={() => handleOAuthLogin('apple')}
               disabled={loading}
             />
             <OAuthButton
-              provider="apple"
-              onClick={() => handleOAuthLogin('apple')}
+              provider="google"
+              onClick={() => handleOAuthLogin('google')}
               disabled={loading}
             />
             <OAuthButton
@@ -178,8 +207,8 @@ export default function AuthForm() {
           <input
             type="tel"
             value={phone}
-            onChange={e => setPhone(e.target.value)}
-            placeholder="+1 (555) 000-0000"
+            onChange={e => setPhone(formatPhone(e.target.value))}
+            placeholder="(555) 000-0000"
             required
             className="input-base"
             autoFocus
@@ -220,10 +249,26 @@ export default function AuthForm() {
           </button>
           <button
             type="button"
-            onClick={() => { setStep(step === 'otp-email' ? 'email' : 'phone'); setOtp('') }}
-            className="text-brand-muted text-sm text-center w-full hover:text-white transition-colors"
+            disabled={resendCountdown > 0}
+            onClick={async () => {
+              setError(null)
+              if (step === 'otp-email') {
+                const { error } = await supabase.auth.signInWithOtp({
+                  email,
+                  options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+                })
+                if (error) setError(error.message)
+                else { setSuccess(`New code sent to ${email}`); setResendCountdown(60) }
+              } else {
+                const formatted = phone.startsWith('+') ? phone : `+1${phone.replace(/\D/g, '')}`
+                const { error } = await supabase.auth.signInWithOtp({ phone: formatted })
+                if (error) setError(error.message)
+                else { setSuccess(`New code sent to ${formatted}`); setResendCountdown(60) }
+              }
+            }}
+            className="text-brand-muted text-sm text-center w-full hover:text-white transition-colors disabled:opacity-50 disabled:hover:text-brand-muted"
           >
-            Resend code
+            {resendCountdown > 0 ? `Resend code in ${resendCountdown}s` : 'Resend code'}
           </button>
         </form>
       )}
