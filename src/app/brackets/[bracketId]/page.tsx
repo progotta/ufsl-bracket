@@ -212,6 +212,14 @@ export default async function BracketPage({ params }: Props) {
     picks[slug ?? key] = val // use corrected slug if found, else keep as-is (handles already-slug picks)
   }
 
+  // DEBUG: log r3 picks and gameResults
+  const r3picks = Object.entries(picks).filter(([k]) => k.includes('r3'))
+  const r3results = Object.entries(gameResults).filter(([k]) => k.includes('r3'))
+  console.log('[bracket-debug] totalGames:', completedGames?.length, 'totalPicks:', Object.keys(picks).length)
+  console.log('[bracket-debug] r3picks:', JSON.stringify(r3picks))
+  console.log('[bracket-debug] r3results:', JSON.stringify(r3results))
+  console.log('[bracket-debug] game49slug:', completedGames?.find(g => g.game_number === 49) ? gameIdMap.get(completedGames.find(g => g.game_number === 49)!.id) : 'n/a')
+
   // Determine champion pick from picks (game 63 = championship in full bracket)
 
   const championTeamId = picks['game-63'] || picks['championship'] || null
