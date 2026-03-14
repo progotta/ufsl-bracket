@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Metadata } from 'next'
 import Nav from '@/components/layout/Nav'
-import dynamic from 'next/dynamic'
+import nextDynamic from 'next/dynamic'
 
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
@@ -10,7 +10,7 @@ import ShareButton from '@/components/bracket/ShareButton'
 import PostBracketInviteBanner from '@/components/pools/PostBracketInviteBanner'
 
 // Lazy-load the heavy bracket picker — it's large JS and only needed client-side
-const BracketPicker = dynamic(() => import('@/components/bracket/BracketPicker'), {
+const BracketPicker = nextDynamic(() => import('@/components/bracket/BracketPicker'), {
   loading: () => (
     <div className="flex-1 flex items-center justify-center min-h-[400px]">
       <div className="text-brand-muted animate-pulse text-sm">Loading bracket…</div>
