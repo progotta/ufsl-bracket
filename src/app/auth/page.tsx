@@ -3,13 +3,19 @@ import { createServerClient } from '@/lib/supabase/server'
 import AuthForm from '@/components/auth/AuthForm'
 import Logo from '@/components/ui/Logo'
 
-export default async function AuthPage() {
+export default async function AuthPage({
+  searchParams,
+}: {
+  searchParams: { mode?: string; error?: string }
+}) {
   const supabase = createServerClient()
   const { data: { session } } = await supabase.auth.getSession()
 
   if (session) {
-    redirect('/dashboard')
+    redirect(searchParams.mode === 'commissioner' ? '/pools/create' : '/dashboard')
   }
+
+  const isCommissioner = searchParams.mode === 'commissioner'
 
   return (
     <main className="min-h-screen bg-court-gradient flex flex-col items-center justify-center p-4">
@@ -24,12 +30,14 @@ export default async function AuthPage() {
         <div className="text-center mb-8">
           <Logo size="lg" />
           <p className="text-white/60 mt-3 text-sm">
-            Pick your bracket. Beat your friends.
+            {isCommissioner ? 'Start your pool in minutes.' : 'Pick your bracket. Beat your friends.'}
           </p>
         </div>
 
         {/* Auth form */}
-        <AuthForm />
+        <AuthForm
+          commissionerMode={isCommissioner}
+        />
 
         <p className="text-center text-white/50 text-xs mt-6">
           By signing in, you agree to our{' '}

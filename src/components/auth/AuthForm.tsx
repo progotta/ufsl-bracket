@@ -8,7 +8,7 @@ import clsx from 'clsx'
 type AuthStep = 'choose' | 'email' | 'phone' | 'otp-email' | 'otp-phone'
 type LoadingProvider = 'apple' | 'google' | 'facebook' | 'email' | 'phone' | 'verify' | null
 
-export default function AuthForm() {
+export default function AuthForm({ commissionerMode = false }: { commissionerMode?: boolean }) {
   const [step, setStep] = useState<AuthStep>('choose')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -42,13 +42,15 @@ export default function AuthForm() {
     return '+' + digits
   }
 
+  const postAuthRedirect = commissionerMode ? '/pools/create' : '/dashboard'
+
   const handleOAuthLogin = async (provider: 'google' | 'apple' | 'facebook') => {
     setLoading(provider)
     setError(null)
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`,
       },
     })
     if (error) {
@@ -64,7 +66,7 @@ export default function AuthForm() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`,
       },
     })
     if (error) {
@@ -123,8 +125,8 @@ export default function AuthForm() {
     <div className="bg-brand-surface border border-brand-border rounded-2xl p-8 shadow-2xl animate-fade-in w-full max-w-md mx-auto">
       {step === 'choose' && (
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-center">Sign In</h1>
-          <p className="text-white/50 text-sm text-center -mt-3">Sign in or create your free account</p>
+          <h1 className="text-2xl font-bold text-center">{commissionerMode ? 'Start your pool' : 'Sign In'}</h1>
+          <p className="text-white/50 text-sm text-center -mt-3">{commissionerMode ? 'Sign in to create your bracket pool' : 'Sign in or create your free account'}</p>
 
           {/* OAuth Buttons */}
           <div className="space-y-3">

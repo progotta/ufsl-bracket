@@ -452,6 +452,15 @@ export default function Leaderboard({
               </div>
             </div>
           )}
+
+          {/* Start your own pool CTA */}
+          {filtered.length > 0 && (
+            <div className="text-center py-4 border-t border-brand-border">
+              <p className="text-xs text-brand-muted">
+                Run your own pool next year? <a href="/" className="text-brand-orange hover:underline">UFSL handles everything →</a>
+              </p>
+            </div>
+          )}
         </>
       )}
 

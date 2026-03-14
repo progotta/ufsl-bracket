@@ -290,6 +290,12 @@ export default function BracketPicker({
               </button>
               <NotificationPrompt trigger="after_bracket" className="text-left" />
             </div>
+            <div className="mt-6 p-4 bg-brand-surface rounded-xl text-center">
+              <p className="text-sm text-brand-muted mb-2">Running your own pool?</p>
+              <a href="/?ref=post-submit" className="text-brand-orange text-sm font-medium hover:underline">
+                UFSL makes it easy — see how →
+              </a>
+            </div>
           </div>
         </div>
       )}
