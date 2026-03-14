@@ -73,6 +73,24 @@ export async function GET(
           }
         }
 
+        // Fallback: if no snapshots, try previous_rank from brackets table
+        if (prevRankMap.size === 0 && current && current.length > 0) {
+          const bracketIds = current.map(e => e.bracket_id).filter(Boolean)
+          if (bracketIds.length > 0) {
+            const { data: brackets } = await supabase
+              .from('brackets')
+              .select('id, user_id, previous_rank')
+              .in('id', bracketIds)
+            if (brackets) {
+              for (const b of brackets) {
+                if (b.previous_rank !== null && b.previous_rank !== undefined) {
+                  prevRankMap.set(b.user_id, b.previous_rank)
+                }
+              }
+            }
+          }
+        }
+
         // Attach movement to each entry
         return (current || []).map(entry => {
           const prevRank = prevRankMap.get(entry.user_id)

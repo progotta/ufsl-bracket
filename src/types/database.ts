@@ -126,6 +126,7 @@ export interface Database {
           secondary_color: string | null
           is_active: boolean
           espn_id: number | null
+          season: number
         }
         Insert: {
           id?: string
@@ -138,6 +139,7 @@ export interface Database {
           secondary_color?: string | null
           is_active?: boolean
           espn_id?: number | null
+          season?: number
         }
         Update: {
           id?: string
@@ -150,6 +152,7 @@ export interface Database {
           secondary_color?: string | null
           is_active?: boolean
           espn_id?: number | null
+          season?: number
         }
       }
       games: {
@@ -167,6 +170,7 @@ export interface Database {
           completed_at: string | null
           status: 'scheduled' | 'in_progress' | 'completed'
           next_game_id: string | null
+          season: number
         }
         Insert: {
           id?: string
@@ -182,6 +186,7 @@ export interface Database {
           completed_at?: string | null
           status?: 'scheduled' | 'in_progress' | 'completed'
           next_game_id?: string | null
+          season?: number
         }
         Update: {
           id?: string
@@ -197,6 +202,7 @@ export interface Database {
           completed_at?: string | null
           status?: 'scheduled' | 'in_progress' | 'completed'
           next_game_id?: string | null
+          season?: number
         }
       }
       brackets: {
@@ -212,6 +218,7 @@ export interface Database {
           max_possible_score: number
           picks: Json
           bracket_type: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
+          previous_rank: number | null
         }
         Insert: {
           id?: string
@@ -225,6 +232,7 @@ export interface Database {
           max_possible_score?: number
           picks?: Json
           bracket_type?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
+          previous_rank?: number | null
         }
         Update: {
           id?: string
@@ -238,6 +246,7 @@ export interface Database {
           max_possible_score?: number
           picks?: Json
           bracket_type?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
+          previous_rank?: number | null
         }
       }
     }

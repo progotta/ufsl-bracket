@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
+import CommissionerActions from '@/components/pools/CommissionerActions'
 import Nav from '@/components/layout/Nav'
 
 // Lazy-load heavy client components to reduce initial bundle
@@ -284,6 +285,19 @@ export default async function PoolPage({ params }: Props) {
           />
         </div>
       </div>
+
+      {/* Commissioner Actions */}
+      {isCommissioner && (
+        <CommissionerActions
+          poolId={params.id}
+          poolStatus={pool.status}
+          leaderboard={(leaderboard || []).map(e => ({
+            display_name: e.display_name,
+            score: e.score,
+            bracket_name: e.bracket_name,
+          }))}
+        />
+      )}
 
       {/* Leaderboard — tabbed (Pool / Global / Friends) */}
       <Leaderboard

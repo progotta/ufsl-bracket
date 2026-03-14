@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
-import { Activity, Cpu, Gamepad2, Users, Trophy } from 'lucide-react'
+import { Activity, Cpu, Gamepad2, Users, Trophy, ClipboardList } from 'lucide-react'
 
 const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '').split(',')
 
@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const nav = [
     { href: '/admin', label: 'Dashboard', icon: Activity },
     { href: '/admin/simulator', label: 'Simulator', icon: Cpu },
+    { href: '/admin/bracket-setup', label: '2026 Bracket', icon: ClipboardList },
     { href: '/admin/games', label: 'Games', icon: Gamepad2 },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/pools', label: 'Pools', icon: Trophy },
