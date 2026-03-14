@@ -92,7 +92,7 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="bg-brand-surface border border-brand-border rounded-2xl p-8 shadow-2xl animate-fade-in">
+    <div className="bg-brand-surface border border-brand-border rounded-2xl p-8 shadow-2xl animate-fade-in w-full max-w-md mx-auto">
       {step === 'choose' && (
         <div className="space-y-6">
           <h1 className="text-2xl font-bold text-center">Sign In</h1>
@@ -122,7 +122,7 @@ export default function AuthForm() {
               <div className="w-full border-t border-brand-border" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-brand-surface px-3 text-brand-muted">or continue with</span>
+              <span className="bg-brand-surface px-3 text-white/50">or continue with</span>
             </div>
           </div>
 

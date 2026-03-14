@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, Share2 } from 'lucide-react'
+import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, ChevronRight, Share2 } from 'lucide-react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
@@ -146,7 +146,7 @@ function TableRow({ entry, isMe, isGlobal, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`w-full grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 items-center px-4 py-3 border-t border-brand-border text-left ${
+      className={`w-full grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-3 items-center px-4 py-3 border-t border-brand-border text-left cursor-pointer ${
         isMe ? 'bg-brand-orange/5 hover:bg-brand-orange/10' : 'hover:bg-brand-card/50'
       } transition-colors group`}
     >
@@ -196,6 +196,11 @@ function TableRow({ entry, isMe, isGlobal, onClick }: {
         {!isGlobal && (
           <div className="text-xs text-brand-muted">/{maxPossible}</div>
         )}
+      </div>
+
+      {/* Chevron — view bracket */}
+      <div className="flex-shrink-0 text-brand-muted group-hover:text-brand-orange transition-colors">
+        <ChevronRight size={14} />
       </div>
     </button>
   )
@@ -358,12 +363,13 @@ export default function Leaderboard({
 
           {/* Table header */}
           {rest.length > 0 && (
-            <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-2 border-t border-brand-border bg-brand-card/20">
+            <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-3 px-4 py-2 border-t border-brand-border bg-brand-card/20">
               <span className="w-7 text-xs font-semibold text-brand-muted uppercase tracking-wide">#</span>
               <span className="text-xs font-semibold text-brand-muted uppercase tracking-wide">Player</span>
               <span className="w-8 text-xs font-semibold text-brand-muted uppercase tracking-wide text-center">±</span>
               <span className="text-xs font-semibold text-brand-muted uppercase tracking-wide text-right hidden sm:block">✓ Picks</span>
               <span className="text-xs font-semibold text-brand-muted uppercase tracking-wide text-right">Score</span>
+              <span className="w-[14px]" />
             </div>
           )}
 

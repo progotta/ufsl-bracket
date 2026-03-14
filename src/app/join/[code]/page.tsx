@@ -52,14 +52,14 @@ export default async function JoinPage({ params }: Props) {
     )
   }
 
-  // Get member count
-  const { count: memberCount } = await supabase
+  // Get member count — use adminDb (service role) to bypass RLS for non-members
+  const { count: memberCount } = await adminDb
     .from('pool_members')
     .select('id', { count: 'exact', head: true })
     .eq('pool_id', pool.id)
 
-  // Get commissioner profile
-  const { data: commissioner } = await supabase
+  // Get commissioner profile — use adminDb so anyone visiting join link can see it
+  const { data: commissioner } = await adminDb
     .from('profiles')
     .select('display_name')
     .eq('id', pool.commissioner_id)

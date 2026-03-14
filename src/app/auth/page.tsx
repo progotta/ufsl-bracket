@@ -23,7 +23,7 @@ export default async function AuthPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Logo size="lg" />
-          <p className="text-brand-muted mt-3 text-sm">
+          <p className="text-white/60 mt-3 text-sm">
             Pick your bracket. Beat your friends.
           </p>
         </div>
@@ -31,7 +31,7 @@ export default async function AuthPage() {
         {/* Auth form */}
         <AuthForm />
 
-        <p className="text-center text-brand-muted text-xs mt-6">
+        <p className="text-center text-white/50 text-xs mt-6">
           By signing in, you agree to our{' '}
           <a href="/terms" className="text-brand-orange hover:underline">Terms</a>{' '}
           and{' '}

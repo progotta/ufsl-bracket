@@ -520,7 +520,9 @@ export default function BracketPicker({
       </div>
 
       {/* Bracket canvas */}
-      <div className="flex-1 overflow-auto p-4 sm:p-6">
+      <div className="relative flex-1 overflow-auto p-4 sm:p-6">
+        {/* Right-edge scroll hint gradient — visible when content overflows (tablet) */}
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-brand-dark to-transparent z-10 lg:hidden" />
         <LiveScoreContext.Provider value={{ liveScoreMap, picks, gameResults, eliminatedTeams: (() => {
           // Build set of team IDs that have lost a completed game
           const eliminated = new Set<string>()
@@ -1024,8 +1026,11 @@ function TeamSlot({
 
       {/* Pick indicator */}
       {isPicked && (
-        <span className="text-brand-orange flex-shrink-0">
-          <CheckCircle size={12} />
+        <span className={clsx(
+          'flex-shrink-0',
+          isCorrect ? 'text-green-400' : isWrong ? 'text-red-400' : 'text-brand-orange'
+        )}>
+          {isCorrect ? <CheckCircle size={12} /> : isWrong ? <X size={12} /> : <CheckCircle size={12} />}
         </span>
       )}
 

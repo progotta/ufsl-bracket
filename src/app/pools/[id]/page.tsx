@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
+import Nav from '@/components/layout/Nav'
 
 // Lazy-load heavy client components to reduce initial bundle
 const Leaderboard = dynamic(() => import('@/components/Leaderboard'), {
@@ -83,10 +84,10 @@ export default async function PoolPage({ params }: Props) {
   const isMember = !!membership
   const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${pool.invite_code}`
 
-  // Get current user's profile for share
+  // Get current user's profile for share + nav
   const { data: currentProfile } = await supabase
     .from('profiles')
-    .select('display_name')
+    .select('*')
     .eq('id', session.user.id)
     .maybeSingle()
 
@@ -96,11 +97,13 @@ export default async function PoolPage({ params }: Props) {
   const userName = currentProfile?.display_name || 'Anonymous'
 
   return (
-    <div className="space-y-8">
+    <div className="min-h-screen bg-brand-dark">
+      <Nav profile={currentProfile} />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <Link href="/dashboard" className="text-brand-muted hover:text-white mt-1 transition-colors">
+          <Link href="/dashboard" className="text-brand-muted hover:text-white mt-1 transition-colors md:hidden">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -267,6 +270,7 @@ export default async function PoolPage({ params }: Props) {
           })}
         </div>
       </section>
+      </main>
     </div>
   )
 }
