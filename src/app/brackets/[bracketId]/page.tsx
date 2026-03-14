@@ -141,11 +141,36 @@ export default async function BracketPage({ params }: Props) {
     .from('games')
     .select('id, region, round, game_number, winner_id, team1_id, team2_id, team1_score, team2_score, status')
 
-  // Build UUID → slug mapping so BracketPicker (which uses slugs like "east-r1-g1") can match DB data
+  // Build UUID → slug mapping matching BracketPicker's gameId() formula
+  // BracketPicker uses within-region position-based game numbers, NOT absolute DB game_numbers
+  const REGION_ORDER: Record<string, number> = { East: 0, West: 1, South: 2, Midwest: 3 }
+  const GAMES_PER_REGION = [8, 4, 2, 1] // R1-R4 games per region
+
+  // Special IDs for R5/R6 by DB game_number (hardcoded from bracketAdvancement structure)
+  const SPECIAL_SLUGS: Record<number, string> = { 61: 'ff-r5-g1', 62: 'ff-r5-g2', 63: 'championship-r6-g1' }
+
+  // Group games by round+region to find within-region position
+  const byRoundRegion: Record<string, typeof completedGames[number][]> = {}
+  for (const g of completedGames || []) {
+    const key = `${g.round}-${g.region}`
+    ;(byRoundRegion[key] = byRoundRegion[key] || []).push(g)
+  }
+  for (const arr of Object.values(byRoundRegion)) arr.sort((a, b) => a.game_number - b.game_number)
+
   const gameIdMap = new Map<string, string>() // UUID → slug
   for (const g of completedGames || []) {
-    const slug = `${(g.region || 'east').toLowerCase()}-r${g.round}-g${g.game_number}`
-    gameIdMap.set(g.id, slug)
+    const special = SPECIAL_SLUGS[g.game_number]
+    if (special) { gameIdMap.set(g.id, special); continue }
+    if (g.round <= 4) {
+      const regionIdx = REGION_ORDER[g.region] ?? 0
+      const group = byRoundRegion[`${g.round}-${g.region}`] || []
+      const withinIdx = group.findIndex(x => x.id === g.id)
+      const bracketNum = regionIdx * GAMES_PER_REGION[g.round - 1] + withinIdx + 1
+      gameIdMap.set(g.id, `${g.region.toLowerCase()}-r${g.round}-g${bracketNum}`)
+    } else {
+      // fallback for any unmapped round
+      gameIdMap.set(g.id, `${g.region.toLowerCase()}-r${g.round}-g${g.game_number}`)
+    }
   }
 
   const gameResults: Record<string, { winnerId: string; team1Score?: number; team2Score?: number }> = {}
