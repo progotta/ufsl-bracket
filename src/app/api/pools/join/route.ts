@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { createRouteClient } from '@/lib/supabase/route'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // POST /api/pools/join — join via invite code
@@ -17,9 +18,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invite code required' }, { status: 400 })
   }
 
-  const db = supabase as any
+  // Use service role to look up pool by invite code — the invite code IS the access control.
+  // RLS blocks non-members; a joiner isn't a member yet.
+  const adminDb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
-  const { data: pool } = await db
+  const { data: pool } = await adminDb
     .from('pools')
     .select('id, name, status, max_members, join_requires_approval')
     .eq('invite_code', inviteCode.toUpperCase())
@@ -38,7 +44,7 @@ export async function POST(request: Request) {
   }
 
   // Check if already a member
-  const { data: existing } = await db
+  const { data: existing } = await adminDb
     .from('pool_members')
     .select('id')
     .eq('pool_id', pool.id)
@@ -51,12 +57,12 @@ export async function POST(request: Request) {
 
   // Check max members
   if (pool.max_members) {
-    const { count } = await db
+    const { count } = await adminDb
       .from('pool_members')
       .select('id', { count: 'exact', head: true })
       .eq('pool_id', pool.id)
 
-    if (count >= pool.max_members) {
+    if ((count ?? 0) >= pool.max_members) {
       return NextResponse.json({ error: 'This pool is full' }, { status: 400 })
     }
   }
@@ -64,7 +70,7 @@ export async function POST(request: Request) {
   // Handle approval-required pools
   if (pool.join_requires_approval) {
     // Check if already requested
-    const { data: existingRequest } = await db
+    const { data: existingRequest } = await adminDb
       .from('pool_join_requests')
       .select('id, status')
       .eq('pool_id', pool.id)
@@ -79,7 +85,7 @@ export async function POST(request: Request) {
       })
     }
 
-    const { error: reqError } = await db.from('pool_join_requests').insert({
+    const { error: reqError } = await adminDb.from('pool_join_requests').insert({
       pool_id: pool.id,
       user_id: session.user.id,
       invite_code: inviteCode.toUpperCase(),
@@ -93,7 +99,7 @@ export async function POST(request: Request) {
   }
 
   // Direct join
-  const { error: joinError } = await db.from('pool_members').insert({
+  const { error: joinError } = await adminDb.from('pool_members').insert({
     pool_id: pool.id,
     user_id: session.user.id,
     role: 'member',
@@ -105,14 +111,14 @@ export async function POST(request: Request) {
 
   // Mark referral as converted
   if (referralId) {
-    await db
+    await adminDb
       .from('referrals')
       .update({ referred_id: session.user.id, converted_at: new Date().toISOString() })
       .eq('id', referralId)
       .is('converted_at', null)
   } else {
     // Try to find and convert any pending referral for this invite code + user
-    await db
+    await adminDb
       .from('referrals')
       .update({ referred_id: session.user.id, converted_at: new Date().toISOString() })
       .eq('invite_code', inviteCode.toUpperCase())

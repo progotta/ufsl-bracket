@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const publicRoutes = ['/', '/auth', '/join', '/api/debug']
+const publicRoutes = ['/', '/auth', '/join']
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({
@@ -34,7 +34,7 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname === route ||
     req.nextUrl.pathname.startsWith('/auth/') ||
     req.nextUrl.pathname.startsWith('/join/') ||
-    req.nextUrl.pathname.startsWith('/api/debug/')
+    req.nextUrl.pathname.startsWith('/api/public/')
   )
 
   // Redirect to auth if not logged in
