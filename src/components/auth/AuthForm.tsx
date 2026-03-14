@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Mail, Phone, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
+import { Mail, Phone, ArrowRight, Loader2, CheckCircle, X } from 'lucide-react'
 import clsx from 'clsx'
 
 type AuthStep = 'choose' | 'email' | 'phone' | 'otp-email' | 'otp-phone'
+type LoadingProvider = 'apple' | 'google' | 'facebook' | 'email' | 'phone' | 'verify' | null
 
 export default function AuthForm() {
   const [step, setStep] = useState<AuthStep>('choose')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<LoadingProvider>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [resendCountdown, setResendCountdown] = useState(0)
@@ -27,25 +28,22 @@ export default function AuthForm() {
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '')
     if (digits.length === 0) return ''
-    // If starts with 1 and has 11 digits, format as +1 (XXX) XXX-XXXX
     if (digits.startsWith('1') && digits.length <= 11) {
       const rest = digits.slice(1)
       if (rest.length <= 3) return `+1 (${rest}`
       if (rest.length <= 6) return `+1 (${rest.slice(0, 3)}) ${rest.slice(3)}`
       return `+1 (${rest.slice(0, 3)}) ${rest.slice(3, 6)}-${rest.slice(6, 10)}`
     }
-    // 10 digits or less — assume US
     if (digits.length <= 10) {
       if (digits.length <= 3) return `(${digits}`
       if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
       return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`
     }
-    // International: just prefix with +
     return '+' + digits
   }
 
   const handleOAuthLogin = async (provider: 'google' | 'apple' | 'facebook') => {
-    setLoading(true)
+    setLoading(provider)
     setError(null)
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -55,13 +53,13 @@ export default function AuthForm() {
     })
     if (error) {
       setError(error.message)
-      setLoading(false)
+      setLoading(null)
     }
   }
 
   const handleEmailOTP = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setLoading('email')
     setError(null)
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -76,14 +74,13 @@ export default function AuthForm() {
       setSuccess(`We sent a code to ${email}`)
       setResendCountdown(60)
     }
-    setLoading(false)
+    setLoading(null)
   }
 
   const handlePhoneOTP = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setLoading('phone')
     setError(null)
-    // Format phone number
     const formatted = phone.startsWith('+') ? phone : `+1${phone.replace(/\D/g, '')}`
     const { error } = await supabase.auth.signInWithOtp({
       phone: formatted,
@@ -95,12 +92,12 @@ export default function AuthForm() {
       setSuccess(`We sent a code to ${formatted}`)
       setResendCountdown(60)
     }
-    setLoading(false)
+    setLoading(null)
   }
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setLoading('verify')
     setError(null)
 
     let verifyError
@@ -115,10 +112,12 @@ export default function AuthForm() {
 
     if (verifyError) {
       setError(verifyError.message)
-      setLoading(false)
+      setLoading(null)
     }
     // On success, the auth state change will redirect
   }
+
+  const isDisabled = loading !== null
 
   return (
     <div className="bg-brand-surface border border-brand-border rounded-2xl p-8 shadow-2xl animate-fade-in w-full max-w-md mx-auto">
@@ -132,17 +131,20 @@ export default function AuthForm() {
             <OAuthButton
               provider="apple"
               onClick={() => handleOAuthLogin('apple')}
-              disabled={loading}
+              disabled={isDisabled}
+              loading={loading === 'apple'}
             />
             <OAuthButton
               provider="google"
               onClick={() => handleOAuthLogin('google')}
-              disabled={loading}
+              disabled={isDisabled}
+              loading={loading === 'google'}
             />
             <OAuthButton
               provider="facebook"
               onClick={() => handleOAuthLogin('facebook')}
-              disabled={loading}
+              disabled={isDisabled}
+              loading={loading === 'facebook'}
             />
           </div>
 
@@ -160,21 +162,23 @@ export default function AuthForm() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setStep('email')}
-              className="flex items-center justify-center gap-2 bg-brand-card border border-brand-border rounded-lg py-3 px-4 text-sm font-medium hover:border-brand-orange transition-colors"
+              disabled={isDisabled}
+              className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-brand-border rounded-lg py-3 px-4 text-sm font-medium transition-colors disabled:opacity-50"
             >
               <Mail size={16} className="text-brand-orange" />
               Email
             </button>
             <button
               onClick={() => setStep('phone')}
-              className="flex items-center justify-center gap-2 bg-brand-card border border-brand-border rounded-lg py-3 px-4 text-sm font-medium hover:border-brand-orange transition-colors"
+              disabled={isDisabled}
+              className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-brand-border rounded-lg py-3 px-4 text-sm font-medium transition-colors disabled:opacity-50"
             >
               <Phone size={16} className="text-brand-orange" />
               Phone
             </button>
           </div>
 
-          {error && <ErrorMessage message={error} />}
+          {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
         </div>
       )}
 
@@ -182,7 +186,7 @@ export default function AuthForm() {
         <form onSubmit={handleEmailOTP} className="space-y-5 animate-fade-in">
           <BackButton onClick={() => { setStep('choose'); setError(null) }} />
           <h2 className="text-xl font-bold">Enter your email</h2>
-          <p className="text-brand-muted text-sm">We'll send you a one-time code to sign in.</p>
+          <p className="text-brand-muted text-sm">We&apos;ll send you a one-time code to sign in.</p>
           <input
             type="email"
             value={email}
@@ -192,9 +196,9 @@ export default function AuthForm() {
             className="input-base"
             autoFocus
           />
-          {error && <ErrorMessage message={error} />}
-          <button type="submit" disabled={loading || !email} className="btn-primary w-full flex items-center justify-center gap-2">
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <><span>Send Code</span><ArrowRight size={16} /></>}
+          {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
+          <button type="submit" disabled={isDisabled || !email} className="btn-primary w-full flex items-center justify-center gap-2">
+            {loading === 'email' ? <Loader2 size={18} className="animate-spin" /> : <><span>Send Code</span><ArrowRight size={16} /></>}
           </button>
         </form>
       )}
@@ -202,8 +206,8 @@ export default function AuthForm() {
       {step === 'phone' && (
         <form onSubmit={handlePhoneOTP} className="space-y-5 animate-fade-in">
           <BackButton onClick={() => { setStep('choose'); setError(null) }} />
-          <h2 className="text-xl font-bold">Enter your phone</h2>
-          <p className="text-brand-muted text-sm">We'll text you a one-time code. US numbers: just enter 10 digits.</p>
+          <h2 className="text-xl font-bold">Enter your phone number</h2>
+          <p className="text-brand-muted text-sm">We&apos;ll text you a one-time code to sign in.</p>
           <input
             type="tel"
             value={phone}
@@ -213,9 +217,10 @@ export default function AuthForm() {
             className="input-base"
             autoFocus
           />
-          {error && <ErrorMessage message={error} />}
-          <button type="submit" disabled={loading || !phone} className="btn-primary w-full flex items-center justify-center gap-2">
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <><span>Send Code</span><ArrowRight size={16} /></>}
+          <p className="text-white/30 text-xs">Powered by Twilio</p>
+          {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
+          <button type="submit" disabled={isDisabled || !phone} className="btn-primary w-full flex items-center justify-center gap-2">
+            {loading === 'phone' ? <Loader2 size={18} className="animate-spin" /> : <><span>Send Code</span><ArrowRight size={16} /></>}
           </button>
         </form>
       )}
@@ -227,6 +232,9 @@ export default function AuthForm() {
             <CheckCircle size={40} className="text-brand-orange mx-auto mb-3" />
             <h2 className="text-xl font-bold">Check your {step === 'otp-email' ? 'email' : 'phone'}</h2>
             {success && <p className="text-brand-muted text-sm mt-1">{success}</p>}
+            {step === 'otp-email' && (
+              <p className="text-white/30 text-xs mt-2">Check spam if you don&apos;t see it within 1 minute</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-brand-muted">6-digit code</label>
@@ -243,9 +251,9 @@ export default function AuthForm() {
               autoFocus
             />
           </div>
-          {error && <ErrorMessage message={error} />}
-          <button type="submit" disabled={loading || otp.length < 6} className="btn-primary w-full flex items-center justify-center gap-2">
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <><span>Verify Code</span><ArrowRight size={16} /></>}
+          {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
+          <button type="submit" disabled={isDisabled || otp.length < 6} className="btn-primary w-full flex items-center justify-center gap-2">
+            {loading === 'verify' ? <Loader2 size={18} className="animate-spin" /> : <><span>Verify Code</span><ArrowRight size={16} /></>}
           </button>
           <button
             type="button"
@@ -280,15 +288,17 @@ function OAuthButton({
   provider,
   onClick,
   disabled,
+  loading,
 }: {
   provider: 'google' | 'apple' | 'facebook'
   onClick: () => void
   disabled: boolean
+  loading: boolean
 }) {
   const config = {
     google: {
       label: 'Continue with Google',
-      bg: 'hover:bg-white/5',
+      bg: 'bg-white/5 hover:bg-white/10',
       icon: (
         <svg viewBox="0 0 24 24" width="18" height="18">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -300,7 +310,7 @@ function OAuthButton({
     },
     apple: {
       label: 'Continue with Apple',
-      bg: 'hover:bg-white/5',
+      bg: 'bg-white/5 hover:bg-white/10',
       icon: (
         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
           <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
@@ -309,7 +319,7 @@ function OAuthButton({
     },
     facebook: {
       label: 'Continue with Facebook',
-      bg: 'hover:bg-[#1877F2]/10',
+      bg: 'bg-white/5 hover:bg-[#1877F2]/10',
       icon: (
         <svg viewBox="0 0 24 24" width="18" height="18" fill="#1877F2">
           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -324,11 +334,15 @@ function OAuthButton({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'w-full flex items-center justify-center gap-3 bg-brand-card border border-brand-border rounded-lg py-3 px-4 text-sm font-medium transition-all active:scale-95 disabled:opacity-50',
+        'w-full flex items-center justify-center gap-3 border border-brand-border rounded-lg py-3 px-4 text-sm font-medium transition-all active:scale-95 disabled:opacity-50',
         c.bg
       )}
     >
-      {c.icon}
+      {loading ? (
+        <Loader2 size={18} className="animate-spin" />
+      ) : (
+        c.icon
+      )}
       {c.label}
     </button>
   )
@@ -346,10 +360,17 @@ function BackButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-function ErrorMessage({ message }: { message: string }) {
+function ErrorMessage({ message, onDismiss }: { message: string; onDismiss: () => void }) {
   return (
-    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
-      {message}
+    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400 flex items-start justify-between gap-2">
+      <span>{message}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="text-red-400 hover:text-red-300 transition-colors shrink-0 mt-0.5"
+      >
+        <X size={14} />
+      </button>
     </div>
   )
 }
