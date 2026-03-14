@@ -231,6 +231,18 @@ export function resolveBracket(
           resolvedGame.team2 = undefined
         }
       }
+
+      if (game.id === 'east-r3-g1' && typeof window !== 'undefined') {
+        // eslint-disable-next-line no-console
+        console.log('[r3g1]', {
+          slot1: game.slot1, slot1id: slot1Game?.id,
+          picks_slot1: picks[slot1Game?.id ?? '']?.slice(0,8),
+          team1: resolvedGame.team1?.abbreviation,
+          slot2: game.slot2, slot2id: slot2Game?.id,
+          picks_slot2: picks[slot2Game?.id ?? '']?.slice(0,8),
+          team2: resolvedGame.team2?.abbreviation,
+        })
+      }
     }
   }
 
