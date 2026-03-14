@@ -57,6 +57,6 @@ export async function GET(req: NextRequest) {
     r3: Object.entries(picks).filter(([k]) => k.includes('r3')).sort(),
     r4: Object.entries(picks).filter(([k]) => k.includes('r4')).sort(),
     r5: Object.entries(picks).filter(([k]) => k.includes('r5') || k.includes('championship')).sort(),
-    gameIdMapSample: Object.fromEntries([...gameIdMap.entries()].slice(0, 10))
+    gameIdMapSample: Object.fromEntries(Array.from(gameIdMap.entries()).slice(0, 10))
   })
 }
