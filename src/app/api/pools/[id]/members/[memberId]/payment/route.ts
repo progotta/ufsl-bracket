@@ -1,6 +1,7 @@
 import { createRouteClient } from '@/lib/supabase/route'
 import { createReadClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { notifyCommissioner } from '@/lib/notify'
 
 export async function PATCH(
   req: Request,
@@ -12,16 +13,17 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Check that user is commissioner of this pool
   const adminDb = createReadClient()
+
+  // Get pool info (need entry_fee for payment amount)
   const { data: pool } = await adminDb
     .from('pools')
-    .select('commissioner_id')
+    .select('commissioner_id, entry_fee')
     .eq('id', params.id)
     .single()
 
   const body = await req.json()
-  const { status, note } = body
+  const { status, note, bracket_id } = body
 
   const isCommissioner = pool?.commissioner_id === session.user.id
 
@@ -30,7 +32,6 @@ export async function PATCH(
     if (status !== 'pending_verification') {
       return NextResponse.json({ error: 'Only the commissioner can update payment status' }, { status: 403 })
     }
-    // Verify this member record belongs to the requesting user
     const { data: memberRecord } = await adminDb
       .from('pool_members')
       .select('user_id')
@@ -45,23 +46,84 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid payment status' }, { status: 400 })
   }
 
+  // Get the member's user_id for the payments table
+  const { data: member } = await adminDb
+    .from('pool_members')
+    .select('user_id')
+    .eq('id', params.memberId)
+    .eq('pool_id', params.id)
+    .single()
+
+  if (!member) {
+    return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+  }
+
+  // Update pool_members (keep backward compat)
   const updateData: Record<string, unknown> = {
     payment_status: status,
     payment_date: status === 'paid' ? new Date().toISOString() : null,
     payment_note: note || null,
   }
 
-  const { data: updated, error } = await adminDb
+  const { error: memberError } = await adminDb
     .from('pool_members')
     .update(updateData)
     .eq('id', params.memberId)
     .eq('pool_id', params.id)
-    .select()
-    .single()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (memberError) {
+    return NextResponse.json({ error: memberError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ data: updated })
+  // Upsert into payments table
+  const entryFee = Number(pool?.entry_fee) || 0
+  const paymentData = {
+    pool_id: params.id,
+    user_id: member.user_id,
+    bracket_id: bracket_id || null,
+    amount: entryFee,
+    status: status,
+    payment_date: status === 'paid' ? new Date().toISOString() : null,
+    payment_note: note || null,
+    payment_method: 'manual',
+    updated_at: new Date().toISOString(),
+  }
+
+  // Check if a payment record exists for this user+pool (no bracket_id for flat fee)
+  const { data: existingPayment } = await adminDb
+    .from('payments')
+    .select('id')
+    .eq('pool_id', params.id)
+    .eq('user_id', member.user_id)
+    .is('bracket_id', bracket_id || null)
+    .maybeSingle()
+
+  if (existingPayment) {
+    await adminDb
+      .from('payments')
+      .update(paymentData)
+      .eq('id', existingPayment.id)
+  } else {
+    await adminDb
+      .from('payments')
+      .insert(paymentData)
+  }
+
+  // Notify commissioner when member marks pending_verification
+  if (status === 'pending_verification' && !isCommissioner) {
+    const { data: memberProfile } = await adminDb
+      .from('profiles')
+      .select('display_name')
+      .eq('id', member.user_id)
+      .single()
+    const memberName = memberProfile?.display_name || 'A member'
+    await notifyCommissioner(params.id, {
+      type: 'payment_received',
+      title: '💳 Payment submitted',
+      message: `${memberName} says they've paid — confirm their payment`,
+      action_url: `/pools/${params.id}/manage`,
+    })
+  }
+
+  return NextResponse.json({ data: { ...updateData, id: params.memberId } })
 }

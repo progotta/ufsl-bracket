@@ -2,6 +2,7 @@
 import { createRouteClient } from '@/lib/supabase/route'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { notifyCommissioner } from '@/lib/notify'
 
 // POST /api/pools/join — join via invite code
 export async function POST(request: Request) {
@@ -107,6 +108,23 @@ export async function POST(request: Request) {
 
   if (joinError) {
     return NextResponse.json({ error: joinError.message }, { status: 500 })
+  }
+
+  // Notify commissioner: pool almost full
+  if (pool.max_members) {
+    const { count: newCount } = await adminDb
+      .from('pool_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('pool_id', pool.id)
+    const remaining = pool.max_members - (newCount ?? 0)
+    if (remaining === 1) {
+      await notifyCommissioner(pool.id, {
+        type: 'pool_almost_full',
+        title: '🔥 Almost full!',
+        message: `${pool.name} has 1 spot left — time to lock it down`,
+        action_url: `/pools/${pool.id}/manage`,
+      })
+    }
   }
 
   // Mark referral as converted

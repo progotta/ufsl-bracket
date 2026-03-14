@@ -201,6 +201,12 @@ export default function BracketPicker({
         } catch {
           // Non-blocking — don't prevent submission flow
         }
+        // Notify commissioner of bracket submission
+        try {
+          await fetch(`/api/brackets/${bracketId}/submit-notify`, { method: 'POST' })
+        } catch {
+          // Non-blocking
+        }
         // Show share prompt before redirecting
         setShowSharePrompt(true)
         setSubmitting(false)

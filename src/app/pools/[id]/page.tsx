@@ -1,7 +1,7 @@
 import { createServerClient, createReadClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus } from 'lucide-react'
+import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
@@ -76,12 +76,19 @@ export default async function PoolPage({ params }: Props) {
     .eq('id', pool.commissioner_id)
     .single()
 
-  const { data: userBracket } = await supabase
+  // Get ALL user brackets for this pool (multi-bracket support)
+  const { data: userBrackets } = await supabase
     .from('brackets')
     .select('*')
     .eq('pool_id', params.id)
     .eq('user_id', session.user.id)
-    .single()
+    .order('created_at', { ascending: true })
+
+  const userBracket = userBrackets?.[0] || null
+  const userBracketCount = userBrackets?.length || 0
+  const maxBracketsPerMember = (pool as any).max_brackets_per_member || 1
+  const feePerBracket = (pool as any).fee_per_bracket ?? true
+  const onePayoutPerPerson = (pool as any).one_payout_per_person ?? false
 
   const { data: leaderboard } = await supabase
     .from('leaderboard')
@@ -89,6 +96,12 @@ export default async function PoolPage({ params }: Props) {
     .eq('pool_id', params.id)
     .order('rank', { ascending: true })
     .limit(50)
+
+  // Fetch payments from payments table for commissioner tracker
+  const { data: payments } = await adminDb
+    .from('payments')
+    .select('*')
+    .eq('pool_id', params.id)
 
   const isCommissioner = pool.commissioner_id === session.user.id
   const isMember = !!membership
@@ -218,10 +231,19 @@ export default async function PoolPage({ params }: Props) {
         </div>
         <div className="flex items-center gap-2">
           {isCommissioner && (
-            <Link href={`/pools/${params.id}/settings`} className="btn-secondary text-sm flex items-center gap-2">
-              <Settings size={16} />
-              Settings
-            </Link>
+            <>
+              <Link
+                href={`/pools/${params.id}/manage`}
+                className="flex items-center gap-2 bg-brand-surface hover:bg-brand-card px-4 py-2 rounded-xl text-sm font-medium transition-colors border border-brand-border"
+              >
+                <Wrench size={16} className="text-brand-orange" />
+                Manage Pool
+              </Link>
+              <Link href={`/pools/${params.id}/settings`} className="btn-secondary text-sm flex items-center gap-2">
+                <Settings size={16} />
+                Settings
+              </Link>
+            </>
           )}
         </div>
       </div>
@@ -235,35 +257,67 @@ export default async function PoolPage({ params }: Props) {
               <Trophy size={22} className="text-brand-orange" />
             </div>
             <div>
-              <div className="font-bold">Your Bracket</div>
+              <div className="font-bold">
+                {maxBracketsPerMember > 1 ? 'Your Brackets' : 'Your Bracket'}
+              </div>
               <div className="text-xs text-brand-muted">
-                {userBracket ? (userBracket.is_submitted ? 'Submitted ✓' : 'In progress') : 'Not started'}
+                {userBracketCount > 0
+                  ? `${userBracketCount} bracket${userBracketCount !== 1 ? 's' : ''}${maxBracketsPerMember > 1 ? ` of ${maxBracketsPerMember} max` : ''}`
+                  : 'Not started'}
               </div>
             </div>
           </div>
-          {userBracket ? (
+          {userBrackets && userBrackets.length > 0 ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between bg-brand-card rounded-xl p-3">
-                <span className="text-sm text-brand-muted">Score</span>
-                <span className="text-2xl font-black text-brand-orange">{userBracket.score}</span>
-              </div>
-              <div className="flex gap-2">
-                <Link href={`/brackets/${userBracket.id}`} className="btn-primary flex-1 text-center block">
-                  {userBracket.is_submitted ? 'View Bracket' : 'Continue Picking'}
-                </Link>
-                {userBracket.is_submitted && (
-                  <ShareButton
-                    bracketId={userBracket.id}
-                    userName={userName}
-                    poolName={pool.name}
-                    score={userBracket.score || 0}
-                    rank={userRank}
-                    poolStatus={pool.status}
-                    className="btn-secondary flex items-center gap-2 text-sm px-4"
-                    label="Share"
-                  />
-                )}
-              </div>
+              {userBrackets.map((bracket, idx) => (
+                <div key={bracket.id} className="space-y-2">
+                  {maxBracketsPerMember > 1 && (
+                    <div className="text-xs font-semibold text-brand-muted">
+                      {bracket.name || `Bracket ${idx + 1}`}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between bg-brand-card rounded-xl p-3">
+                    <span className="text-sm text-brand-muted">
+                      {bracket.is_submitted ? 'Score' : 'In progress'}
+                    </span>
+                    <span className="text-2xl font-black text-brand-orange">{bracket.score}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link href={`/brackets/${bracket.id}`} className="btn-primary flex-1 text-center block text-sm">
+                      {bracket.is_submitted ? 'View Bracket' : 'Continue Picking'}
+                    </Link>
+                    {bracket.is_submitted && idx === 0 && (
+                      <ShareButton
+                        bracketId={bracket.id}
+                        userName={userName}
+                        poolName={pool.name}
+                        score={bracket.score || 0}
+                        rank={userRank}
+                        poolStatus={pool.status}
+                        className="btn-secondary flex items-center gap-2 text-sm px-4"
+                        label="Share"
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Add another bracket CTA */}
+              {maxBracketsPerMember > 1 && userBracketCount < maxBracketsPerMember && (
+                <div className="mt-2 p-3 bg-brand-card/50 rounded-xl text-center">
+                  <Link
+                    href={`/pools/${params.id}/bracket/new`}
+                    className="text-brand-orange text-sm font-bold hover:underline"
+                  >
+                    + Add another bracket
+                  </Link>
+                  {feePerBracket && entryFee > 0 && (
+                    <p className="text-xs text-brand-muted mt-1">
+                      Additional ${entryFee} entry fee applies
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ) : isMember ? (
             <div className="space-y-2">
@@ -441,6 +495,8 @@ export default async function PoolPage({ params }: Props) {
         showTabs={true}
         entryFee={entryFee}
         payouts={payouts}
+        maxBracketsPerMember={maxBracketsPerMember}
+        onePayoutPerPerson={onePayoutPerPerson}
       />
 
       {/* Smack Talk */}
