@@ -395,14 +395,23 @@ async function DashboardPageInner() {
                       <PoolStatusBadge status={pool.status} />
                     </div>
                   </div>
-                  <PoolLeaderboardPreview
-                    entries={lb?.entries ?? []}
-                    currentUserId={session.user.id}
-                    currentUserRank={lb?.currentUserRank}
-                    currentUserScore={lb?.currentUserScore}
-                    totalMembers={lb?.totalMembers ?? (poolMemberCounts.get(pool.id) ?? 0)}
-                    tournamentStarted={tournamentStarted}
-                  />
+                  {!brackets.some(b => b.pool_id === pool.id) && pool.status !== 'completed' && pool.status !== 'locked' ? (
+                    <div className="my-2 bg-brand-orange/5 border border-brand-orange/20 rounded-lg p-3 text-center">
+                      <p className="text-xs text-brand-muted mb-2">You haven&apos;t picked a bracket yet!</p>
+                      <span className="text-xs font-bold text-brand-orange group-hover:underline">
+                        Pick your bracket →
+                      </span>
+                    </div>
+                  ) : (
+                    <PoolLeaderboardPreview
+                      entries={lb?.entries ?? []}
+                      currentUserId={session.user.id}
+                      currentUserRank={lb?.currentUserRank}
+                      currentUserScore={lb?.currentUserScore}
+                      totalMembers={lb?.totalMembers ?? (poolMemberCounts.get(pool.id) ?? 0)}
+                      tournamentStarted={tournamentStarted}
+                    />
+                  )}
                   {/* Inline invite link for non-locked pools */}
                   {pool.status !== 'completed' && pool.status !== 'locked' && (
                     <div className="mt-2 pt-2 border-t border-brand-border/50 flex items-center justify-between">

@@ -21,23 +21,36 @@ export default function PostBracketInviteBanner({
   inviterName,
   memberCount,
 }: PostBracketInviteBannerProps) {
+  const [dismissed, setDismissed] = useState(true) // Start hidden
   const [visible, setVisible] = useState(false)
   const [showModal, setShowModal] = useState(false)
 
-  useEffect(() => {
-    // Show after a short delay for better UX
-    const timer = setTimeout(() => setVisible(true), 1500)
-    return () => clearTimeout(timer)
-  }, [])
+  const storageKey = `invite-banner-dismissed-${poolId}`
 
-  if (!visible) return null
+  useEffect(() => {
+    const wasDismissed = localStorage.getItem(storageKey) === 'true'
+    setDismissed(wasDismissed)
+    if (!wasDismissed) {
+      // Animate in after 2 seconds so it doesn't block first impression
+      const timer = setTimeout(() => setVisible(true), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [storageKey])
+
+  const handleDismiss = () => {
+    localStorage.setItem(storageKey, 'true')
+    setDismissed(true)
+    setVisible(false)
+  }
+
+  if (dismissed || !visible) return null
 
   return (
     <>
       <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-40 animate-slide-up">
         <div className="bg-brand-surface border border-brand-orange/30 rounded-2xl p-4 shadow-2xl">
           <button
-            onClick={() => setVisible(false)}
+            onClick={handleDismiss}
             className="absolute top-3 right-3 text-brand-muted hover:text-white transition-colors"
           >
             <X size={16} />
@@ -63,7 +76,7 @@ export default function PostBracketInviteBanner({
 
       <InviteModal
         isOpen={showModal}
-        onClose={() => { setShowModal(false); setVisible(false) }}
+        onClose={() => { setShowModal(false); handleDismiss() }}
         poolName={poolName}
         inviteCode={inviteCode}
         inviteUrl={inviteUrl}

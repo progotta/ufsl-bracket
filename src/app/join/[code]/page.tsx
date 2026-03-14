@@ -6,9 +6,31 @@ import JoinPoolForm from '@/components/pools/JoinPoolForm'
 import { Users, Trophy, Lock, AlertCircle } from 'lucide-react'
 import { BRACKET_TYPE_META, type BracketType } from '@/lib/secondChance'
 import type { Pool } from '@/types/database'
+import type { Metadata } from 'next'
 
 interface Props {
   params: { code: string }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const adminDb = createReadClient()
+  const { data: pool } = await adminDb
+    .from('pools')
+    .select('name, description')
+    .eq('invite_code', params.code.toUpperCase())
+    .single()
+
+  if (!pool) return { title: 'UFSL Bracket Challenge' }
+
+  return {
+    title: `Join ${pool.name} 🏀`,
+    description: pool.description || 'Compete in March Madness bracket picks with your friends!',
+    openGraph: {
+      title: `You're invited to ${pool.name}!`,
+      description: 'Pick your bracket and beat your friends in UFSL Bracket Challenge 🏀',
+      siteName: 'UFSL Bracket Challenge',
+    },
+  }
 }
 
 export default async function JoinPage({ params }: Props) {

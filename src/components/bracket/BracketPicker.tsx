@@ -191,6 +191,16 @@ export default function BracketPicker({
 
     if (!error) {
       if (submit) {
+        // Trigger achievement check for bracket submission
+        try {
+          await fetch('/api/achievements/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'bracket_submitted', context: { poolId } }),
+          })
+        } catch {
+          // Non-blocking — don't prevent submission flow
+        }
         // Show share prompt before redirecting
         setShowSharePrompt(true)
         setSubmitting(false)
