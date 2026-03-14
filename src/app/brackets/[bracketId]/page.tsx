@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import { Metadata } from 'next'
 import Nav from '@/components/layout/Nav'
 import dynamic from 'next/dynamic'
+
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 import ShareButton from '@/components/bracket/ShareButton'
 import PostBracketInviteBanner from '@/components/pools/PostBracketInviteBanner'
 
@@ -146,16 +149,11 @@ export default async function BracketPage({ params }: Props) {
   const REGION_ORDER: Record<string, number> = { East: 0, West: 1, South: 2, Midwest: 3 }
   const GAMES_PER_REGION = [8, 4, 2, 1] // R1-R4 games per region
 
-  // Hardcoded slug map for R3-R6 — DB region data is unreliable for R4+ seeded games
+  // R5/R6 use special slug formats in BracketPicker (ff-r5-g1, championship-r6-g1)
+  // R1-R4 use formula: {region}-r{round}-g{regionIdx * gamesPerRegion + withinRegionIdx + 1}
+  // DB regions MUST be correct for R1-R4 formula to work (East/West/South/Midwest)
   const SPECIAL_SLUGS: Record<number, string> = {
-    // R3 Sweet 16 (game_numbers 49-56, alternating East/West/South/Midwest)
-    49: 'east-r3-g1',  50: 'west-r3-g3',  51: 'south-r3-g5',  52: 'midwest-r3-g7',
-    53: 'east-r3-g2',  54: 'west-r3-g4',  55: 'south-r3-g6',  56: 'midwest-r3-g8',
-    // R4 Elite 8
-    57: 'east-r4-g1',  58: 'west-r4-g2',  59: 'south-r4-g3',  60: 'midwest-r4-g4',
-    // R5 Final Four
     61: 'ff-r5-g1', 62: 'ff-r5-g2',
-    // R6 Championship
     63: 'championship-r6-g1',
   }
 
@@ -211,14 +209,6 @@ export default async function BracketPage({ params }: Props) {
     const slug = gameIdMap.get(key)
     picks[slug ?? key] = val // use corrected slug if found, else keep as-is (handles already-slug picks)
   }
-
-  // DEBUG: log r3 picks and gameResults
-  const r3picks = Object.entries(picks).filter(([k]) => k.includes('r3'))
-  const r3results = Object.entries(gameResults).filter(([k]) => k.includes('r3'))
-  console.log('[bracket-debug] totalGames:', completedGames?.length, 'totalPicks:', Object.keys(picks).length)
-  console.log('[bracket-debug] r3picks:', JSON.stringify(r3picks))
-  console.log('[bracket-debug] r3results:', JSON.stringify(r3results))
-  console.log('[bracket-debug] game49slug:', completedGames?.find(g => g.game_number === 49) ? gameIdMap.get(completedGames.find(g => g.game_number === 49)!.id) : 'n/a')
 
   // Determine champion pick from picks (game 63 = championship in full bracket)
 
