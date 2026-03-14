@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AchievementToastProvider } from '@/components/achievements/AchievementToast'
 import SimBanner from '@/components/SimBanner'
+import MobileNav from '@/components/layout/MobileNav'
 
 export const metadata: Metadata = {
   title: 'UFSL Bracket Challenge',
@@ -28,8 +29,11 @@ export default function RootLayout({
       <body className="min-h-screen bg-brand-dark text-white">
         <SimBanner />
         <AchievementToastProvider>
-          {children}
+          <main className="pb-16 md:pb-0">
+            {children}
+          </main>
         </AchievementToastProvider>
+        <MobileNav />
       </body>
     </html>
   )

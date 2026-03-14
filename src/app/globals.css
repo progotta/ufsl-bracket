@@ -138,3 +138,8 @@ body {
 .animate-slide-up {
   animation: slide-up 0.3s ease-out forwards;
 }
+
+/* Safe area for iPhone notch / home indicator */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
