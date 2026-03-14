@@ -316,31 +316,13 @@ export default function BracketPicker({
                 <span>{bracketTypeMeta.badge}</span>
               </div>
             )}
-            {/* Region filter */}
-            <div className="flex items-center gap-1 overflow-x-auto">
-              {(['All', ...REGIONS, 'Final Four'] as const).map(r => (
-                <button
-                  key={r}
-                  onClick={() => setActiveRegion(r as Region | 'All' | 'Final Four')}
-                  className={clsx(
-                    'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
-                    activeRegion === r
-                      ? 'bg-brand-orange text-white'
-                      : 'text-brand-muted hover:text-white hover:bg-brand-card'
-                  )}
-                >
-                  {r}
-                </button>
-              ))}
+            {/* Progress — visible inline on mobile */}
+            <div className="text-sm text-brand-muted">
+              <span className="text-white font-bold">{completedPicks}</span>/{totalGames} picks
             </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Progress */}
-            <div className="text-sm text-brand-muted hidden sm:block">
-              <span className="text-white font-bold">{completedPicks}</span>/{totalGames} picks
-            </div>
-
             {/* Import Bracket button */}
             {!isSubmitted && (
               <button
@@ -427,8 +409,8 @@ export default function BracketPicker({
               </button>
             )}
 
-            {/* Zoom controls */}
-            <div className="flex items-center gap-1 bg-brand-card rounded-lg border border-brand-border">
+            {/* Zoom controls — desktop only */}
+            <div className="hidden md:flex items-center gap-1 bg-brand-card rounded-lg border border-brand-border">
               <button
                 onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
                 className="p-1.5 hover:text-white text-brand-muted transition-colors"
@@ -501,31 +483,42 @@ export default function BracketPicker({
               </>
             )}
             {isSubmitted && (
-              <>
-                <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
-                  <CheckCircle size={16} />
-                  Submitted
-                </span>
-                <button
-                  onClick={() => setShowShareModal(true)}
-                  className="btn-secondary text-sm flex items-center gap-2 py-2"
-                >
-                  <Share2 size={14} />
-                  Share
-                </button>
-              </>
+              <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
+                <CheckCircle size={16} />
+                Submitted
+              </span>
             )}
           </div>
         </div>
 
-        {/* Progress bar */}
+        {/* Progress bar with label */}
         <div className="max-w-[1600px] mx-auto mt-2">
-          <div className="h-1 bg-brand-border rounded-full overflow-hidden">
+          <div className="h-1.5 bg-brand-border rounded-full overflow-hidden">
             <div
               className="h-full bg-brand-gradient rounded-full transition-all duration-300"
               style={{ width: `${(completedPicks / totalGames) * 100}%` }}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Sticky region tabs — stays visible on scroll (below toolbar) */}
+      <div className="sticky top-[57px] z-10 bg-brand-dark border-b border-brand-border px-4 py-2">
+        <div className="max-w-[1600px] mx-auto flex items-center gap-1 overflow-x-auto scrollbar-none">
+          {(['All', ...REGIONS, 'Final Four'] as const).map(r => (
+            <button
+              key={r}
+              onClick={() => setActiveRegion(r as Region | 'All' | 'Final Four')}
+              className={clsx(
+                'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
+                activeRegion === r
+                  ? 'bg-brand-orange text-white'
+                  : 'text-brand-muted hover:text-white hover:bg-brand-card'
+              )}
+            >
+              {r}
+            </button>
+          ))}
         </div>
       </div>
 

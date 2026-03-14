@@ -32,6 +32,8 @@ interface Props {
   params: { id: string }
 }
 
+export const revalidate = 60
+
 export default async function PoolPage({ params }: Props) {
   const supabase = createServerClient()
   const { data: { session } } = await supabase.auth.getSession()
@@ -96,10 +98,70 @@ export default async function PoolPage({ params }: Props) {
   const userRank = userLeaderboardEntry?.rank ?? undefined
   const userName = currentProfile?.display_name || 'Anonymous'
 
+  // Tournament progress: count games by round
+  const { data: roundProgress } = await supabase
+    .from('games')
+    .select('round, status, winner_id')
+
+  const tournamentProgress = (() => {
+    if (!roundProgress || roundProgress.length === 0) return null
+    const ROUND_LABELS: Record<number, string> = { 1: 'R64', 2: 'R32', 3: 'S16', 4: 'E8', 5: 'F4', 6: 'NCG' }
+    const rounds = new Map<number, { total: number; completed: number }>()
+    for (const g of roundProgress) {
+      const r = rounds.get(g.round) || { total: 0, completed: 0 }
+      r.total++
+      if (g.winner_id) r.completed++
+      rounds.set(g.round, r)
+    }
+    const sortedRounds = Array.from(rounds.entries()).sort((a, b) => a[0] - b[0])
+    let currentRound = 1
+    let gamesRemaining = 0
+    for (const [round, { total, completed }] of sortedRounds) {
+      if (completed < total) {
+        currentRound = round
+        gamesRemaining = total - completed
+        break
+      }
+      currentRound = round
+    }
+    const allComplete = sortedRounds.every(([, { total, completed }]) => completed >= total)
+    return { rounds: sortedRounds, labels: ROUND_LABELS, currentRound, gamesRemaining, allComplete }
+  })()
+
   return (
     <div className="min-h-screen bg-brand-dark">
       <Nav profile={currentProfile} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      {/* Tournament Progress */}
+      {tournamentProgress && tournamentProgress.rounds.length > 0 && (
+        <div className="bg-brand-surface border border-brand-border rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-bold">🏀</span>
+            <div className="flex items-center gap-1 text-xs font-semibold">
+              {tournamentProgress.rounds.map(([round, { total, completed }], idx) => {
+                const label = tournamentProgress.labels[round] || `R${round}`
+                const isComplete = completed >= total
+                const isCurrent = round === tournamentProgress.currentRound && !tournamentProgress.allComplete
+                return (
+                  <span key={round} className="flex items-center gap-1">
+                    {idx > 0 && <span className="text-brand-muted mx-0.5">&rarr;</span>}
+                    <span className={
+                      isCurrent ? 'text-brand-orange font-black' :
+                      isComplete ? 'text-green-400' : 'text-brand-muted'
+                    }>
+                      {isCurrent ? `${label}` : label}
+                    </span>
+                  </span>
+                )
+              })}
+            </div>
+            <span className="text-xs text-brand-muted ml-auto">
+              {tournamentProgress.allComplete ? 'Tournament complete' : `${tournamentProgress.gamesRemaining} games remaining`}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useLiveScores } from '@/hooks/useLiveScores'
 import { RefreshCw, Radio } from 'lucide-react'
 import clsx from 'clsx'
@@ -18,14 +19,26 @@ interface LiveGamesProps {
  */
 export default function LiveGames({ userPickIds = [] }: LiveGamesProps) {
   const pickIdSet = new Set(userPickIds)
+  const [showAll, setShowAll] = useState(false)
 
   const { games, activeGames, loading, error, source, lastUpdated, hasActiveGames, refetch } =
     useLiveScores()
 
-  const displayGames = [...activeGames, ...games.filter(g => g.status === 'completed')].slice(0, 20)
-  const scheduledGames = games.filter(g => g.status === 'scheduled').slice(0, 6)
+  const allDisplayGames = [...activeGames, ...games.filter(g => g.status === 'completed')].slice(0, 20)
+  const allScheduledGames = games.filter(g => g.status === 'scheduled').slice(0, 6)
 
-  if (!loading && displayGames.length === 0 && scheduledGames.length === 0) {
+  // Default: show only live games. If none live, show upcoming scheduled.
+  const liveOnly = activeGames
+  const hasLive = liveOnly.length > 0
+  const defaultGames = hasLive ? liveOnly : []
+  const defaultScheduled = hasLive ? [] : allScheduledGames.slice(0, 4)
+
+  const displayGames = showAll ? allDisplayGames : defaultGames
+  const scheduledGames = showAll ? allScheduledGames : defaultScheduled
+
+  const totalHidden = (allDisplayGames.length + allScheduledGames.length) - (displayGames.length + scheduledGames.length)
+
+  if (!loading && allDisplayGames.length === 0 && allScheduledGames.length === 0) {
     return null
   }
 
@@ -104,9 +117,21 @@ export default function LiveGames({ userPickIds = [] }: LiveGamesProps) {
           </div>
         )}
 
-        {!loading && displayGames.length === 0 && scheduledGames.length === 0 && (
+        {!loading && displayGames.length === 0 && scheduledGames.length === 0 && !showAll && (
           <div className="text-center py-3 text-brand-muted text-xs">
-            No games scheduled
+            No live games right now
+          </div>
+        )}
+
+        {/* Show all / show less toggle */}
+        {(totalHidden > 0 || showAll) && (
+          <div className="text-center pt-1 pb-0.5">
+            <button
+              onClick={() => setShowAll(s => !s)}
+              className="text-[10px] text-brand-orange hover:underline font-medium"
+            >
+              {showAll ? 'Show less' : `Show all ${allDisplayGames.length + allScheduledGames.length} games`}
+            </button>
           </div>
         )}
       </div>

@@ -23,6 +23,8 @@ import {
   type BracketType,
 } from '@/lib/secondChance'
 
+export const revalidate = 30
+
 export default async function DashboardPage() {
   try {
     return await DashboardPageInner()
