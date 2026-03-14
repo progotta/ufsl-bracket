@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const publicRoutes = ['/', '/auth', '/join']
+const publicRoutes = ['/', '/auth', '/join', '/api/debug']
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({
