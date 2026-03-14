@@ -146,8 +146,18 @@ export default async function BracketPage({ params }: Props) {
   const REGION_ORDER: Record<string, number> = { East: 0, West: 1, South: 2, Midwest: 3 }
   const GAMES_PER_REGION = [8, 4, 2, 1] // R1-R4 games per region
 
-  // Special IDs for R5/R6 by DB game_number (hardcoded from bracketAdvancement structure)
-  const SPECIAL_SLUGS: Record<number, string> = { 61: 'ff-r5-g1', 62: 'ff-r5-g2', 63: 'championship-r6-g1' }
+  // Hardcoded slug map for R3-R6 — DB region data is unreliable for R4+ seeded games
+  const SPECIAL_SLUGS: Record<number, string> = {
+    // R3 Sweet 16 (game_numbers 49-56, alternating East/West/South/Midwest)
+    49: 'east-r3-g1',  50: 'west-r3-g3',  51: 'south-r3-g5',  52: 'midwest-r3-g7',
+    53: 'east-r3-g2',  54: 'west-r3-g4',  55: 'south-r3-g6',  56: 'midwest-r3-g8',
+    // R4 Elite 8
+    57: 'east-r4-g1',  58: 'west-r4-g2',  59: 'south-r4-g3',  60: 'midwest-r4-g4',
+    // R5 Final Four
+    61: 'ff-r5-g1', 62: 'ff-r5-g2',
+    // R6 Championship
+    63: 'championship-r6-g1',
+  }
 
   // Group games by round+region to find within-region position
   type GameRow = { id: string; region: string; round: number; game_number: number; winner_id: string | null; team1_id: string | null; team2_id: string | null; team1_score: number | null; team2_score: number | null; status: string }
