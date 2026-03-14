@@ -150,7 +150,8 @@ export default async function BracketPage({ params }: Props) {
   const SPECIAL_SLUGS: Record<number, string> = { 61: 'ff-r5-g1', 62: 'ff-r5-g2', 63: 'championship-r6-g1' }
 
   // Group games by round+region to find within-region position
-  const byRoundRegion: Record<string, typeof completedGames[number][]> = {}
+  type GameRow = { id: string; region: string; round: number; game_number: number; winner_id: string | null; team1_id: string | null; team2_id: string | null; team1_score: number | null; team2_score: number | null; status: string }
+  const byRoundRegion: Record<string, GameRow[]> = {}
   for (const g of completedGames || []) {
     const key = `${g.round}-${g.region}`
     ;(byRoundRegion[key] = byRoundRegion[key] || []).push(g)
