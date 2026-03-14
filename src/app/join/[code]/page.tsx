@@ -5,6 +5,7 @@ import Nav from '@/components/layout/Nav'
 import JoinPoolForm from '@/components/pools/JoinPoolForm'
 import { Users, Trophy, Lock, AlertCircle } from 'lucide-react'
 import { BRACKET_TYPE_META, type BracketType } from '@/lib/secondChance'
+import type { Pool } from '@/types/database'
 
 interface Props {
   params: { code: string }
@@ -19,11 +20,12 @@ export default async function JoinPage({ params }: Props) {
   // Use service role to look up pool by invite code — the invite code IS the access control.
   // RLS (pools_member_read) blocks non-members, but a joiner isn't a member yet.
   const adminDb = createReadClient()
-  const { data: pool } = await adminDb
+  const { data: poolRaw } = await adminDb
     .from('pools')
     .select('id, name, description, status, invite_code, is_public, commissioner_id, bracket_type, max_members, join_requires_approval')
     .eq('invite_code', code)
     .single()
+  const pool = poolRaw as Pool | null
 
   // Invalid code
   if (!pool) {
@@ -165,7 +167,7 @@ function PoolPreviewCard({
   commissioner,
   bracketMeta,
 }: {
-  pool: { name: string; description?: string; status: string; bracket_type?: string }
+  pool: { name: string; description?: string | null; status: string; bracket_type?: string | null }
   memberCount: number
   commissioner: { display_name: string | null } | null
   bracketMeta: typeof BRACKET_TYPE_META[keyof typeof BRACKET_TYPE_META]
@@ -222,7 +224,7 @@ function PoolErrorPage({
   error,
   session,
 }: {
-  pool: { name: string; description?: string; status: string; bracket_type?: string }
+  pool: { name: string; description?: string | null; status: string; bracket_type?: string | null }
   memberCount: number
   commissioner: { display_name: string | null } | null
   bracketMeta: typeof BRACKET_TYPE_META[keyof typeof BRACKET_TYPE_META]
