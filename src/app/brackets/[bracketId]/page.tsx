@@ -194,18 +194,12 @@ export default async function BracketPage({ params }: Props) {
   const userName = profile?.display_name || 'Anonymous'
   const poolStatus = pool?.status || 'open'
 
-  // Translate picks from UUID game keys → slug keys (BracketPicker uses slugs)
-  // Also build a full UUID→slug map covering all games
-  const allGameIdMap = new Map<string, string>()
-  for (const g of completedGames || []) {
-    const slug = `${(g.region || 'east').toLowerCase()}-r${g.round}-g${g.game_number}`
-    allGameIdMap.set(g.id, slug)
-  }
+  // Translate picks from UUID game keys → slug keys using the same corrected gameIdMap
   const rawPicks = (bracket.picks as Record<string, string>) || {}
   const picks: Record<string, string> = {}
   for (const [key, val] of Object.entries(rawPicks)) {
-    const slug = allGameIdMap.get(key)
-    picks[slug ?? key] = val // use slug if found, else keep as-is (handles already-slug picks)
+    const slug = gameIdMap.get(key)
+    picks[slug ?? key] = val // use corrected slug if found, else keep as-is (handles already-slug picks)
   }
 
   // Determine champion pick from picks (game 63 = championship in full bracket)
