@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/adminAuth'
 import { NextResponse } from 'next/server'
 
 export async function POST() {
+  try {
   const authError = await requireAdmin()
   if (authError) return authError
 
@@ -34,4 +35,8 @@ export async function POST() {
   }
 
   return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('[simulator/reset]', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

@@ -7,6 +7,7 @@ import { ROUND_POINTS } from '@/lib/bracket'
 import { advanceWinner } from '@/lib/bracketAdvancement'
 
 export async function POST(request: Request) {
+  try {
   const authError = await requireAdmin()
   if (authError) return authError
 
@@ -85,6 +86,10 @@ export async function POST(request: Request) {
     gamesPlayed: played.length,
     errors,
   })
+  } catch (err) {
+    console.error('[simulator/play-round]', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 function findNextUnplayedRound(games: any[]): number | null {

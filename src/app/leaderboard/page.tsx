@@ -2,6 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Trophy, Globe } from 'lucide-react'
 import Leaderboard from '@/components/Leaderboard'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 export default async function LeaderboardPage() {
   const supabase = createServerClient()
@@ -35,11 +36,13 @@ export default async function LeaderboardPage() {
       </div>
 
       {/* Leaderboard — defaults to global tab, shows all tabs */}
-      <Leaderboard
-        currentUserId={session.user.id}
-        defaultTab="global"
-        showTabs={true}
-      />
+      <ErrorBoundary>
+        <Leaderboard
+          currentUserId={session.user.id}
+          defaultTab="global"
+          showTabs={true}
+        />
+      </ErrorBoundary>
     </div>
   )
 }

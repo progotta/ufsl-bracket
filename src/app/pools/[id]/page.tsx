@@ -13,6 +13,8 @@ import PaymentOptions from '@/components/pools/PaymentOptions'
 import StripeStatusBanner from '@/components/pools/StripeStatusBanner'
 import Nav from '@/components/layout/Nav'
 import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
+import { FEATURES } from '@/lib/features'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 // Lazy-load heavy client components to reduce initial bundle
 const Leaderboard = dynamic(() => import('@/components/Leaderboard'), {
@@ -232,13 +234,15 @@ export default async function PoolPage({ params }: Props) {
         <div className="flex items-center gap-2">
           {isCommissioner && (
             <>
-              <Link
-                href={`/pools/${params.id}/manage`}
-                className="flex items-center gap-2 bg-brand-surface hover:bg-brand-card px-4 py-2 rounded-xl text-sm font-medium transition-colors border border-brand-border"
-              >
-                <Wrench size={16} className="text-brand-orange" />
-                Manage Pool
-              </Link>
+              {FEATURES.commissionerDashboard && (
+                <Link
+                  href={`/pools/${params.id}/manage`}
+                  className="flex items-center gap-2 bg-brand-surface hover:bg-brand-card px-4 py-2 rounded-xl text-sm font-medium transition-colors border border-brand-border"
+                >
+                  <Wrench size={16} className="text-brand-orange" />
+                  Manage Pool
+                </Link>
+              )}
               <Link href={`/pools/${params.id}/settings`} className="btn-secondary text-sm flex items-center gap-2">
                 <Settings size={16} />
                 Settings
@@ -366,7 +370,7 @@ export default async function PoolPage({ params }: Props) {
       </div>
 
       {/* Pool Pot */}
-      {entryFee > 0 && (
+      {FEATURES.paidPools && entryFee > 0 && (
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-black text-lg">💰 Pool Pot</h3>
@@ -415,9 +419,9 @@ export default async function PoolPage({ params }: Props) {
       )}
 
       {/* Payment connect — commissioner only */}
-      {isCommissioner && entryFee > 0 && (
+      {FEATURES.paidPools && isCommissioner && entryFee > 0 && (
         <div className="space-y-3">
-          {poolPaymentMethods.some((m: any) => m.type === 'stripe') && (
+          {FEATURES.stripe && poolPaymentMethods.some((m: any) => m.type === 'stripe') && (
             <StripeConnectSection
               poolId={params.id}
               stripeOnboarded={!!commissionerProfile?.stripe_onboarded}
@@ -453,7 +457,7 @@ export default async function PoolPage({ params }: Props) {
       )}
 
       {/* Pay entry fee — member only */}
-      {!isCommissioner && isMember && entryFee > 0 && (currentMember?.payment_status === 'unpaid' || currentMember?.payment_status === 'pending_verification') && poolPaymentMethods.length > 0 && (
+      {FEATURES.paidPools && !isCommissioner && isMember && entryFee > 0 && (currentMember?.payment_status === 'unpaid' || currentMember?.payment_status === 'pending_verification') && poolPaymentMethods.length > 0 && (
         currentMember?.payment_status === 'pending_verification' ? (
           <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
             <span className="text-xl">&#9203;</span>
@@ -488,28 +492,32 @@ export default async function PoolPage({ params }: Props) {
       )}
 
       {/* Leaderboard — tabbed (Pool / Global / Friends) */}
-      <Leaderboard
-        poolId={params.id}
-        currentUserId={session.user.id}
-        defaultTab="pool"
-        showTabs={true}
-        entryFee={entryFee}
-        payouts={payouts}
-        maxBracketsPerMember={maxBracketsPerMember}
-        onePayoutPerPerson={onePayoutPerPerson}
-      />
+      <ErrorBoundary>
+        <Leaderboard
+          poolId={params.id}
+          currentUserId={session.user.id}
+          defaultTab="pool"
+          showTabs={true}
+          entryFee={entryFee}
+          payouts={payouts}
+          maxBracketsPerMember={maxBracketsPerMember}
+          onePayoutPerPerson={onePayoutPerPerson}
+        />
+      </ErrorBoundary>
 
       {/* Smack Talk */}
       {isMember && (
-        <SmackTalk
-          poolId={params.id}
-          currentUserId={session.user.id}
-          currentUserName={null}
-        />
+        <ErrorBoundary>
+          <SmackTalk
+            poolId={params.id}
+            currentUserId={session.user.id}
+            currentUserName={null}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Payment Tracker — commissioner only */}
-      {isCommissioner && entryFee > 0 && (
+      {FEATURES.paidPools && isCommissioner && entryFee > 0 && (
         <section>
           <h3 className="font-black text-lg mb-3">💳 Payment Tracker</h3>
           <div className="space-y-2">

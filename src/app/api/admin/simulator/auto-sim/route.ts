@@ -6,6 +6,7 @@ import { ACTUAL_2025_RESULTS } from '@/lib/simulator'
 import { ROUND_POINTS } from '@/lib/bracket'
 
 export async function POST() {
+  try {
   const authError = await requireAdmin()
   if (authError) return authError
 
@@ -64,4 +65,8 @@ export async function POST() {
   }
 
   return NextResponse.json({ success: true, gamesApplied: applied, errors })
+  } catch (err) {
+    console.error('[simulator/auto-sim]', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

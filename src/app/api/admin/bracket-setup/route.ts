@@ -6,10 +6,11 @@ const MATCHUPS_R1 = [[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]]
 const REGIONS: Array<'East' | 'West' | 'South' | 'Midwest'> = ['East', 'West', 'South', 'Midwest']
 
 export async function POST(req: NextRequest) {
+  try {
   const authError = await requireAdmin()
   if (authError) return authError
 
-  const body = await req.json()
+  const body = await req.json().catch(() => ({} as any))
   const { action, data } = body
   const supabase = createReadClient()
 
@@ -253,6 +254,10 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
+  } catch (err) {
+    console.error('[admin/bracket-setup]', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function GET(req: NextRequest) {

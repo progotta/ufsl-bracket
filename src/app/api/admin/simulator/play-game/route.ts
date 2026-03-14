@@ -7,12 +7,13 @@ import { ROUND_POINTS } from '@/lib/bracket'
 import { advanceWinner } from '@/lib/bracketAdvancement'
 
 export async function POST(request: Request) {
+  try {
   const authError = await requireAdmin()
   if (authError) return authError
 
   const supabase = createRouteClient()
   const db = supabase as any
-  const { gameId, useActual } = await request.json()
+  const { gameId, useActual } = await request.json().catch(() => ({} as any))
 
   if (!gameId) {
     return NextResponse.json({ error: 'gameId required' }, { status: 400 })
@@ -56,4 +57,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ success: true, result })
+  } catch (err) {
+    console.error('[simulator/play-game]', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
