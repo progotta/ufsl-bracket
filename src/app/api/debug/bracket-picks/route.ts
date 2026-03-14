@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -7,7 +7,10 @@ export async function GET(req: NextRequest) {
   const bracketId = req.nextUrl.searchParams.get('bracketId')
   if (!bracketId) return NextResponse.json({ error: 'no bracketId' })
 
-  const supabase = createServerClient()
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
   const { data: bracket } = await supabase.from('brackets').select('picks').eq('id', bracketId).single()
   const { data: games } = await supabase.from('games').select('id, region, round, game_number, winner_id, team1_score, team2_score, status')
 
