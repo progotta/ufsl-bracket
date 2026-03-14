@@ -44,7 +44,7 @@ export default async function JoinPage({ params }: Props) {
   const adminDb = createReadClient()
   const { data: poolRaw } = await adminDb
     .from('pools')
-    .select('id, name, description, status, invite_code, is_public, commissioner_id, bracket_type, max_members, join_requires_approval')
+    .select('id, name, description, status, invite_code, is_public, commissioner_id, bracket_type, max_members, join_requires_approval, entry_fee, payment_instructions, payout_structure')
     .eq('invite_code', code)
     .single()
   const pool = poolRaw as Pool | null
@@ -189,7 +189,7 @@ function PoolPreviewCard({
   commissioner,
   bracketMeta,
 }: {
-  pool: { name: string; description?: string | null; status: string; bracket_type?: string | null }
+  pool: { name: string; description?: string | null; status: string; bracket_type?: string | null; entry_fee?: number | null; payment_instructions?: string | null }
   memberCount: number
   commissioner: { display_name: string | null } | null
   bracketMeta: typeof BRACKET_TYPE_META[keyof typeof BRACKET_TYPE_META]
@@ -201,6 +201,20 @@ function PoolPreviewCard({
       <h1 className="text-3xl font-black mb-2">{pool.name}</h1>
       {pool.description && (
         <p className="text-brand-muted mb-4">{pool.description}</p>
+      )}
+
+      {pool.entry_fee && pool.entry_fee > 0 && (
+        <div className="bg-brand-orange/10 border border-brand-orange/30 rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="text-xl">💰</span>
+            <span className="font-bold text-brand-orange text-lg">
+              ${pool.entry_fee} entry fee per bracket
+            </span>
+          </div>
+          {pool.payment_instructions && (
+            <p className="text-sm text-brand-muted">{pool.payment_instructions}</p>
+          )}
+        </div>
       )}
 
       <div className="grid grid-cols-3 gap-3 my-6">

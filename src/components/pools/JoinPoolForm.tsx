@@ -81,6 +81,20 @@ export default function JoinPoolForm({ pool, userId, memberCount = 0, commission
         <p className="text-brand-muted mb-4 text-sm">{pool.description}</p>
       )}
 
+      {(pool as any).entry_fee > 0 && (
+        <div className="bg-brand-orange/10 border border-brand-orange/30 rounded-xl p-4 mb-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xl">💰</span>
+            <span className="font-bold text-brand-orange text-lg">
+              ${(pool as any).entry_fee} entry fee per bracket
+            </span>
+          </div>
+          {(pool as any).payment_instructions && (
+            <p className="text-sm text-brand-muted">{(pool as any).payment_instructions}</p>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-3 my-5">
         <div className="bg-brand-card rounded-xl p-3">
           <div className="text-xl font-black text-brand-orange">{memberCount}</div>

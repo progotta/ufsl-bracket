@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, ChevronRight, Share2 } from 'lucide-react'
+import { formatCurrency } from '@/lib/payouts'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
@@ -33,19 +34,28 @@ export interface LeaderboardEntry {
 type Tab = 'pool' | 'global' | 'friends'
 type GlobalFilter = 'all-time' | 'this-round' | 'today'
 
+interface PayoutInfo {
+  place: number
+  amount: number
+  label: string
+}
+
 interface LeaderboardProps {
   poolId?: string
   currentUserId: string
   defaultTab?: Tab
   showTabs?: boolean
+  entryFee?: number
+  payouts?: PayoutInfo[]
 }
 
 // ─── Podium Component (top 3) ─────────────────────────────────────────────────
 
-function Podium({ entries, currentUserId, onClickUser }: {
+function Podium({ entries, currentUserId, onClickUser, payouts }: {
   entries: LeaderboardEntry[]
   currentUserId: string
   onClickUser: (userId: string, bracketId?: string) => void
+  payouts?: PayoutInfo[]
 }) {
   const podiumOrder = [
     entries[1], // silver (2nd)
@@ -100,6 +110,15 @@ function Podium({ entries, currentUserId, onClickUser }: {
               </div>
               <div className="text-lg font-black text-brand-orange">{score}</div>
               <div className="text-xs text-brand-muted">pts</div>
+              {(() => {
+                const payout = payouts?.find(p => p.place === entry.rank)
+                if (!payout) return null
+                return (
+                  <div className="text-xs font-bold text-green-400 mt-0.5">
+                    {formatCurrency(payout.amount)}
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Podium block */}
@@ -132,11 +151,12 @@ function MovementBadge({ movement }: { movement: number | null | undefined }) {
 
 // ─── Table Row ────────────────────────────────────────────────────────────────
 
-function TableRow({ entry, isMe, isGlobal, onClick }: {
+function TableRow({ entry, isMe, isGlobal, onClick, payouts }: {
   entry: LeaderboardEntry
   isMe: boolean
   isGlobal: boolean
   onClick: () => void
+  payouts?: PayoutInfo[]
 }) {
   const score = isGlobal ? (entry.total_score ?? 0) : (entry.score ?? 0)
   const correctPicks = isGlobal ? (entry.total_correct_picks ?? 0) : (entry.correct_picks ?? 0)
@@ -196,6 +216,11 @@ function TableRow({ entry, isMe, isGlobal, onClick }: {
         {!isGlobal && maxPossible > 0 && (
           <div className="text-[10px] text-brand-muted">max {maxPossible}</div>
         )}
+        {(() => {
+          const payout = payouts?.find(p => p.place === entry.rank)
+          if (!payout) return null
+          return <div className="text-[10px] font-bold text-green-400">💰 {formatCurrency(payout.amount)}</div>
+        })()}
       </div>
 
       {/* Chevron — view bracket */}
@@ -213,6 +238,8 @@ export default function Leaderboard({
   currentUserId,
   defaultTab = 'pool',
   showTabs = true,
+  entryFee = 0,
+  payouts: payoutsProp,
 }: LeaderboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab)
   const [globalFilter, setGlobalFilter] = useState<GlobalFilter>('all-time')
@@ -357,7 +384,7 @@ export default function Leaderboard({
           {/* Podium — top 3 */}
           {filtered.length >= 2 && !search && (
             <div className="border-t border-brand-border pt-6 pb-2 bg-brand-card/30">
-              <Podium entries={top3} currentUserId={currentUserId} onClickUser={handleClickUser} />
+              <Podium entries={top3} currentUserId={currentUserId} onClickUser={handleClickUser} payouts={activeTab === 'pool' ? payoutsProp : undefined} />
             </div>
           )}
 
@@ -382,6 +409,7 @@ export default function Leaderboard({
                 isMe={entry.user_id === currentUserId}
                 isGlobal={isGlobal}
                 onClick={() => handleClickUser(entry.user_id, entry.bracket_id)}
+                payouts={activeTab === 'pool' ? payoutsProp : undefined}
               />
             ))
           ) : (
@@ -392,6 +420,7 @@ export default function Leaderboard({
                 isMe={entry.user_id === currentUserId}
                 isGlobal={isGlobal}
                 onClick={() => handleClickUser(entry.user_id, entry.bracket_id)}
+                payouts={activeTab === 'pool' ? payoutsProp : undefined}
               />
             ))
           )}

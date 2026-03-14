@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createReadClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus } from 'lucide-react'
@@ -7,7 +7,9 @@ import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
 import CommissionerActions from '@/components/pools/CommissionerActions'
+import PaymentToggle from '@/components/pools/PaymentToggle'
 import Nav from '@/components/layout/Nav'
+import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
 
 // Lazy-load heavy client components to reduce initial bundle
 const Leaderboard = dynamic(() => import('@/components/Leaderboard'), {
@@ -58,9 +60,11 @@ export default async function PoolPage({ params }: Props) {
 
   if (!membership && !pool.is_public) notFound()
 
-  const { data: members } = await supabase
+  // Use adminDb for members query to get payment fields (RLS may not expose them)
+  const adminDb = createReadClient()
+  const { data: members } = await adminDb
     .from('pool_members')
-    .select('user_id, role, profiles(display_name, avatar_url)')
+    .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url)')
     .eq('pool_id', params.id)
 
   const { data: commissionerProfile } = await supabase
@@ -128,6 +132,15 @@ export default async function PoolPage({ params }: Props) {
     const allComplete = sortedRounds.every(([, { total, completed }]) => completed >= total)
     return { rounds: sortedRounds, labels: ROUND_LABELS, currentRound, gamesRemaining, allComplete }
   })()
+
+  // Payment data
+  const entryFee = (pool as any).entry_fee ? Number((pool as any).entry_fee) : 0
+  const memberCount = members?.length || 0
+  const paidCount = members?.filter((m: any) => m.payment_status === 'paid').length || 0
+  const totalPot = memberCount * entryFee
+  const payouts = entryFee > 0 && (pool as any).payout_structure
+    ? calculatePayouts(totalPot, (pool as any).payout_structure as PayoutStructure, paidCount)
+    : []
 
   return (
     <div className="min-h-screen bg-brand-dark">
@@ -286,6 +299,55 @@ export default async function PoolPage({ params }: Props) {
         </div>
       </div>
 
+      {/* Pool Pot */}
+      {entryFee > 0 && (
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-black text-lg">💰 Pool Pot</h3>
+            <span className="text-2xl font-black text-brand-orange">
+              {formatCurrency(paidCount * entryFee)}
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-3">
+            <div className="flex justify-between text-sm text-brand-muted mb-1">
+              <span>{paidCount} of {memberCount} paid</span>
+              <span>{formatCurrency(memberCount * entryFee)} when full</span>
+            </div>
+            <div className="h-2 bg-brand-surface rounded-full">
+              <div
+                className="h-2 bg-brand-orange rounded-full transition-all"
+                style={{ width: `${memberCount > 0 ? (paidCount / memberCount) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Payout table */}
+          {payouts.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm text-brand-muted font-medium">Payouts</p>
+              {payouts.map(payout => (
+                <div key={payout.place} className="flex justify-between items-center">
+                  <span className="text-sm">{payout.label}</span>
+                  <span className="font-bold text-brand-orange">
+                    {formatCurrency(payout.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {(pool as any).payment_instructions && (
+            <div className="mt-3 pt-3 border-t border-brand-border">
+              <p className="text-xs text-brand-muted">
+                💳 {(pool as any).payment_instructions}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Commissioner Actions */}
       {isCommissioner && (
         <CommissionerActions
@@ -305,6 +367,8 @@ export default async function PoolPage({ params }: Props) {
         currentUserId={session.user.id}
         defaultTab="pool"
         showTabs={true}
+        entryFee={entryFee}
+        payouts={payouts}
       />
 
       {/* Smack Talk */}
@@ -314,6 +378,47 @@ export default async function PoolPage({ params }: Props) {
           currentUserId={session.user.id}
           currentUserName={null}
         />
+      )}
+
+      {/* Payment Tracker — commissioner only */}
+      {isCommissioner && entryFee > 0 && (
+        <section>
+          <h3 className="font-black text-lg mb-3">💳 Payment Tracker</h3>
+          <div className="space-y-2">
+            {members?.map((member: any) => {
+              const profile = member.profiles as any
+              return (
+                <div key={member.user_id} className="flex items-center justify-between bg-brand-surface border border-brand-border rounded-xl p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-sm font-bold text-brand-orange">
+                      {(profile?.display_name || '?')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{profile?.display_name || 'Anonymous'}</p>
+                      {member.payment_date && (
+                        <p className="text-xs text-brand-muted">
+                          Paid {new Date(member.payment_date).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {member.payment_status === 'waived' ? (
+                      <span className="text-xs text-brand-muted bg-brand-surface px-2 py-1 rounded-full border border-brand-border">Waived</span>
+                    ) : (
+                      <PaymentToggle
+                        memberId={member.id}
+                        status={member.payment_status || 'unpaid'}
+                        poolId={pool.id}
+                        fee={entryFee}
+                      />
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
       )}
 
       {/* Members */}

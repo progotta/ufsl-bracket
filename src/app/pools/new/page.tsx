@@ -11,6 +11,7 @@ import {
   isBracketTypeOpen,
   type BracketType,
 } from '@/lib/secondChance'
+import { PRESET_PAYOUTS } from '@/lib/payouts'
 import type { Game } from '@/types/database'
 
 export default function NewPoolPage() {
@@ -21,6 +22,10 @@ export default function NewPoolPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [games, setGames] = useState<Game[]>([])
+  const [hasFee, setHasFee] = useState(false)
+  const [entryFee, setEntryFee] = useState('')
+  const [payoutPreset, setPayoutPreset] = useState(JSON.stringify(PRESET_PAYOUTS[0].value))
+  const [paymentInstructions, setPaymentInstructions] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -63,6 +68,9 @@ export default function NewPoolPage() {
         commissioner_id: session.user.id,
         is_public: isPublic,
         bracket_type: bracketType,
+        entry_fee: hasFee && entryFee ? parseFloat(entryFee) : 0,
+        payout_structure: hasFee && entryFee ? JSON.parse(payoutPreset) : null,
+        payment_instructions: hasFee && paymentInstructions.trim() ? paymentInstructions.trim() : null,
       } as any)
       .select()
       .single()
@@ -234,6 +242,59 @@ export default function NewPoolPage() {
                 }`}
               />
             </button>
+          </div>
+
+          {/* Entry Fee (optional) */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hasFee}
+                onChange={e => setHasFee(e.target.checked)}
+                className="w-4 h-4 rounded"
+              />
+              <span className="font-medium">💰 Entry Fee</span>
+            </label>
+
+            {hasFee && (
+              <div className="space-y-3 pl-7">
+                <div className="flex items-center gap-2">
+                  <span className="text-brand-muted">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="10.00"
+                    value={entryFee}
+                    onChange={e => setEntryFee(e.target.value)}
+                    className="input-base w-32"
+                  />
+                  <span className="text-brand-muted text-sm">per bracket</span>
+                </div>
+
+                <div>
+                  <label className="text-sm text-brand-muted mb-2 block">Payout Structure</label>
+                  <select value={payoutPreset} onChange={e => setPayoutPreset(e.target.value)} className="input-base w-full">
+                    {PRESET_PAYOUTS.map(p => (
+                      <option key={p.label} value={JSON.stringify(p.value)}>{p.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm text-brand-muted mb-2 block">
+                    How to collect payment (shown to members)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Venmo @yourname with 'bracket' in memo"
+                    value={paymentInstructions}
+                    onChange={e => setPaymentInstructions(e.target.value)}
+                    className="input-base w-full"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {error && (

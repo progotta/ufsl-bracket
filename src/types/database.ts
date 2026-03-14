@@ -55,6 +55,9 @@ export interface Database {
           locks_at: string | null
           max_members: number | null
           join_requires_approval: boolean
+          entry_fee: number | null
+          payout_structure: Json | null
+          payment_instructions: string | null
         }
         Insert: {
           id?: string
@@ -72,6 +75,9 @@ export interface Database {
           locks_at?: string | null
           max_members?: number | null
           join_requires_approval?: boolean
+          entry_fee?: number | null
+          payout_structure?: Json | null
+          payment_instructions?: string | null
         }
         Update: {
           id?: string
@@ -89,6 +95,9 @@ export interface Database {
           locks_at?: string | null
           max_members?: number | null
           join_requires_approval?: boolean
+          entry_fee?: number | null
+          payout_structure?: Json | null
+          payment_instructions?: string | null
         }
       }
       pool_members: {
@@ -98,6 +107,9 @@ export interface Database {
           pool_id: string
           user_id: string
           role: 'commissioner' | 'member'
+          payment_status: 'unpaid' | 'paid' | 'waived'
+          payment_date: string | null
+          payment_note: string | null
         }
         Insert: {
           id?: string
@@ -105,6 +117,9 @@ export interface Database {
           pool_id: string
           user_id: string
           role?: 'commissioner' | 'member'
+          payment_status?: 'unpaid' | 'paid' | 'waived'
+          payment_date?: string | null
+          payment_note?: string | null
         }
         Update: {
           id?: string
@@ -112,6 +127,9 @@ export interface Database {
           pool_id?: string
           user_id?: string
           role?: 'commissioner' | 'member'
+          payment_status?: 'unpaid' | 'paid' | 'waived'
+          payment_date?: string | null
+          payment_note?: string | null
         }
       }
       teams: {
