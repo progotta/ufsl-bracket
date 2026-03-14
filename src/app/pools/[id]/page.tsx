@@ -8,6 +8,9 @@ import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
 import CommissionerActions from '@/components/pools/CommissionerActions'
 import PaymentToggle from '@/components/pools/PaymentToggle'
+import StripeConnectSection from '@/components/pools/StripeConnectSection'
+import PayWithStripe from '@/components/pools/PayWithStripe'
+import StripeStatusBanner from '@/components/pools/StripeStatusBanner'
 import Nav from '@/components/layout/Nav'
 import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
 
@@ -67,9 +70,9 @@ export default async function PoolPage({ params }: Props) {
     .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url)')
     .eq('pool_id', params.id)
 
-  const { data: commissionerProfile } = await supabase
+  const { data: commissionerProfile } = await adminDb
     .from('profiles')
-    .select('display_name')
+    .select('display_name, stripe_account_id, stripe_onboarded')
     .eq('id', pool.commissioner_id)
     .single()
 
@@ -90,6 +93,10 @@ export default async function PoolPage({ params }: Props) {
   const isCommissioner = pool.commissioner_id === session.user.id
   const isMember = !!membership
   const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${pool.invite_code}`
+
+  // Current user's payment status + commissioner Stripe status
+  const currentMember = members?.find((m: any) => m.user_id === session.user.id)
+  const commissionerStripeReady = !!commissionerProfile?.stripe_onboarded && !!commissionerProfile?.stripe_account_id
 
   // Get current user's profile for share + nav
   const { data: currentProfile } = await supabase
@@ -146,6 +153,9 @@ export default async function PoolPage({ params }: Props) {
     <div className="min-h-screen bg-brand-dark">
       <Nav profile={currentProfile} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      {/* Stripe/Payment status banners */}
+      <StripeStatusBanner />
+
       {/* Tournament Progress */}
       {tournamentProgress && tournamentProgress.rounds.length > 0 && (
         <div className="bg-brand-surface border border-brand-border rounded-xl px-4 py-3">
@@ -345,6 +355,26 @@ export default async function PoolPage({ params }: Props) {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Stripe Connect — commissioner only */}
+      {isCommissioner && entryFee > 0 && (
+        <StripeConnectSection
+          poolId={params.id}
+          stripeOnboarded={!!commissionerProfile?.stripe_onboarded}
+          stripeAccountId={commissionerProfile?.stripe_account_id || null}
+        />
+      )}
+
+      {/* Pay entry fee — member only */}
+      {!isCommissioner && isMember && entryFee > 0 && currentMember?.payment_status === 'unpaid' && commissionerStripeReady && (
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p className="font-bold text-sm">Entry Fee Required</p>
+            <p className="text-xs text-brand-muted mt-0.5">Pay ${entryFee} to lock in your spot</p>
+          </div>
+          <PayWithStripe poolId={params.id} entryFee={entryFee} />
         </div>
       )}
 

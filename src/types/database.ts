@@ -18,6 +18,8 @@ export interface Database {
           avatar_url: string | null
           phone: string | null
           email: string | null
+          stripe_account_id: string | null
+          stripe_onboarded: boolean
         }
         Insert: {
           id: string
@@ -27,6 +29,8 @@ export interface Database {
           avatar_url?: string | null
           phone?: string | null
           email?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarded?: boolean
         }
         Update: {
           id?: string
@@ -36,6 +40,8 @@ export interface Database {
           avatar_url?: string | null
           phone?: string | null
           email?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarded?: boolean
         }
       }
       pools: {
@@ -110,6 +116,8 @@ export interface Database {
           payment_status: 'unpaid' | 'paid' | 'waived'
           payment_date: string | null
           payment_note: string | null
+          stripe_session_id: string | null
+          stripe_payment_intent_id: string | null
         }
         Insert: {
           id?: string
@@ -120,6 +128,8 @@ export interface Database {
           payment_status?: 'unpaid' | 'paid' | 'waived'
           payment_date?: string | null
           payment_note?: string | null
+          stripe_session_id?: string | null
+          stripe_payment_intent_id?: string | null
         }
         Update: {
           id?: string
@@ -130,6 +140,8 @@ export interface Database {
           payment_status?: 'unpaid' | 'paid' | 'waived'
           payment_date?: string | null
           payment_note?: string | null
+          stripe_session_id?: string | null
+          stripe_payment_intent_id?: string | null
         }
       }
       teams: {
