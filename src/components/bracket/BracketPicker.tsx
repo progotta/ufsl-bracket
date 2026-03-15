@@ -653,15 +653,25 @@ function FullBracket({
 }) {
   return (
     <div className="min-w-[1200px]">
-      {/* Top half: East (left), West (right) */}
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-4 mb-4">
+      {/*
+        Single 3-column grid spanning all 4 regions.
+        Col 1: left regions (East top, South bottom)
+        Col 2: center (Final Four + Championship, spanning both rows)
+        Col 3: right regions (West top, Midwest bottom)
+        This ensures top and bottom halves share the same column widths.
+      */}
+      <div className="grid grid-cols-[1fr_auto_1fr] gap-4">
+        {/* Row 1 left: East */}
         <RegionColumn region="East" side="left" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
-        <FinalFourColumn gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
+        {/* Center column spanning both rows */}
+        <div className="row-span-2 flex items-center">
+          <FinalFourColumn gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
+        </div>
+        {/* Row 1 right: West */}
         <RegionColumn region="West" side="right" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
-      </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-4 mt-4">
+        {/* Row 2 left: South */}
         <RegionColumn region="South" side="left" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
-        <div /> {/* spacer */}
+        {/* Row 2 right: Midwest (center col spans, no spacer needed) */}
         <RegionColumn region="Midwest" side="right" gameMap={gameMap} picks={picks} onPick={onPick} onTeamInfo={onTeamInfo} isSubmitted={isSubmitted} showInsights={showInsights} />
       </div>
     </div>
