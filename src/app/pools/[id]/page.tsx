@@ -347,8 +347,9 @@ export default async function PoolPage({ params }: Props) {
           )}
         </div>
 
-        {/* Invite (pre-lock) or Share Standings (post-lock) */}
-        {pool.status === 'locked' || pool.status === 'completed' ? (
+        {/* Invite (pre-lock) or Share Standings (once games are underway) */}
+        {pool.status === 'locked' || pool.status === 'completed' ||
+         tournamentProgress.rounds.some(([, { completed }]) => completed > 0) ? (
           <ShareStandingsCard poolName={pool.name} poolUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/pools/${pool.id}`} leaderboard={leaderboard || []} />
         ) : (
           <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
