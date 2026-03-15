@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Users, FileCheck, DollarSign, Trophy, Bell, Lock, Download, Share2, Check, Clock, AlertTriangle, Info, Loader2 } from 'lucide-react'
+import { Users, FileCheck, DollarSign, Trophy, Bell, Lock, Download, Share2, Check, Clock, AlertTriangle, Info, Loader2, RefreshCw } from 'lucide-react'
 import clsx from 'clsx'
 import PaymentToggle from '@/components/pools/PaymentToggle'
+import { getOpenBracketTypes } from '@/lib/secondChance'
 
 interface MemberData {
   id: string
@@ -29,10 +30,11 @@ interface Props {
   inviteUrl: string
   inviteCode: string
   members: MemberData[]
+  games: { round: number; status: string; team1_id: string | null; team2_id: string | null; winner_id: string | null }[]
 }
 
 export default function ManageDashboard({
-  poolId, poolName, poolStatus, entryFee, maxMembers, inviteUrl, inviteCode, members,
+  poolId, poolName, poolStatus, entryFee, maxMembers, inviteUrl, inviteCode, members, games,
 }: Props) {
   const [sendingReminder, setSendingReminder] = useState<string | null>(null)
   const [reminderResult, setReminderResult] = useState<string | null>(null)
@@ -45,6 +47,7 @@ export default function ManageDashboard({
   const pendingCount = members.filter(m => m.payment_status === 'pending_verification').length
   const unsubmittedCount = members.filter(m => !m.has_submitted).length
   const prizePool = paidCount * entryFee
+  const openSecondChanceTypes = getOpenBracketTypes(games as any).filter(t => t !== 'full')
 
   const submitted = members.filter(m => m.has_submitted)
   const notSubmitted = members.filter(m => !m.has_submitted)
@@ -322,6 +325,22 @@ export default function ManageDashboard({
             label={copied ? 'Copied!' : 'Share pool invite link'}
             onClick={copyInviteLink}
           />
+          {openSecondChanceTypes.length > 0 && (
+            <QuickAction
+              icon={<RefreshCw size={16} />}
+              label="Launch 2nd Chance Pool"
+              onClick={() => {
+                const type = openSecondChanceTypes[0]
+                const params = new URLSearchParams({
+                  bracket_type: type,
+                  from_pool: poolId,
+                  from_name: poolName,
+                })
+                window.location.href = `/pools/new?${params.toString()}`
+              }}
+              variant="secondary"
+            />
+          )}
         </div>
       </div>
     </div>
@@ -356,7 +375,7 @@ function QuickAction({ icon, label, onClick, disabled, variant }: {
   label: string
   onClick: () => void
   disabled?: boolean
-  variant?: 'danger'
+  variant?: 'danger' | 'secondary'
 }) {
   return (
     <button
@@ -366,6 +385,8 @@ function QuickAction({ icon, label, onClick, disabled, variant }: {
         'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-left',
         variant === 'danger'
           ? 'bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20'
+          : variant === 'secondary'
+          ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20'
           : 'bg-brand-surface border border-brand-border hover:bg-brand-card',
         disabled && 'opacity-40 cursor-not-allowed'
       )}

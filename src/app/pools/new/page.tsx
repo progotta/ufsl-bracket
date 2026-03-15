@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Loader2, RefreshCw, Users } from 'lucide-react'
 import Link from 'next/link'
 import {
   BRACKET_TYPE_META,
@@ -38,10 +38,15 @@ export default function NewPoolPage() {
   const supabase = createClient()
 
   // Pre-select bracket type from query param (e.g. from /second-chance page)
+  // Pre-populate pool name when coming from an existing pool
   useEffect(() => {
     const typeParam = searchParams.get('bracket_type') as BracketType | null
     if (typeParam && BRACKET_TYPE_ORDER.includes(typeParam)) {
       setBracketType(typeParam)
+    }
+    const fromName = searchParams.get('from_name')
+    if (fromName) {
+      setName(`${fromName} — 2nd Chance`)
     }
   }, [searchParams])
 
@@ -140,6 +145,13 @@ export default function NewPoolPage() {
 
       <div className="bg-brand-surface border border-brand-border rounded-2xl p-8">
         <form onSubmit={handleCreate} className="space-y-6">
+
+          {searchParams.get('from_pool') && (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-sm text-blue-400 flex items-center gap-2 mb-4">
+              <Users size={15} />
+              Your existing pool members will be notified when this pool is ready to join.
+            </div>
+          )}
 
           {/* Bracket Type Selector */}
           <div>

@@ -33,6 +33,11 @@ export default async function ManagePoolPage({ params }: Props) {
     .select('id, user_id, role, payment_status, payment_date, payment_note, created_at, profiles(display_name, avatar_url)')
     .eq('pool_id', params.id)
 
+  // Get games for second-chance bracket type detection
+  const { data: gamesRaw } = await adminDb
+    .from('games')
+    .select('round, status, team1_id, team2_id, winner_id')
+
   // Get brackets for this pool
   const { data: brackets } = await adminDb
     .from('brackets')
@@ -91,6 +96,13 @@ export default async function ManagePoolPage({ params }: Props) {
           inviteUrl={inviteUrl}
           inviteCode={pool.invite_code}
           members={memberData}
+          games={(gamesRaw || []).map(g => ({
+            round: g.round,
+            status: g.status,
+            team1_id: g.team1_id,
+            team2_id: g.team2_id,
+            winner_id: g.winner_id,
+          }))}
         />
       </main>
   )
