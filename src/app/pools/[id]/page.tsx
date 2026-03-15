@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import ShareStandingsCard from '@/components/pools/ShareStandingsCard'
 import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
@@ -346,26 +347,30 @@ export default async function PoolPage({ params }: Props) {
           )}
         </div>
 
-        {/* Invite */}
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-blue-500/10 rounded-xl p-2.5">
-              <LinkIcon size={22} className="text-blue-400" />
+        {/* Invite (pre-lock) or Share Standings (post-lock) */}
+        {pool.status === 'locked' || pool.status === 'completed' ? (
+          <ShareStandingsCard poolName={pool.name} poolUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/pools/${pool.id}`} leaderboard={leaderboard || []} />
+        ) : (
+          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-blue-500/10 rounded-xl p-2.5">
+                <LinkIcon size={22} className="text-blue-400" />
+              </div>
+              <div>
+                <div className="font-bold">Invite Friends</div>
+                <div className="text-xs text-brand-muted">Share the link to join</div>
+              </div>
             </div>
-            <div>
-              <div className="font-bold">Invite Friends</div>
-              <div className="text-xs text-brand-muted">Share the link to join</div>
-            </div>
+            <InviteSection
+              poolName={pool.name}
+              inviteCode={pool.invite_code}
+              inviteUrl={inviteUrl}
+              inviterName={commissionerProfile?.display_name || undefined}
+              memberCount={members?.length || 0}
+              bracketType={pool.bracket_type}
+            />
           </div>
-          <InviteSection
-            poolName={pool.name}
-            inviteCode={pool.invite_code}
-            inviteUrl={inviteUrl}
-            inviterName={commissionerProfile?.display_name || undefined}
-            memberCount={members?.length || 0}
-            bracketType={pool.bracket_type}
-          />
-        </div>
+        )}
       </div>
 
       {/* Pool Pot */}
