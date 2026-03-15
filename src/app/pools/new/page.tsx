@@ -46,12 +46,21 @@ export default function NewPoolPage() {
   }, [searchParams])
 
   // Load games to determine which bracket types are open
+  // Also auto-select the first open bracket type if full is no longer available
   useEffect(() => {
     supabase
       .from('games')
       .select('id, round, status, team1_id, team2_id, winner_id, scheduled_at')
       .then(({ data }) => {
-        if (data) setGames(data as Game[])
+        if (data) {
+          setGames(data as Game[])
+          // If no bracket type was pre-selected and full is closed, default to first open type
+          const typeParam = searchParams.get('bracket_type') as BracketType | null
+          if (!typeParam) {
+            const firstOpen = BRACKET_TYPE_ORDER.find(t => isBracketTypeOpen(t, data as Game[]))
+            if (firstOpen && firstOpen !== 'full') setBracketType(firstOpen)
+          }
+        }
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -142,8 +151,8 @@ export default function NewPoolPage() {
                 const meta = BRACKET_TYPE_META[type]
                 const isOpen = isBracketTypeOpen(type, games)
                 const isSelected = bracketType === type
-                // Full is always available (pre-tournament), others based on round
-                const isAvailable = type === 'full' || isOpen
+                // Availability based purely on tournament state
+                const isAvailable = isOpen
 
                 return (
                   <button

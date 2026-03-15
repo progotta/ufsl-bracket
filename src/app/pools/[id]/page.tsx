@@ -35,7 +35,7 @@ const SmackTalk = dynamic(() => import('@/components/smack/SmackTalk'), {
   ),
   ssr: false,
 })
-import { BRACKET_TYPE_META, type BracketType } from '@/lib/secondChance'
+import { BRACKET_TYPE_META, isBracketTypeOpen, type BracketType } from '@/lib/secondChance'
 
 interface Props {
   params: { id: string }
@@ -307,7 +307,7 @@ export default async function PoolPage({ params }: Props) {
               ))}
 
               {/* Add another bracket CTA */}
-              {maxBracketsPerMember > 1 && userBracketCount < maxBracketsPerMember && (
+              {maxBracketsPerMember > 1 && userBracketCount < maxBracketsPerMember && isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) && (
                 <div className="mt-2 p-3 bg-brand-card/50 rounded-xl text-center">
                   <Link
                     href={`/pools/${params.id}/bracket/new`}
@@ -324,6 +324,7 @@ export default async function PoolPage({ params }: Props) {
               )}
             </div>
           ) : isMember ? (
+            isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) ? (
             <div className="space-y-2">
               <Link
                 href={`/pools/${params.id}/bracket/new`}
@@ -342,6 +343,12 @@ export default async function PoolPage({ params }: Props) {
                 </Link>
               </p>
             </div>
+            ) : (
+              <div className="bg-brand-surface border border-brand-border rounded-xl p-4 text-center">
+                <p className="text-sm font-bold text-brand-muted">Submissions Closed</p>
+                <p className="text-xs text-brand-muted mt-1">The window to submit a bracket for this pool has passed.</p>
+              </div>
+            )
           ) : (
             <JoinPoolButton poolId={params.id} />
           )}
