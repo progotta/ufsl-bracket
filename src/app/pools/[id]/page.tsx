@@ -13,6 +13,7 @@ import PaymentOptions from '@/components/pools/PaymentOptions'
 import StripeStatusBanner from '@/components/pools/StripeStatusBanner'
 import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
 import { FEATURES } from '@/lib/features'
+import AutoRefresh from '@/components/pools/AutoRefresh'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 // Lazy-load heavy client components to reduce initial bundle
@@ -167,6 +168,7 @@ export default async function PoolPage({ params }: Props) {
 
   return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <AutoRefresh intervalSeconds={30} />
       {/* Stripe/Payment status banners */}
       <StripeStatusBanner />
 
@@ -187,7 +189,7 @@ export default async function PoolPage({ params }: Props) {
                       isCurrent ? 'text-brand-orange font-black' :
                       isComplete ? 'text-green-400' : 'text-brand-muted'
                     }>
-                      {isCurrent ? `${label}` : label}
+                      {isComplete ? `✓ ${label}` : isCurrent ? `● ${label}` : label}
                     </span>
                   </span>
                 )
