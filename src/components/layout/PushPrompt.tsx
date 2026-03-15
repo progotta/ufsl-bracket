@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Bell, X } from 'lucide-react'
+import Link from 'next/link'
 import { FEATURES } from '@/lib/features'
 
 export default function PushPrompt() {
-  const [state, setState] = useState<'idle' | 'prompt' | 'subscribed' | 'denied' | 'unsupported'>('idle')
+  const [state, setState] = useState<'idle' | 'prompt' | 'subscribed' | 'just_subscribed' | 'denied' | 'unsupported'>('idle')
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function PushPrompt() {
         body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
       })
 
-      setState('subscribed')
+      setState('just_subscribed')
     } catch (err) {
       console.error('Push subscribe failed:', err)
       setState('denied')
@@ -59,7 +60,35 @@ export default function PushPrompt() {
     return output
   }
 
-  if (!FEATURES.pushNotifications || state !== 'prompt' || dismissed) return null
+  if (!FEATURES.pushNotifications || dismissed) return null
+
+  if (state === 'just_subscribed') {
+    return (
+      <div className="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-40 bg-brand-surface border border-green-500/30 rounded-2xl p-4 shadow-2xl animate-fade-in">
+        <button onClick={dismiss} className="absolute top-3 right-3 text-brand-muted hover:text-white">
+          <X size={16} />
+        </button>
+        <div className="flex items-start gap-3">
+          <div className="bg-green-500/10 rounded-xl p-2 mt-0.5">
+            <Bell size={20} className="text-green-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm">Notifications enabled!</p>
+            <p className="text-xs text-brand-muted mt-0.5">You&apos;ll get alerts for picks locking, round results, and more.</p>
+            <Link
+              href="/profile/notifications"
+              onClick={dismiss}
+              className="inline-block mt-2 text-xs font-semibold text-brand-orange hover:text-brand-orange/80 transition-colors"
+            >
+              Customize notifications &rarr;
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (state !== 'prompt') return null
 
   return (
     <div className="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-40 bg-brand-surface border border-brand-orange/30 rounded-2xl p-4 shadow-2xl animate-fade-in">

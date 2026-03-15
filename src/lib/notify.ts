@@ -1,12 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
-import { sendPushToUser } from './webPush'
+// src/lib/notify.ts — legacy shim, use dispatch() directly for new code
+import { dispatch, dispatchToPool } from './notifications/dispatch'
+import { NotificationType } from './notifications/types'
 
-const getServiceClient = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+export { dispatch as dispatchNotification } from './notifications/dispatch'
+export { dispatchToPool } from './notifications/dispatch'
 
+// Backward-compat: existing callers pass { pool_id, type, title, message, action_url }
 export async function notify(userId: string, notification: {
   pool_id?: string
   type: string
@@ -14,15 +13,11 @@ export async function notify(userId: string, notification: {
   message: string
   action_url?: string
 }) {
-  const supabase = getServiceClient()
-  await supabase.from('notifications').insert({ user_id: userId, ...notification })
-
-  await sendPushToUser(userId, {
+  await dispatch(userId, notification.type as NotificationType, {
     title: notification.title,
     body: notification.message,
-    url: notification.action_url || '/',
-    tag: notification.type,
-  }).catch(() => {})
+    url: notification.action_url,
+  })
 }
 
 export async function notifyCommissioner(poolId: string, notification: {
@@ -31,16 +26,11 @@ export async function notifyCommissioner(poolId: string, notification: {
   message: string
   action_url?: string
 }) {
-  const supabase = getServiceClient()
-  const { data: pool } = await supabase
-    .from('pools')
-    .select('commissioner_id')
-    .eq('id', poolId)
-    .single()
-
-  if (pool) {
-    await notify(pool.commissioner_id, { pool_id: poolId, ...notification })
-  }
+  await dispatchToPool(poolId, notification.type as NotificationType, {
+    title: notification.title,
+    body: notification.message,
+    url: notification.action_url,
+  }, { commissionerOnly: true })
 }
 
 export async function notifyPoolMembers(poolId: string, notification: {
@@ -49,18 +39,9 @@ export async function notifyPoolMembers(poolId: string, notification: {
   message: string
   action_url?: string
 }) {
-  const supabase = getServiceClient()
-  const { data: members } = await supabase
-    .from('pool_members')
-    .select('user_id')
-    .eq('pool_id', poolId)
-
-  if (members) {
-    const rows = members.map(m => ({
-      user_id: m.user_id,
-      pool_id: poolId,
-      ...notification,
-    }))
-    await supabase.from('notifications').insert(rows)
-  }
+  await dispatchToPool(poolId, notification.type as NotificationType, {
+    title: notification.title,
+    body: notification.message,
+    url: notification.action_url,
+  })
 }
