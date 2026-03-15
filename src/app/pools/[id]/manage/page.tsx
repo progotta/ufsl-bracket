@@ -25,13 +25,17 @@ export default async function ManagePoolPage({ params }: Props) {
     .single()
 
   if (!pool) notFound()
-  if (pool.commissioner_id !== session.user.id) notFound()
 
   // Get members with profiles
   const { data: members } = await adminDb
     .from('pool_members')
     .select('id, user_id, role, payment_status, payment_date, payment_note, created_at, profiles(display_name, avatar_url)')
     .eq('pool_id', params.id)
+
+  const memberRecord = members?.find((m: any) => m.user_id === session.user.id)
+  const isOwner = pool.commissioner_id === session.user.id
+  const isCoCommissioner = memberRecord?.role === 'commissioner'
+  if (!isOwner && !isCoCommissioner) notFound()
 
   // Get games for second-chance bracket type detection
   const { data: gamesRaw } = await adminDb
@@ -96,6 +100,8 @@ export default async function ManagePoolPage({ params }: Props) {
           inviteUrl={inviteUrl}
           inviteCode={pool.invite_code}
           members={memberData}
+          isOwner={isOwner}
+          ownerUserId={pool.commissioner_id}
           games={(gamesRaw || []).map(g => ({
             round: g.round,
             status: g.status,

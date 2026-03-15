@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { Users, FileCheck, DollarSign, Trophy, Bell, Lock, Download, Share2, Check, Clock, AlertTriangle, Info, Loader2, RefreshCw } from 'lucide-react'
 import clsx from 'clsx'
 import PaymentToggle from '@/components/pools/PaymentToggle'
+import RoleToggle from '@/components/pools/RoleToggle'
 import { getOpenBracketTypes } from '@/lib/secondChance'
 
 interface MemberData {
@@ -30,11 +31,13 @@ interface Props {
   inviteUrl: string
   inviteCode: string
   members: MemberData[]
+  isOwner: boolean
+  ownerUserId: string
   games: { round: number; status: string; team1_id: string | null; team2_id: string | null; winner_id: string | null }[]
 }
 
 export default function ManageDashboard({
-  poolId, poolName, poolStatus, entryFee, maxMembers, inviteUrl, inviteCode, members, games,
+  poolId, poolName, poolStatus, entryFee, maxMembers, inviteUrl, inviteCode, members, isOwner, ownerUserId, games,
 }: Props) {
   const [sendingReminder, setSendingReminder] = useState<string | null>(null)
   const [reminderResult, setReminderResult] = useState<string | null>(null)
@@ -206,6 +209,14 @@ export default function ManageDashboard({
                       <p className="text-xs text-brand-muted truncate">{m.bracket_name}</p>
                     )}
                   </div>
+                  {isOwner && m.user_id !== ownerUserId && (
+                    <RoleToggle
+                      memberId={m.id}
+                      poolId={poolId}
+                      currentRole={m.role as 'commissioner' | 'member'}
+                      memberName={m.display_name}
+                    />
+                  )}
                   {m.bracket_submitted_at && (
                     <span className="text-[10px] text-brand-muted whitespace-nowrap">
                       {new Date(m.bracket_submitted_at).toLocaleDateString()}
@@ -231,6 +242,14 @@ export default function ManageDashboard({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{m.display_name}</p>
                   </div>
+                  {isOwner && m.user_id !== ownerUserId && (
+                    <RoleToggle
+                      memberId={m.id}
+                      poolId={poolId}
+                      currentRole={m.role as 'commissioner' | 'member'}
+                      memberName={m.display_name}
+                    />
+                  )}
                   <button
                     onClick={() => sendReminder('submit')}
                     disabled={!!sendingReminder}
@@ -266,7 +285,15 @@ export default function ManageDashboard({
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  {isOwner && m.user_id !== ownerUserId && (
+                    <RoleToggle
+                      memberId={m.id}
+                      poolId={poolId}
+                      currentRole={m.role as 'commissioner' | 'member'}
+                      memberName={m.display_name}
+                    />
+                  )}
                   {m.payment_status === 'waived' ? (
                     <span className="text-xs text-brand-muted bg-brand-surface px-2 py-1 rounded-full border border-brand-border">Waived</span>
                   ) : (

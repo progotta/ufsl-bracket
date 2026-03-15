@@ -106,7 +106,8 @@ export default async function PoolPage({ params }: Props) {
     .select('*')
     .eq('pool_id', params.id)
 
-  const isCommissioner = pool.commissioner_id === session.user.id
+  const isCommissioner = pool.commissioner_id === session.user.id ||
+    members?.some((m: any) => m.user_id === session.user.id && m.role === 'commissioner')
   const isMember = !!membership
   const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${pool.invite_code}`
 
