@@ -555,25 +555,6 @@ export default function BracketPicker({
 
       {/* Bracket canvas */}
       <div className="relative flex-1">
-        {/* Left arrow — mobile only */}
-        {canScrollBracketLeft && (
-          <button
-            onClick={() => scrollBracket('left')}
-            className="md:hidden absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-brand-dark/80 backdrop-blur border border-brand-border rounded-full p-1.5 shadow-lg"
-          >
-            <ChevronLeft size={18} />
-          </button>
-        )}
-        {/* Right arrow — mobile only */}
-        {canScrollBracketRight && (
-          <button
-            onClick={() => scrollBracket('right')}
-            className="md:hidden absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-brand-dark/80 backdrop-blur border border-brand-border rounded-full p-1.5 shadow-lg"
-          >
-            <ChevronRight size={18} />
-          </button>
-        )}
-
         <div
           ref={bracketScrollRef}
           onScroll={updateBracketScroll}
@@ -619,18 +600,32 @@ export default function BracketPicker({
           </LiveScoreContext.Provider>
         </div>
 
-        {/* Scroll progress bar — mobile only */}
-        <div className="md:hidden mx-4 mt-2 h-1 bg-brand-border rounded-full overflow-hidden">
-          <div
-            className="h-full bg-brand-orange rounded-full transition-all duration-150"
-            style={{ width: `${Math.max(5, bracketScrollPct * 100)}%` }}
-          />
+        {/* Mobile nav bar: arrows + progress — below bracket, no overlap */}
+        <div className="md:hidden flex items-center gap-3 px-4 mt-2 mb-2">
+          <button
+            onClick={() => scrollBracket('left')}
+            disabled={!canScrollBracketLeft}
+            className="flex-shrink-0 bg-brand-surface border border-brand-border rounded-full p-1.5 disabled:opacity-30 transition-opacity"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <div className="flex-1 h-1.5 bg-brand-border rounded-full overflow-hidden">
+            <div
+              className="h-full bg-brand-orange rounded-full transition-all duration-150"
+              style={{ width: `${Math.max(5, bracketScrollPct * 100)}%` }}
+            />
+          </div>
+          <button
+            onClick={() => scrollBracket('right')}
+            disabled={!canScrollBracketRight}
+            className="flex-shrink-0 bg-brand-surface border border-brand-border rounded-full p-1.5 disabled:opacity-30 transition-opacity"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
-
-        {/* Region labels hint — mobile only */}
-        <div className="md:hidden flex justify-between text-[10px] text-brand-muted px-5 mt-1 mb-2">
+        <div className="md:hidden flex justify-between text-[10px] text-brand-muted px-5 mb-2">
           <span>← East / South</span>
-          <span>F4 / NCG</span>
+          <span>F4</span>
           <span>West / Midwest →</span>
         </div>
       </div>
