@@ -554,14 +554,48 @@ export default function BracketPicker({
             style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
           >
             {activeRegion === 'All' ? (
-              <FullBracket
-                gameMap={gameMap}
-                picks={picks}
-                onPick={handlePick}
-                onTeamInfo={handleTeamInfo}
-                isSubmitted={isSubmitted}
-                showInsights={showInsights}
-              />
+              <>
+                {/* Desktop: side-by-side full bracket */}
+                <div className="hidden md:block">
+                  <FullBracket
+                    gameMap={gameMap}
+                    picks={picks}
+                    onPick={handlePick}
+                    onTeamInfo={handleTeamInfo}
+                    isSubmitted={isSubmitted}
+                    showInsights={showInsights}
+                  />
+                </div>
+                {/* Mobile: regions stacked vertically */}
+                <div className="md:hidden space-y-8">
+                  {(['East', 'West', 'South', 'Midwest'] as const).map(r => (
+                    <div key={r}>
+                      <h3 className="text-sm font-black text-brand-muted uppercase tracking-widest mb-3 px-1">{r}</h3>
+                      <RegionBracket
+                        region={r}
+                        gameMap={gameMap}
+                        picks={picks}
+                        onPick={handlePick}
+                        onTeamInfo={handleTeamInfo}
+                        isSubmitted={isSubmitted}
+                        showInsights={showInsights}
+                      />
+                    </div>
+                  ))}
+                  <div>
+                    <h3 className="text-sm font-black text-brand-muted uppercase tracking-widest mb-3 px-1">Final Four</h3>
+                    <RegionBracket
+                      region="Final Four"
+                      gameMap={gameMap}
+                      picks={picks}
+                      onPick={handlePick}
+                      onTeamInfo={handleTeamInfo}
+                      isSubmitted={isSubmitted}
+                      showInsights={showInsights}
+                    />
+                  </div>
+                </div>
+              </>
             ) : (
               <RegionBracket
                 region={activeRegion as string}
