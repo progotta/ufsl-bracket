@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sendPushToUser } from './webPush'
 
 const getServiceClient = () =>
   createClient(
@@ -15,6 +16,13 @@ export async function notify(userId: string, notification: {
 }) {
   const supabase = getServiceClient()
   await supabase.from('notifications').insert({ user_id: userId, ...notification })
+
+  await sendPushToUser(userId, {
+    title: notification.title,
+    body: notification.message,
+    url: notification.action_url || '/',
+    tag: notification.type,
+  }).catch(() => {})
 }
 
 export async function notifyCommissioner(poolId: string, notification: {

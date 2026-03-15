@@ -3,6 +3,7 @@ import './globals.css'
 import { AchievementToastProvider } from '@/components/achievements/AchievementToast'
 import SimBanner from '@/components/SimBanner'
 import MobileNav from '@/components/layout/MobileNav'
+import PushPrompt from '@/components/layout/PushPrompt'
 
 export const metadata: Metadata = {
   title: 'UFSL — Ultimate Fantasy Sports League',
@@ -34,6 +35,7 @@ export default function RootLayout({
           </main>
         </AchievementToastProvider>
         <MobileNav />
+        <PushPrompt />
       </body>
     </html>
   )

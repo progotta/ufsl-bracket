@@ -14,6 +14,7 @@ export const FEATURES = {
 
   // Notifications
   notifications: process.env.NEXT_PUBLIC_FEATURE_NOTIFICATIONS === 'true',
+  pushNotifications: process.env.NEXT_PUBLIC_FEATURE_PUSH_NOTIFICATIONS === 'true',
 
   // Debug/dev
   simulator: process.env.NEXT_PUBLIC_FEATURE_SIMULATOR === 'true',
