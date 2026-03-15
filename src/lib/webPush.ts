@@ -24,7 +24,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
   const db = createReadClient()
   const { data: subs } = await db
     .from('push_subscriptions')
-    .select('endpoint, p256dh, auth')
+    .select('endpoint, keys')
     .eq('user_id', userId)
 
   if (!subs?.length) return
@@ -32,7 +32,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
   const results = await Promise.allSettled(
     subs.map(sub =>
       webPush.sendNotification(
-        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        { endpoint: sub.endpoint, keys: { p256dh: (sub.keys as any).p256dh, auth: (sub.keys as any).auth } },
         JSON.stringify(payload)
       )
     )

@@ -4,14 +4,18 @@ import { NextResponse } from 'next/server'
 // POST /api/referrals — log that someone clicked an invite link (pre-join tracking)
 export async function POST(request: Request) {
   try {
+    const supabase = createRouteClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { invite_code, referrer_id, pool_id } = await request.json()
 
     if (!invite_code) {
       return NextResponse.json({ error: 'invite_code required' }, { status: 400 })
     }
-
-    const supabase = createRouteClient()
-    const { data: { session } } = await supabase.auth.getSession()
 
     // Create a referral entry (referred_id will be set when they actually join)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

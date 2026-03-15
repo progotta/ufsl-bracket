@@ -18,6 +18,25 @@ export async function GET(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
 
+  // Verify pool membership (or commissioner access)
+  const { data: memberCheck } = await db
+    .from('pool_members')
+    .select('id')
+    .eq('pool_id', poolId)
+    .eq('user_id', session.user.id)
+    .maybeSingle()
+
+  if (!memberCheck) {
+    const { data: poolCheck } = await db
+      .from('pools')
+      .select('commissioner_id')
+      .eq('id', poolId)
+      .single()
+    if (poolCheck?.commissioner_id !== session.user.id) {
+      return NextResponse.json({ error: 'Not a pool member' }, { status: 403 })
+    }
+  }
+
   let query = db
     .from('smack_messages')
     .select(`

@@ -14,8 +14,7 @@ export async function POST(request: Request) {
   await supabase.from('push_subscriptions').upsert({
     user_id: session.user.id,
     endpoint,
-    p256dh: keys.p256dh,
-    auth: keys.auth,
+    keys: { p256dh: keys.p256dh, auth: keys.auth },
   }, { onConflict: 'user_id,endpoint' })
 
   return NextResponse.json({ success: true })
