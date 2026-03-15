@@ -69,43 +69,57 @@ export default async function PoolPage({ params }: Props) {
 
   // Use adminDb for members query to get payment fields (RLS may not expose them)
   const adminDb = createServiceClient()
-  const { data: members } = await adminDb
-    .from('pool_members')
-    .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url)')
-    .eq('pool_id', params.id)
 
-  const { data: commissionerProfile } = await adminDb
-    .from('profiles')
-    .select('display_name, stripe_account_id, stripe_onboarded, paypal_merchant_id, paypal_onboarded')
-    .eq('id', pool.commissioner_id)
-    .single()
-
-  // Get ALL user brackets for this pool (multi-bracket support)
-  const { data: userBrackets } = await supabase
-    .from('brackets')
-    .select('*')
-    .eq('pool_id', params.id)
-    .eq('user_id', session.user.id)
-    .order('created_at', { ascending: true })
+  // Round 2: parallelize all independent queries
+  const [
+    { data: members },
+    { data: commissionerProfile },
+    { data: userBrackets },
+    { data: leaderboard },
+    { data: payments },
+    { data: currentProfile },
+    { data: roundProgress },
+  ] = await Promise.all([
+    adminDb
+      .from('pool_members')
+      .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url)')
+      .eq('pool_id', params.id),
+    adminDb
+      .from('profiles')
+      .select('display_name, stripe_account_id, stripe_onboarded, paypal_merchant_id, paypal_onboarded')
+      .eq('id', pool.commissioner_id)
+      .single(),
+    supabase
+      .from('brackets')
+      .select('*')
+      .eq('pool_id', params.id)
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('leaderboard')
+      .select('*')
+      .eq('pool_id', params.id)
+      .order('rank', { ascending: true })
+      .limit(50),
+    adminDb
+      .from('payments')
+      .select('*')
+      .eq('pool_id', params.id),
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .maybeSingle(),
+    supabase
+      .from('games')
+      .select('round, status, winner_id'),
+  ])
 
   const userBracket = userBrackets?.[0] || null
   const userBracketCount = userBrackets?.length || 0
   const maxBracketsPerMember = (pool as any).max_brackets_per_member || 1
   const feePerBracket = (pool as any).fee_per_bracket ?? true
   const onePayoutPerPerson = (pool as any).one_payout_per_person ?? false
-
-  const { data: leaderboard } = await supabase
-    .from('leaderboard')
-    .select('*')
-    .eq('pool_id', params.id)
-    .order('rank', { ascending: true })
-    .limit(50)
-
-  // Fetch payments from payments table for commissioner tracker
-  const { data: payments } = await adminDb
-    .from('payments')
-    .select('*')
-    .eq('pool_id', params.id)
 
   const isCommissioner = pool.commissioner_id === session.user.id ||
     members?.some((m: any) => m.user_id === session.user.id && m.role === 'commissioner')
@@ -118,22 +132,10 @@ export default async function PoolPage({ params }: Props) {
   const commissionerPaypalReady = !!(commissionerProfile as any)?.paypal_onboarded && !!(commissionerProfile as any)?.paypal_merchant_id
   const poolPaymentMethods = ((pool as any).payment_methods || []) as any[]
 
-  // Get current user's profile for share + nav
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', session.user.id)
-    .maybeSingle()
-
   // Get current user's rank from leaderboard
   const userLeaderboardEntry = leaderboard?.find(e => e.user_id === session.user.id)
   const userRank = userLeaderboardEntry?.rank ?? undefined
   const userName = currentProfile?.display_name || 'Anonymous'
-
-  // Tournament progress: count games by round
-  const { data: roundProgress } = await supabase
-    .from('games')
-    .select('round, status, winner_id')
 
   const tournamentProgress = (() => {
     if (!roundProgress || roundProgress.length === 0) return null
@@ -171,7 +173,7 @@ export default async function PoolPage({ params }: Props) {
 
   return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-      <AutoRefresh intervalSeconds={30} />
+      <AutoRefresh intervalSeconds={60} />
       {/* Stripe/Payment status banners */}
       <StripeStatusBanner />
 

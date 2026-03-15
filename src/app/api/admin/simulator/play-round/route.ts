@@ -139,15 +139,21 @@ async function updateBracketScores(db: any, gameId: string, winnerId: string, ro
   const points = ROUND_POINTS[round] || 1
   const slug = getGameSlug(gameNumber, round, region)
 
+  // Batch all updates into a single upsert instead of N sequential updates
+  const updates: { id: string; score: number; correct_picks: number }[] = []
   for (const bracket of brackets) {
     const picks = (bracket.picks || {}) as Record<string, string>
     // Check both slug-keyed (real users) and UUID-keyed (legacy) picks
     const pickedWinner = picks[slug] || picks[gameId]
     if (pickedWinner === winnerId) {
-      await db.from('brackets').update({
+      updates.push({
+        id: bracket.id,
         score: (bracket.score || 0) + points,
         correct_picks: (bracket.correct_picks || 0) + 1,
-      }).eq('id', bracket.id)
+      })
     }
+  }
+  if (updates.length > 0) {
+    await db.from('brackets').upsert(updates, { onConflict: 'id' })
   }
 }

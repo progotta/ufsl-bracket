@@ -49,5 +49,22 @@ export async function sendPushToPool(poolId: string, payload: PushPayload, exclu
 
   if (!members) return
   const userIds = members.map(m => m.user_id).filter(id => id !== excludeUserId)
-  await Promise.allSettled(userIds.map(id => sendPushToUser(id, payload)))
+  if (userIds.length === 0) return
+
+  // Batch subscription lookup — single query for all users instead of N per-user queries
+  const { data: allSubs } = await db
+    .from('push_subscriptions')
+    .select('user_id, endpoint, keys')
+    .in('user_id', userIds)
+
+  if (!allSubs?.length) return
+
+  // Dispatch to all subscriptions in parallel
+  const tasks: Promise<unknown>[] = allSubs.map(sub =>
+    webPush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: (sub.keys as any).p256dh, auth: (sub.keys as any).auth } },
+      JSON.stringify(payload)
+    ).catch(() => {})
+  )
+  await Promise.allSettled(tasks)
 }

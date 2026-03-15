@@ -52,20 +52,25 @@ export async function POST(request: Request) {
   // Advance winner to next bracket slot
   await advanceWinner(db, game.game_number, result.winnerId)
 
-  // Update bracket scores — check both slug-keyed (real users) and UUID-keyed (legacy)
+  // Update bracket scores — batch upsert instead of N sequential updates
   const { data: brackets } = await db.from('brackets').select('id, picks, score, correct_picks')
   if (brackets) {
     const points = ROUND_POINTS[game.round] || 1
     const slug = getGameSlug(game.game_number, game.round, game.region)
+    const updates: { id: string; score: number; correct_picks: number }[] = []
     for (const bracket of brackets) {
       const picks = (bracket.picks || {}) as Record<string, string>
       const pickedWinner = picks[slug] || picks[gameId]
       if (pickedWinner === result.winnerId) {
-        await db.from('brackets').update({
+        updates.push({
+          id: bracket.id,
           score: (bracket.score || 0) + points,
           correct_picks: (bracket.correct_picks || 0) + 1,
-        }).eq('id', bracket.id)
+        })
       }
+    }
+    if (updates.length > 0) {
+      await db.from('brackets').upsert(updates, { onConflict: 'id' })
     }
   }
 

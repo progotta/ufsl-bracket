@@ -39,9 +39,10 @@ export async function POST() {
     }
   }
 
-  // Recalculate all bracket scores from scratch
+  // Recalculate all bracket scores from scratch — batch upsert instead of N sequential updates
   const { data: brackets } = await db.from('brackets').select('id, picks')
   if (brackets) {
+    const updates: { id: string; score: number }[] = []
     for (const bracket of brackets) {
       const picks = (bracket.picks || {}) as Record<string, string>
       let score = 0
@@ -51,7 +52,10 @@ export async function POST() {
           score += ROUND_POINTS[game.round] || 1
         }
       }
-      await db.from('brackets').update({ score }).eq('id', bracket.id)
+      updates.push({ id: bracket.id, score })
+    }
+    if (updates.length > 0) {
+      await db.from('brackets').upsert(updates, { onConflict: 'id' })
     }
   }
 
