@@ -20,21 +20,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ]
 
   return (
-    <div className="min-h-screen flex bg-brand-bg">
-      <aside className="w-48 bg-brand-surface border-r border-brand-border flex flex-col py-6 px-3 gap-1 shrink-0">
-        <div className="text-xs font-bold text-brand-muted uppercase tracking-widest px-2 mb-3">Admin</div>
-        {nav.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-white hover:bg-white/5 transition-colors"
-          >
-            <Icon size={14} />
-            {label}
-          </Link>
-        ))}
-      </aside>
-      <main className="flex-1 overflow-auto p-6">{children}</main>
+    <div className="min-h-screen flex flex-col bg-brand-bg">
+      {/* Top nav bar — mobile friendly */}
+      <header className="bg-brand-surface border-b border-brand-border sticky top-0 z-30">
+        <div className="px-4 py-2">
+          <div className="text-xs font-bold text-brand-muted uppercase tracking-widest mb-2">Admin</div>
+          <nav className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+            {nav.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap shrink-0"
+              >
+                <Icon size={14} />
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </header>
+      <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
     </div>
   )
 }
