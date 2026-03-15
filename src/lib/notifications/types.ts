@@ -7,6 +7,7 @@ export type NotificationType =
   | 'bracket_alive'
   | 'pool_invite'
   | 'payment_due'
+  | 'pool_notes_updated'
   // Commissioner
   | 'member_joined'
   | 'bracket_submitted'
@@ -38,6 +39,7 @@ export const NOTIFICATION_DEFINITIONS: NotificationDefinition[] = [
   { type: 'bracket_alive',        audience: 'player',       label: 'Still in contention',       description: 'When you survive a big round (Elite 8, Final 4)',      defaultPush: true,  defaultEmail: false, defaultSms: false },
   { type: 'pool_invite',          audience: 'player',       label: 'Pool invitation',           description: 'When someone invites you to a pool',                   defaultPush: true,  defaultEmail: true,  defaultSms: false },
   { type: 'payment_due',          audience: 'player',       label: 'Payment reminder',          description: 'When you owe an entry fee',                            defaultPush: true,  defaultEmail: true,  defaultSms: false },
+  { type: 'pool_notes_updated',  audience: 'player',       label: 'League announcements',      description: 'When the commissioner posts a league update or rule change', defaultPush: true, defaultEmail: false, defaultSms: false },
   // Commissioner
   { type: 'member_joined',        audience: 'commissioner', label: 'New member joined',         description: 'When someone joins your pool',                         defaultPush: true,  defaultEmail: false, defaultSms: false },
   { type: 'bracket_submitted',    audience: 'commissioner', label: 'Bracket submitted',         description: 'When a member submits their bracket',                  defaultPush: false, defaultEmail: false, defaultSms: false },

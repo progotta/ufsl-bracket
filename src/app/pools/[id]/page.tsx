@@ -8,6 +8,7 @@ import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
 import CommissionerActions from '@/components/pools/CommissionerActions'
+import LeagueNotes from '@/components/pools/LeagueNotes'
 import PaymentToggle from '@/components/pools/PaymentToggle'
 import StripeConnectSection from '@/components/pools/StripeConnectSection'
 import PaymentOptions from '@/components/pools/PaymentOptions'
@@ -381,6 +382,14 @@ export default async function PoolPage({ params }: Props) {
           </div>
         )}
       </div>
+
+      {/* League Notes */}
+      <LeagueNotes
+        poolId={params.id}
+        initialNotes={(pool as any).notes || null}
+        isCommissioner={!!isCommissioner}
+        notesUpdatedAt={(pool as any).notes_updated_at || null}
+      />
 
       {/* Pool Pot */}
       {FEATURES.paidPools && entryFee > 0 && (
