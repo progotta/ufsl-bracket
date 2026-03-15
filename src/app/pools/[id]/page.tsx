@@ -11,7 +11,6 @@ import PaymentToggle from '@/components/pools/PaymentToggle'
 import StripeConnectSection from '@/components/pools/StripeConnectSection'
 import PaymentOptions from '@/components/pools/PaymentOptions'
 import StripeStatusBanner from '@/components/pools/StripeStatusBanner'
-import Nav from '@/components/layout/Nav'
 import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
 import { FEATURES } from '@/lib/features'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
@@ -167,8 +166,6 @@ export default async function PoolPage({ params }: Props) {
     : []
 
   return (
-    <div className="min-h-screen bg-brand-dark">
-      <Nav profile={currentProfile} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       {/* Stripe/Payment status banners */}
       <StripeStatusBanner />
@@ -623,7 +620,6 @@ export default async function PoolPage({ params }: Props) {
         </div>
       </section>
       </main>
-    </div>
   )
 }
 

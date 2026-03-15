@@ -2,7 +2,6 @@ import { createServerClient, createReadClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import Nav from '@/components/layout/Nav'
 import ManageDashboard from './ManageDashboard'
 
 interface Props {
@@ -71,8 +70,6 @@ export default async function ManagePoolPage({ params }: Props) {
   })
 
   return (
-    <div className="min-h-screen bg-brand-dark">
-      <Nav profile={currentProfile} />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -96,6 +93,5 @@ export default async function ManagePoolPage({ params }: Props) {
           members={memberData}
         />
       </main>
-    </div>
   )
 }
