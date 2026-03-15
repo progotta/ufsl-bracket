@@ -462,7 +462,7 @@ export default async function PoolPage({ params }: Props) {
       )}
 
       {/* Pay entry fee — member only */}
-      {FEATURES.paidPools && !isCommissioner && isMember && entryFee > 0 && (currentMember?.payment_status === 'unpaid' || currentMember?.payment_status === 'pending_verification') && poolPaymentMethods.length > 0 && (
+      {FEATURES.paidPools && !isCommissioner && isMember && entryFee > 0 && (currentMember?.payment_status === 'unpaid' || currentMember?.payment_status === 'pending_verification') && (
         currentMember?.payment_status === 'pending_verification' ? (
           <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
             <span className="text-xl">&#9203;</span>

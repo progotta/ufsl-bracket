@@ -113,7 +113,7 @@ export default function PaymentOptions({
           </div>
         )}
 
-        {/* Manual */}
+        {/* Manual payment method (if configured) */}
         {manualMethod && (
           <div className="p-3 bg-brand-card rounded-xl border border-brand-border">
             <div className="flex items-center gap-2 mb-2">
@@ -146,21 +146,30 @@ export default function PaymentOptions({
               {manualMethod.instructions && (
                 <p className="text-xs text-brand-muted">{manualMethod.instructions}</p>
               )}
-              <button
-                onClick={handleIvePaid}
-                disabled={markingPaid}
-                className="w-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 font-semibold text-sm px-4 py-2 rounded-xl hover:bg-yellow-500/20 transition-colors flex items-center justify-center gap-2"
-              >
-                {markingPaid ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <>
-                    <Check size={14} />
-                    I&apos;ve Paid
-                  </>
-                )}
-              </button>
             </div>
+          </div>
+        )}
+
+        {/* "I've Paid" fallback — always shown when entry fee > 0 */}
+        {!hasStripe && !hasPaypal && (
+          <div className="p-3 bg-brand-card rounded-xl border border-brand-border">
+            {!manualMethod && (
+              <p className="text-xs text-brand-muted mb-3">Pay the commissioner directly (Venmo, Cash App, Zelle, cash, etc.), then tap below to notify them.</p>
+            )}
+            <button
+              onClick={handleIvePaid}
+              disabled={markingPaid}
+              className="w-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 font-semibold text-sm px-4 py-2 rounded-xl hover:bg-yellow-500/20 transition-colors flex items-center justify-center gap-2"
+            >
+              {markingPaid ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <>
+                  <Check size={14} />
+                  I&apos;ve Paid — Notify Commissioner
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>
