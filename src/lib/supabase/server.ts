@@ -3,7 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 // Service role client — bypasses RLS. Use only for server-side trusted operations.
-export const createReadClient = () =>
+// L-5: Renamed from createReadClient to createServiceClient — this is NOT read-only;
+// it has full service-role privileges. The old name was misleading.
+export const createServiceClient = () =>
   createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

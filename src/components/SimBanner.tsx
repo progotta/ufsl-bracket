@@ -4,31 +4,32 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-const ADMIN_IDS = (process.env.NEXT_PUBLIC_ADMIN_USER_IDS || '').split(',')
+interface SimBannerProps {
+  // M-2: isAdmin is determined server-side; no UUIDs exposed in the JS bundle
+  isAdmin: boolean
+}
 
-export default function SimBanner() {
+export default function SimBanner({ isAdmin }: SimBannerProps) {
   const [sim, setSim] = useState<{ label: string; date: string } | null>(null)
 
   useEffect(() => {
+    if (!isAdmin) return
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user || !ADMIN_IDS.includes(user.id)) return
-      supabase
-        .from('simulation_config')
-        .select('is_simulation_mode,sim_label,current_simulated_date')
-        .single()
-        .then(({ data }) => {
-          if (data?.is_simulation_mode) {
-            setSim({
-              label: data.sim_label || 'Simulation',
-              date: data.current_simulated_date
-                ? new Date(data.current_simulated_date).toLocaleString()
-                : '',
-            })
-          }
-        })
-    })
-  }, [])
+    supabase
+      .from('simulation_config')
+      .select('is_simulation_mode,sim_label,current_simulated_date')
+      .single()
+      .then(({ data }) => {
+        if (data?.is_simulation_mode) {
+          setSim({
+            label: data.sim_label || 'Simulation',
+            date: data.current_simulated_date
+              ? new Date(data.current_simulated_date).toLocaleString()
+              : '',
+          })
+        }
+      })
+  }, [isAdmin])
 
   if (!sim) return null
 

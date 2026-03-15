@@ -1,5 +1,5 @@
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function PATCH(
@@ -7,8 +7,9 @@ export async function PATCH(
   { params }: { params: { id: string; memberId: string } }
 ) {
   const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // M-3: Use getUser() for write operations (server-validated, not cookie-only)
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (!user || authError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { role } = await request.json()
   if (!['commissioner', 'member'].includes(role)) {
@@ -16,9 +17,9 @@ export async function PATCH(
   }
 
   // Only the pool OWNER (commissioner_id) can assign/remove co-commissioners
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
   const { data: pool } = await adminDb.from('pools').select('commissioner_id').eq('id', params.id).single()
-  if (!pool || pool.commissioner_id !== session.user.id) {
+  if (!pool || pool.commissioner_id !== user.id) {
     return NextResponse.json({ error: 'Only the pool owner can assign roles' }, { status: 403 })
   }
 

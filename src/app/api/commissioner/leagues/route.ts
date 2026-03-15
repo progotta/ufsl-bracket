@@ -1,5 +1,5 @@
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
 
   // Get all pools where user is commissioner
   const { data: pools, error } = await adminDb

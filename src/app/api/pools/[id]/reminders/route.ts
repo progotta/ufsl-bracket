@@ -1,8 +1,9 @@
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { notify } from '@/lib/notify'
 import { sendBracketReminderEmail, sendPaymentReminderEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/ratelimit'
 
 export async function POST(
   req: Request,
@@ -14,7 +15,11 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const adminDb = createReadClient()
+  // M-5: Rate limit reminder blasts — 2 per pool per hour
+  const rlResponse = await rateLimit(params.id, 'pool-reminders', { requests: 2, window: '1 h' })
+  if (rlResponse) return rlResponse
+
+  const adminDb = createServiceClient()
 
   // Verify commissioner
   const { data: pool } = await adminDb

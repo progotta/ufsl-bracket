@@ -88,18 +88,12 @@ export async function POST(req: Request) {
         await supabase.from('payments').insert(paymentRecord)
       }
 
-      // Notify commissioner of payment
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', user_id)
-        .single()
-      const memberName = profile?.display_name || 'A member'
-      const amount = Number(pool?.entry_fee) || 0
+      // L-6: Generic notification body — don't expose member name or amount on lock screen
+      // Full payment details remain visible in the manage dashboard (/pools/{id}/manage)
       await notifyCommissioner(pool_id, {
         type: 'payment_received',
         title: '💰 Payment received',
-        message: `${memberName} paid $${amount} entry fee via PayPal`,
+        message: 'A member confirmed their payment — tap to view pool',
         action_url: `/pools/${pool_id}/manage`,
       })
     }

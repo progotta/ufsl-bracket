@@ -7,6 +7,28 @@ import { deliverSms } from './channels/sms'
 const getServiceClient = () =>
   createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
+// M-6: Escape HTML to prevent injection in notification emails
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+// M-6: Only allow safe UFSL-owned URLs in email links
+function isSafeUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' && (
+      u.hostname.endsWith('ufsl.net') ||
+      u.hostname.endsWith('vercel.app') ||
+      u.hostname === 'localhost'
+    )
+  } catch { return false }
+}
+
 export interface DispatchPayload {
   title: string
   body: string
@@ -67,7 +89,8 @@ export async function dispatch(
     tasks.push(deliverEmail(
       profile.email,
       payload.title,
-      payload.emailHtml || `<p>${payload.body}</p>${payload.url ? `<p><a href="${payload.url}">View on UFSL</a></p>` : ''}`
+      // M-6: Escape body to prevent HTML injection; validate URL before embedding
+      payload.emailHtml || `<p>${escapeHtml(payload.body)}</p>${payload.url && isSafeUrl(payload.url) ? `<p><a href="${payload.url}">View on UFSL →</a></p>` : ''}`
     ))
   }
 

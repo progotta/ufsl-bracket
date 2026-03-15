@@ -4,6 +4,7 @@ import { AchievementToastProvider } from '@/components/achievements/AchievementT
 import SimBanner from '@/components/SimBanner'
 import MobileNav from '@/components/layout/MobileNav'
 import PushPrompt from '@/components/layout/PushPrompt'
+import { createServerClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: 'UFSL — Ultimate Fantasy Sports League',
@@ -15,11 +16,29 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+// M-2: Check admin status server-side so ADMIN_USER_IDS never leaks into the JS bundle
+async function getIsAdmin(): Promise<boolean> {
+  try {
+    const supabase = createServerClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return false
+    const adminIds = (process.env.ADMIN_USER_IDS || '')
+      .split(',')
+      .map(id => id.trim())
+      .filter(Boolean)
+    return adminIds.includes(session.user.id)
+  } catch {
+    return false
+  }
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const isAdmin = await getIsAdmin()
+
   return (
     <html lang="en" className="dark">
       <head>
@@ -28,7 +47,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-screen bg-brand-dark text-white">
-        <SimBanner />
+        <SimBanner isAdmin={isAdmin} />
         <AchievementToastProvider>
           <main className="pb-16 md:pb-0">
             {children}

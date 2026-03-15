@@ -1,4 +1,4 @@
-import { createServerClient, createReadClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Nav from '@/components/layout/Nav'
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
   const { data: pool } = await adminDb
     .from('pools')
     .select('name, description')
@@ -41,7 +41,7 @@ export default async function JoinPage({ params }: Props) {
 
   // Use service role to look up pool by invite code — the invite code IS the access control.
   // RLS (pools_member_read) blocks non-members, but a joiner isn't a member yet.
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
   const { data: poolRaw } = await adminDb
     .from('pools')
     .select('id, name, description, status, invite_code, is_public, commissioner_id, bracket_type, max_members, join_requires_approval, entry_fee, payment_instructions, payout_structure')

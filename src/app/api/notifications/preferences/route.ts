@@ -2,7 +2,7 @@ import { createRouteClient } from '@/lib/supabase/route'
 import { NextResponse } from 'next/server'
 import { NotificationType } from '@/lib/notifications/types'
 
-// GET — fetch all preferences for current user
+// GET — fetch all preferences for current user (read-only, getSession is fine)
 export async function GET() {
   const supabase = createRouteClient()
   const { data: { session } } = await supabase.auth.getSession()
@@ -22,8 +22,9 @@ export async function GET() {
 // PATCH — upsert one preference
 export async function PATCH(request: Request) {
   const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // M-3: Use getUser() for write operations (server-validated, not cookie-only)
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (!user || authError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { type, push_enabled, email_enabled, sms_enabled } = await request.json()
 
@@ -31,7 +32,7 @@ export async function PATCH(request: Request) {
   const db = supabase as any
 
   const { error } = await db.from('notification_preferences').upsert({
-    user_id: session.user.id,
+    user_id: user.id,
     type: type as NotificationType,
     push_enabled: push_enabled ?? true,
     email_enabled: email_enabled ?? false,

@@ -1,4 +1,4 @@
-import { createServerClient, createReadClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -16,7 +16,7 @@ export default async function ManagePoolPage({ params }: Props) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) redirect('/auth')
 
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
 
   const { data: pool } = await adminDb
     .from('pools')

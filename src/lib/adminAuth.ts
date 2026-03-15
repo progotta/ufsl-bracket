@@ -26,14 +26,20 @@ export async function requireAdmin(): Promise<NextResponse | null> {
     .map(id => id.trim())
     .filter(Boolean)
 
-  // If no admin IDs are configured, block access entirely in production.
-  // In development/test we allow any logged-in user for convenience.
+  // If no admin IDs are configured, block access in all environments except local development.
+  // L-1: Restrict bypass to localhost only — preview/staging deployments without ADMIN_USER_IDS
+  // set should NOT grant admin access to all logged-in users. The check below ensures the bypass
+  // only fires when running on a local machine (NODE_ENV=development AND site URL contains localhost).
   if (adminIds.length === 0) {
-    if (process.env.NODE_ENV === 'production') {
+    const isLocalDev =
+      process.env.NODE_ENV === 'development' &&
+      (process.env.NEXT_PUBLIC_SITE_URL || '').includes('localhost')
+
+    if (!isLocalDev) {
       return NextResponse.json({ error: 'Admin access not configured' }, { status: 403 })
     }
-    // Dev/test: log a warning but allow through
-    console.warn('[adminAuth] ADMIN_USER_IDS is not set — admin routes are unprotected in dev mode')
+    // Local dev only: log a warning but allow through so developers can test admin features
+    console.warn('[adminAuth] ADMIN_USER_IDS is not set — admin routes are unprotected on localhost dev')
     return null
   }
 

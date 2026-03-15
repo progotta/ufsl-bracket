@@ -1,5 +1,5 @@
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { dispatchToPool } from '@/lib/notifications/dispatch'
 import { rateLimit } from '@/lib/ratelimit'
@@ -9,11 +9,12 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // M-3: Use getUser() for write operations (server-validated, not cookie-only)
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (!user || authError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Rate limit: 5 notes updates per pool per hour
-  const rlKey = `${session.user.id}:${params.id}`
+  const rlKey = `${user.id}:${params.id}`
   const rlResponse = await rateLimit(rlKey, 'notes-update', { requests: 5, window: '1 h' })
   if (rlResponse) return rlResponse
 
@@ -28,10 +29,10 @@ export async function PATCH(
     .from('pool_members')
     .select('role')
     .eq('pool_id', params.id)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single()
 
-  const isCommissioner = pool?.commissioner_id === session.user.id || member?.role === 'commissioner'
+  const isCommissioner = pool?.commissioner_id === user.id || member?.role === 'commissioner'
   if (!isCommissioner) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { notes } = await request.json()
@@ -42,7 +43,7 @@ export async function PATCH(
   }
 
   // Use service role client to bypass RLS (co-commissioner case)
-  const serviceDb = createReadClient()
+  const serviceDb = createServiceClient()
   await serviceDb
     .from('pools')
     .update({ notes, notes_updated_at: new Date().toISOString() })
@@ -54,7 +55,7 @@ export async function PATCH(
       title: `📋 ${pool?.name} — League update`,
       body: notes.length > 100 ? notes.substring(0, 97) + '…' : notes,
       url: `/pools/${params.id}`,
-    }, { excludeUserId: session.user.id })
+    }, { excludeUserId: user.id })
   }
 
   return NextResponse.json({ success: true })

@@ -1,5 +1,5 @@
 import webPush from 'web-push'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 
 let vapidConfigured = false
 function ensureVapid() {
@@ -21,7 +21,7 @@ export interface PushPayload {
 
 export async function sendPushToUser(userId: string, payload: PushPayload) {
   ensureVapid()
-  const db = createReadClient()
+  const db = createServiceClient()
   const { data: subs } = await db
     .from('push_subscriptions')
     .select('endpoint, keys')
@@ -41,7 +41,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
 }
 
 export async function sendPushToPool(poolId: string, payload: PushPayload, excludeUserId?: string) {
-  const db = createReadClient()
+  const db = createServiceClient()
   const { data: members } = await db
     .from('pool_members')
     .select('user_id')

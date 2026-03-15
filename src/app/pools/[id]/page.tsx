@@ -1,4 +1,4 @@
-import { createServerClient, createReadClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench } from 'lucide-react'
@@ -68,7 +68,7 @@ export default async function PoolPage({ params }: Props) {
   if (!membership && !pool.is_public) notFound()
 
   // Use adminDb for members query to get payment fields (RLS may not expose them)
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
   const { data: members } = await adminDb
     .from('pool_members')
     .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url)')

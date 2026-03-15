@@ -1,5 +1,5 @@
 import { requireAdmin } from '@/lib/adminAuth'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 const MATCHUPS_R1 = [[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]]
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({} as any))
   const { action, data } = body
-  const supabase = createReadClient()
+  const supabase = createServiceClient()
 
   if (action === 'import_teams') {
     const { teams, season = 2026 } = data as { teams: Array<{ name: string; abbreviation: string; seed: number; region: string; espn_id?: number }>; season?: number }
@@ -264,7 +264,7 @@ export async function GET(req: NextRequest) {
   const authError = await requireAdmin()
   if (authError) return authError
 
-  const supabase = createReadClient()
+  const supabase = createServiceClient()
   const season = parseInt(req.nextUrl.searchParams.get('season') || '2026')
 
   const { data: teams } = await supabase
