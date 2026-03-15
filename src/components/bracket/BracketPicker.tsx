@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import NotificationPrompt from '@/components/NotificationPrompt'
@@ -21,7 +21,7 @@ import {
   FILL_STRATEGY_META,
   type FillStrategy,
 } from '@/lib/quickFill'
-import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, X, Download, Share2 } from 'lucide-react'
+import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, ChevronLeft, ChevronRight, X, Download, Share2 } from 'lucide-react'
 import { useLiveScores } from '@/hooks/useLiveScores'
 import GameLiveScore from '@/components/bracket/GameLiveScore'
 import type { LiveGameScore } from '@/lib/liveScores'
@@ -87,6 +87,25 @@ export default function BracketPicker({
   const [showQuickFillMenu, setShowQuickFillMenu] = useState(false)
   const [pendingFill, setPendingFill] = useState<{ strategy: FillStrategy; newPicks: Record<string, string> } | null>(null)
   const [showImportModal, setShowImportModal] = useState(false)
+  const bracketScrollRef = useRef<HTMLDivElement>(null)
+  const [bracketScrollPct, setBracketScrollPct] = useState(0)
+  const [canScrollBracketLeft, setCanScrollBracketLeft] = useState(false)
+  const [canScrollBracketRight, setCanScrollBracketRight] = useState(true)
+
+  const updateBracketScroll = () => {
+    const el = bracketScrollRef.current
+    if (!el) return
+    const maxScroll = el.scrollWidth - el.clientWidth
+    const pct = maxScroll > 0 ? el.scrollLeft / maxScroll : 0
+    setBracketScrollPct(pct)
+    setCanScrollBracketLeft(el.scrollLeft > 10)
+    setCanScrollBracketRight(el.scrollLeft < maxScroll - 10)
+  }
+
+  const scrollBracket = (dir: 'left' | 'right') => {
+    bracketScrollRef.current?.scrollBy({ left: dir === 'right' ? 320 : -320, behavior: 'smooth' })
+  }
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -535,80 +554,85 @@ export default function BracketPicker({
       </div>
 
       {/* Bracket canvas */}
-      <div className="relative flex-1 overflow-auto p-4 sm:p-6">
-        {/* Right-edge scroll hint gradient — visible when content overflows (tablet) */}
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-brand-dark to-transparent z-10 lg:hidden" />
-        <LiveScoreContext.Provider value={{ liveScoreMap, picks, gameResults, eliminatedTeams: (() => {
-          // Build set of team IDs that have lost a completed game
-          const eliminated = new Set<string>()
-          for (const [gameId, result] of Object.entries(gameResults)) {
-            const g = gameMap.get(gameId)
-            if (!g) continue
-            if (g.team1?.id && g.team1.id !== result.winnerId) eliminated.add(g.team1.id)
-            if (g.team2?.id && g.team2.id !== result.winnerId) eliminated.add(g.team2.id)
-          }
-          return eliminated
-        })() }}>
-          <div
-            className="transition-transform origin-top-left"
-            style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
+      <div className="relative flex-1">
+        {/* Left arrow — mobile only */}
+        {canScrollBracketLeft && (
+          <button
+            onClick={() => scrollBracket('left')}
+            className="md:hidden absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-brand-dark/80 backdrop-blur border border-brand-border rounded-full p-1.5 shadow-lg"
           >
-            {activeRegion === 'All' ? (
-              <>
-                {/* Desktop: side-by-side full bracket */}
-                <div className="hidden md:block">
-                  <FullBracket
-                    gameMap={gameMap}
-                    picks={picks}
-                    onPick={handlePick}
-                    onTeamInfo={handleTeamInfo}
-                    isSubmitted={isSubmitted}
-                    showInsights={showInsights}
-                  />
-                </div>
-                {/* Mobile: regions stacked vertically */}
-                <div className="md:hidden space-y-8">
-                  {(['East', 'West', 'South', 'Midwest'] as const).map(r => (
-                    <div key={r}>
-                      <h3 className="text-sm font-black text-brand-muted uppercase tracking-widest mb-3 px-1">{r}</h3>
-                      <RegionBracket
-                        region={r}
-                        gameMap={gameMap}
-                        picks={picks}
-                        onPick={handlePick}
-                        onTeamInfo={handleTeamInfo}
-                        isSubmitted={isSubmitted}
-                        showInsights={showInsights}
-                      />
-                    </div>
-                  ))}
-                  <div>
-                    <h3 className="text-sm font-black text-brand-muted uppercase tracking-widest mb-3 px-1">Final Four</h3>
-                    <RegionBracket
-                      region="Final Four"
-                      gameMap={gameMap}
-                      picks={picks}
-                      onPick={handlePick}
-                      onTeamInfo={handleTeamInfo}
-                      isSubmitted={isSubmitted}
-                      showInsights={showInsights}
-                    />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <RegionBracket
-                region={activeRegion as string}
-                gameMap={gameMap}
-                picks={picks}
-                onPick={handlePick}
-                onTeamInfo={handleTeamInfo}
-                isSubmitted={isSubmitted}
-                showInsights={showInsights}
-              />
-            )}
-          </div>
-        </LiveScoreContext.Provider>
+            <ChevronLeft size={18} />
+          </button>
+        )}
+        {/* Right arrow — mobile only */}
+        {canScrollBracketRight && (
+          <button
+            onClick={() => scrollBracket('right')}
+            className="md:hidden absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-brand-dark/80 backdrop-blur border border-brand-border rounded-full p-1.5 shadow-lg"
+          >
+            <ChevronRight size={18} />
+          </button>
+        )}
+
+        <div
+          ref={bracketScrollRef}
+          onScroll={updateBracketScroll}
+          className="overflow-x-auto scrollbar-none p-4 sm:p-6"
+          style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+        >
+          <LiveScoreContext.Provider value={{ liveScoreMap, picks, gameResults, eliminatedTeams: (() => {
+            // Build set of team IDs that have lost a completed game
+            const eliminated = new Set<string>()
+            for (const [gameId, result] of Object.entries(gameResults)) {
+              const g = gameMap.get(gameId)
+              if (!g) continue
+              if (g.team1?.id && g.team1.id !== result.winnerId) eliminated.add(g.team1.id)
+              if (g.team2?.id && g.team2.id !== result.winnerId) eliminated.add(g.team2.id)
+            }
+            return eliminated
+          })() }}>
+            <div
+              className="transition-transform origin-top-left"
+              style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
+            >
+              {activeRegion === 'All' ? (
+                <FullBracket
+                  gameMap={gameMap}
+                  picks={picks}
+                  onPick={handlePick}
+                  onTeamInfo={handleTeamInfo}
+                  isSubmitted={isSubmitted}
+                  showInsights={showInsights}
+                />
+              ) : (
+                <RegionBracket
+                  region={activeRegion as string}
+                  gameMap={gameMap}
+                  picks={picks}
+                  onPick={handlePick}
+                  onTeamInfo={handleTeamInfo}
+                  isSubmitted={isSubmitted}
+                  showInsights={showInsights}
+                />
+              )}
+            </div>
+          </LiveScoreContext.Provider>
+        </div>
+
+        {/* Scroll progress bar — mobile only */}
+        <div className="md:hidden mx-4 mt-2 h-1 bg-brand-border rounded-full overflow-hidden">
+          <div
+            className="h-full bg-brand-orange rounded-full transition-all duration-150"
+            style={{ width: `${Math.max(5, bracketScrollPct * 100)}%` }}
+          />
+        </div>
+
+        {/* Region labels hint — mobile only */}
+        <div className="md:hidden flex justify-between text-[10px] text-brand-muted px-5 mt-1 mb-2">
+          <span>← East / South</span>
+          <span>F4 / NCG</span>
+          <span>West / Midwest →</span>
+        </div>
       </div>
     </div>
   )
