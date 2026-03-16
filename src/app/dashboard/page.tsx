@@ -13,7 +13,6 @@ import NotificationPrompt from '@/components/NotificationPrompt'
 import LiveGames from '@/components/LiveGames'
 import BracketRoundBreakdown from '@/components/BracketRoundBreakdown'
 import BracketCardIntelligence from '@/components/BracketCardIntelligence'
-import AutoRefresh from '@/components/pools/AutoRefresh'
 import { computeAllBracketIntelligence } from '@/lib/bracketIntelligence'
 import {
   BRACKET_TYPE_META,
@@ -176,7 +175,6 @@ async function DashboardPageInner() {
 
   return (
     <div className="space-y-8">
-      <AutoRefresh intervalSeconds={60} />
       {/* Welcome header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
