@@ -5,6 +5,7 @@ import { Users, FileCheck, DollarSign, Trophy, Bell, Lock, Download, Share2, Che
 import clsx from 'clsx'
 import PaymentToggle from '@/components/pools/PaymentToggle'
 import RoleToggle from '@/components/pools/RoleToggle'
+import InvitePanel from '@/components/pools/InvitePanel'
 import { getOpenBracketTypes } from '@/lib/secondChance'
 
 interface MemberData {
@@ -151,6 +152,18 @@ export default function ManageDashboard({
             <StatCard icon={<Trophy size={18} />} label="Prize Pool" value={`$${prizePool}`} color="orange" />
           </>
         )}
+      </div>
+
+      {/* Invite Panel */}
+      <div>
+        <h3 className="font-bold text-sm text-brand-muted uppercase tracking-wider mb-3">Invite People</h3>
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
+          <InvitePanel
+            poolName={poolName}
+            inviteCode={inviteCode}
+            inviteUrl={inviteUrl}
+          />
+        </div>
       </div>
 
       {/* Action items */}
