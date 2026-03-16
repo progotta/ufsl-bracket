@@ -67,9 +67,6 @@ export default function AuthForm({ commissionerMode = false }: { commissionerMod
     setError(null)
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`,
-      },
     })
     if (error) {
       setError(error.message)
