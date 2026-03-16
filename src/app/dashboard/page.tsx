@@ -10,6 +10,7 @@ import AllSmack from '@/components/smack/AllSmack'
 import RecentAchievements from '@/components/achievements/RecentAchievements'
 import AchievementsPanel from '@/components/achievements/AchievementsPanel'
 import NotificationPrompt from '@/components/NotificationPrompt'
+import PhoneNudgeBanner from '@/components/PhoneNudgeBanner'
 import LiveGames from '@/components/LiveGames'
 import BracketRoundBreakdown from '@/components/BracketRoundBreakdown'
 import BracketCardIntelligence from '@/components/BracketCardIntelligence'
@@ -190,6 +191,9 @@ async function DashboardPageInner() {
           Create Pool
         </Link>
       </div>
+
+      {/* Phone-only account nudge — only visible to phone-only users */}
+      <PhoneNudgeBanner />
 
       {/* ── PRIORITY 1: Brackets ── */}
       <section id="brackets">
