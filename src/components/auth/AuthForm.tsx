@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Mail, Phone, ArrowRight, Loader2, CheckCircle, X } from 'lucide-react'
 import clsx from 'clsx'
@@ -9,6 +10,7 @@ type AuthStep = 'choose' | 'email' | 'phone' | 'otp-email' | 'otp-phone'
 type LoadingProvider = 'apple' | 'google' | 'facebook' | 'email' | 'phone' | 'verify' | null
 
 export default function AuthForm({ commissionerMode = false }: { commissionerMode?: boolean }) {
+  const router = useRouter()
   const [step, setStep] = useState<AuthStep>('choose')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -115,8 +117,11 @@ export default function AuthForm({ commissionerMode = false }: { commissionerMod
     if (verifyError) {
       setError(verifyError.message)
       setLoading(null)
+    } else {
+      // Explicit redirect — don't rely solely on auth state change
+      router.push(postAuthRedirect)
+      router.refresh()
     }
-    // On success, the auth state change will redirect
   }
 
   const isDisabled = loading !== null
