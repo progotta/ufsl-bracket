@@ -33,8 +33,8 @@ export default function TermsPage() {
         <p className="text-brand-muted leading-relaxed">
           You are responsible for maintaining the confidentiality of your account credentials and for all
           activity that occurs under your account. Notify us immediately at{' '}
-          <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">
-            shawn@progotta.com
+          <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">
+            support@ufsl.net
           </a>{' '}
           if you suspect unauthorized access. You may not share your account or transfer it to another
           person.
@@ -160,7 +160,7 @@ export default function TermsPage() {
         <p className="text-brand-muted leading-relaxed">
           UFSL — Ultimate Fantasy Sports League<br />
           <a href="https://ufsl.net" className="text-brand-orange hover:underline">ufsl.net</a><br />
-          <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">shawn@progotta.com</a>
+          <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">support@ufsl.net</a>
         </p>
       </section>
     </article>

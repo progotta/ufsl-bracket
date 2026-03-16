@@ -34,8 +34,8 @@ const faqs = [
         You can also log in with your phone number via SMS verification, or use{' '}
         <strong className="text-white">Google Sign-In</strong> if you registered with Google.
         If you&apos;re still having trouble, email us at{' '}
-        <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">
-          shawn@progotta.com
+        <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">
+          support@ufsl.net
         </a>
         .
       </>
@@ -91,8 +91,8 @@ const faqs = [
         page — just filling in picks without submitting doesn&apos;t lock them in. If you submitted
         before the deadline and your picks still aren&apos;t appearing, try a hard refresh (Ctrl+Shift+R
         or Cmd+Shift+R) and check again. If the issue persists, email us immediately at{' '}
-        <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">
-          shawn@progotta.com
+        <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">
+          support@ufsl.net
         </a>{' '}
         with your username and pool name.
       </>
@@ -136,7 +136,7 @@ export default function SupportPage() {
           </p>
         </div>
         <a
-          href="mailto:shawn@progotta.com"
+          href="mailto:support@ufsl.net"
           className="inline-block bg-brand-orange hover:bg-orange-500 transition-colors text-white font-semibold px-5 py-2.5 rounded-lg text-sm whitespace-nowrap"
         >
           Email Us

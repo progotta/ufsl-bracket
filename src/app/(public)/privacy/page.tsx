@@ -19,8 +19,8 @@ export default function PrivacyPage() {
         </p>
         <p className="text-brand-muted leading-relaxed mt-3">
           Questions? Contact us at{' '}
-          <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">
-            shawn@progotta.com
+          <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">
+            support@ufsl.net
           </a>
           .
         </p>
@@ -147,8 +147,8 @@ export default function PrivacyPage() {
         </ul>
         <p className="text-brand-muted leading-relaxed mt-3">
           To exercise any of these rights, contact{' '}
-          <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">
-            shawn@progotta.com
+          <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">
+            support@ufsl.net
           </a>
           .
         </p>
@@ -186,7 +186,7 @@ export default function PrivacyPage() {
         <p className="text-brand-muted leading-relaxed">
           UFSL — Ultimate Fantasy Sports League<br />
           <a href="https://ufsl.net" className="text-brand-orange hover:underline">ufsl.net</a><br />
-          <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">shawn@progotta.com</a>
+          <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">support@ufsl.net</a>
         </p>
       </section>
     </article>

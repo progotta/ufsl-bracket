@@ -144,8 +144,8 @@ export default function SmsConsentPage() {
           </li>
           <li>
             Email us at{' '}
-            <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">
-              shawn@progotta.com
+            <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">
+              support@ufsl.net
             </a>{' '}
             for any questions or issues.
           </li>
@@ -167,7 +167,7 @@ export default function SmsConsentPage() {
         <p className="text-brand-muted leading-relaxed">
           UFSL — Ultimate Fantasy Sports League<br />
           <a href="https://ufsl.net" className="text-brand-orange hover:underline">ufsl.net</a><br />
-          <a href="mailto:shawn@progotta.com" className="text-brand-orange hover:underline">shawn@progotta.com</a>
+          <a href="mailto:support@ufsl.net" className="text-brand-orange hover:underline">support@ufsl.net</a>
         </p>
       </section>
     </article>
