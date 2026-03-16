@@ -95,10 +95,21 @@ export async function dispatch(
   }
 
   if (smsEnabled && profile?.phone) {
-    tasks.push(deliverSms(
-      profile.phone,
-      payload.smsBody || `${payload.title}: ${payload.body}`
-    ))
+    // Daily SMS cap: max 2 per user per day to control costs
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const { count: smsToday } = await db
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('channel', 'sms')
+      .gte('created_at', todayStart.toISOString())
+    if ((smsToday ?? 0) < 2) {
+      tasks.push(deliverSms(
+        profile.phone,
+        payload.smsBody || `${payload.title}: ${payload.body}`
+      ))
+    }
   }
 
   await Promise.allSettled(tasks)
