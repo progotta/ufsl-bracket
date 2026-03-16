@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import Link from 'next/link'
 import { AchievementToastProvider } from '@/components/achievements/AchievementToast'
 import SimBanner from '@/components/SimBanner'
 import MobileNav from '@/components/layout/MobileNav'
@@ -55,6 +56,20 @@ export default async function RootLayout({
         </AchievementToastProvider>
         <MobileNav />
         <PushPrompt />
+        {/* Site footer with legal links */}
+        <footer className="hidden md:block border-t border-brand-border mt-8">
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            <div className="flex flex-wrap gap-4 text-xs text-brand-muted justify-center">
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <span>·</span>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              <span>·</span>
+              <Link href="/support" className="hover:text-white transition-colors">Support</Link>
+              <span>·</span>
+              <Link href="/sms-consent" className="hover:text-white transition-colors">SMS Consent</Link>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   )
