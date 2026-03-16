@@ -241,15 +241,14 @@ export default function AuthForm({ commissionerMode = false }: { commissionerMod
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2 text-brand-muted">6-digit code</label>
+            <label className="block text-sm font-medium mb-2 text-brand-muted">Verification code</label>
             <input
               type="text"
               inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
+              maxLength={8}
               value={otp}
-              onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
+              onChange={e => setOtp(e.target.value.replace(/\s/g, ''))}
+              placeholder={step === 'otp-phone' ? '000000' : '00000000'}
               required
               className="input-base text-center text-2xl tracking-widest font-mono"
               autoFocus
