@@ -15,7 +15,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   const { data: members } = await db
     .from('pool_members')
-    .select('*, profiles(display_name, avatar_url, email)')
+    .select('*, profiles(display_name, avatar_url)')
     .eq('pool_id', params.id)
 
   return NextResponse.json({ members: members || [] })

@@ -10,8 +10,17 @@ export default function PhoneNudgeBanner() {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    // Check localStorage first — if already dismissed this session, bail
-    if (typeof window !== 'undefined' && localStorage.getItem(DISMISS_KEY)) return
+    if (typeof window === 'undefined') return
+
+    // Check localStorage first — if already dismissed, bail
+    if (localStorage.getItem(DISMISS_KEY)) return
+
+    // Check sessionStorage — avoid Admin API call on every page load
+    const cached = sessionStorage.getItem('ufsl_identity_check')
+    if (cached) {
+      setShow(cached === 'phone_only')
+      return
+    }
 
     // Fetch identities to check if phone-only
     fetch('/api/profile/identities')
@@ -24,9 +33,9 @@ export default function PhoneNudgeBanner() {
           ['google', 'apple', 'facebook'].includes(i.provider)
         )
         // Show banner only if: has phone, and no email, and no OAuth
-        if (hasPhone && !hasEmail && !hasOAuth) {
-          setShow(true)
-        }
+        const phoneOnly = hasPhone && !hasEmail && !hasOAuth
+        sessionStorage.setItem('ufsl_identity_check', phoneOnly ? 'phone_only' : 'has_email')
+        setShow(phoneOnly)
       })
       .catch(() => {
         // Silently ignore — non-critical feature

@@ -53,7 +53,10 @@ export default function InvitePanel({ poolName, inviteCode, inviteUrl }: InviteP
 
   const smsInvite = () => {
     const body = encodeURIComponent(`Join my ${poolName} bracket pool on UFSL! ${inviteUrl}`)
-    window.open(`sms:?&body=${body}`, '_self')
+    // iOS uses sms:&body=  Android uses sms:?body=
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    const sep = isIOS ? '&' : '?'
+    window.open(`sms:${sep}body=${body}`, '_self')
   }
 
   const pickContact = async () => {

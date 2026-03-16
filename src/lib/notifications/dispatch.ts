@@ -105,10 +105,20 @@ export async function dispatch(
       .eq('channel', 'sms')
       .gte('created_at', todayStart.toISOString())
     if ((smsToday ?? 0) < 2) {
-      tasks.push(deliverSms(
+      await deliverSms(
         profile.phone,
         payload.smsBody || `${payload.title}: ${payload.body}`
-      ))
+      )
+      // Log the SMS delivery so the cap works correctly on subsequent calls
+      try {
+        await db.from('notifications').insert({
+          user_id: userId,
+          type,
+          title: payload.title,
+          message: payload.body,
+          channel: 'sms',
+        })
+      } catch { /* non-fatal */ }
     }
   }
 

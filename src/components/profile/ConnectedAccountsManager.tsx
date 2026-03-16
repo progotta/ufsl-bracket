@@ -136,7 +136,8 @@ export default function ConnectedAccountsManager() {
     e.preventDefault()
     setFlowLoading(true)
     setError(null)
-    const { error: err } = await supabase.auth.signInWithOtp({ email: newEmail })
+    // Use updateUser (not signInWithOtp) to link email without disturbing the session
+    const { error: err } = await supabase.auth.updateUser({ email: newEmail })
     setFlowLoading(false)
     if (err) {
       setError(err.message)
@@ -150,10 +151,11 @@ export default function ConnectedAccountsManager() {
     e.preventDefault()
     setFlowLoading(true)
     setError(null)
+    // type: 'email_change' (not 'email') — this is the link/change flow, not sign-in
     const { error: err } = await supabase.auth.verifyOtp({
       email: newEmail,
       token: otp,
-      type: 'email',
+      type: 'email_change',
     })
     setFlowLoading(false)
     if (err) {
@@ -190,9 +192,8 @@ export default function ConnectedAccountsManager() {
     e.preventDefault()
     setFlowLoading(true)
     setError(null)
-    const { error: err } = await supabase.auth.signInWithOtp({
-      phone: normalizePhone(newPhone),
-    })
+    // Use updateUser (not signInWithOtp) to link phone without disturbing the session
+    const { error: err } = await supabase.auth.updateUser({ phone: normalizePhone(newPhone) })
     setFlowLoading(false)
     if (err) {
       setError(err.message)
@@ -206,10 +207,11 @@ export default function ConnectedAccountsManager() {
     e.preventDefault()
     setFlowLoading(true)
     setError(null)
+    // type: 'phone_change' (not 'sms') — this is the link/change flow, not sign-in
     const { error: err } = await supabase.auth.verifyOtp({
       phone: normalizePhone(newPhone),
       token: otp,
-      type: 'sms',
+      type: 'phone_change',
     })
     setFlowLoading(false)
     if (err) {
@@ -531,7 +533,7 @@ export default function ConnectedAccountsManager() {
               type="button"
               disabled={resendCountdown > 0}
               onClick={async () => {
-                const { error: err } = await supabase.auth.signInWithOtp({ email: newEmail })
+                const { error: err } = await supabase.auth.updateUser({ email: newEmail })
                 if (err) setError(err.message)
                 else setResendCountdown(60)
               }}
@@ -630,9 +632,7 @@ export default function ConnectedAccountsManager() {
               type="button"
               disabled={resendCountdown > 0}
               onClick={async () => {
-                const { error: err } = await supabase.auth.signInWithOtp({
-                  phone: normalizePhone(newPhone),
-                })
+                const { error: err } = await supabase.auth.updateUser({ phone: normalizePhone(newPhone) })
                 if (err) setError(err.message)
                 else setResendCountdown(60)
               }}

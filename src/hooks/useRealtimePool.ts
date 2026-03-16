@@ -1,15 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/client'
 
 export function useRealtimeMembers(poolId: string, initialMembers: any[]) {
   const [members, setMembers] = useState(initialMembers)
 
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = createClient()
 
     const channel = supabase
       .channel(`members-${poolId}`)
@@ -21,8 +18,15 @@ export function useRealtimeMembers(poolId: string, initialMembers: any[]) {
       }, () => {
         // Refetch members when membership changes
         fetch(`/api/pools/${poolId}/members`)
-          .then(r => r.json())
-          .then(data => { if (data.members) setMembers(data.members) })
+          .then(r => {
+            if (r.status === 403) {
+              // Membership revoked — redirect to dashboard
+              window.location.href = '/dashboard'
+              return null
+            }
+            return r.json()
+          })
+          .then(data => { if (data?.members) setMembers(data.members) })
           .catch(() => {})
       })
       .subscribe()
