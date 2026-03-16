@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Loader2, CheckCircle, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { Profile } from '@/types/database'
+import PlayerAvatar from '@/components/ui/PlayerAvatar'
 
 interface ProfileFormProps {
   profile: Profile | null
@@ -54,18 +55,14 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
       {/* Avatar section */}
       <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 flex items-center gap-6">
         <div className="relative">
-          {profile?.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={profile.avatar_url}
-              alt="Avatar"
-              className="w-20 h-20 rounded-2xl object-cover border border-brand-border"
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-2xl bg-brand-orange/20 flex items-center justify-center text-3xl font-black text-brand-orange border border-brand-border">
-              {initials}
-            </div>
-          )}
+          <PlayerAvatar
+            userId={userId}
+            displayName={profile?.display_name}
+            avatarUrl={profile?.avatar_url}
+            size="w-20 h-20"
+            rounded="2xl"
+            borderClass="border-brand-border"
+          />
         </div>
         <div>
           <div className="font-bold text-lg">{profile?.display_name || 'No name set'}</div>

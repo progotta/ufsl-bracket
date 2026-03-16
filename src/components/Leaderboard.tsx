@@ -5,6 +5,7 @@ import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronU
 import { formatCurrency } from '@/lib/payouts'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import PlayerAvatar from '@/components/ui/PlayerAvatar'
 
 // Lazy-load the share modal — only needed when the user clicks share
 const ShareModal = dynamic(() => import('@/components/ShareModal'), { ssr: false })
@@ -91,18 +92,14 @@ function Podium({ entries, currentUserId, onClickUser, payouts }: {
           >
             {/* Avatar */}
             <div className={`relative ${i === 1 ? 'scale-110' : ''}`}>
-              {entry.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={entry.avatar_url}
-                  alt={display}
-                  className={`w-14 h-14 rounded-full border-2 ${isMe ? 'border-brand-orange' : medal.border} shadow-lg`}
-                />
-              ) : (
-                <div className={`w-14 h-14 rounded-full border-2 ${isMe ? 'border-brand-orange bg-brand-orange/20' : `${medal.border} bg-brand-card`} flex items-center justify-center text-xl font-black shadow-lg`}>
-                  {display[0].toUpperCase()}
-                </div>
-              )}
+              <PlayerAvatar
+                userId={entry.user_id}
+                displayName={display}
+                avatarUrl={entry.avatar_url}
+                size="w-14 h-14"
+                borderClass={isMe ? 'border-brand-orange' : medal.border}
+                className="shadow-lg"
+              />
               <span className="absolute -bottom-1 -right-1 text-base">{medal.emoji}</span>
             </div>
 
@@ -183,14 +180,13 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
 
       {/* Player */}
       <div className="flex items-center gap-2.5 min-w-0">
-        {entry.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={entry.avatar_url} alt="" className="w-8 h-8 rounded-full flex-shrink-0" />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-bold text-xs flex-shrink-0">
-            {display[0].toUpperCase()}
-          </div>
-        )}
+        <PlayerAvatar
+          userId={entry.user_id}
+          displayName={display}
+          avatarUrl={entry.avatar_url}
+          size="w-8 h-8"
+          borderClass={isMe ? 'border-brand-orange' : 'border-brand-border/40'}
+        />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className={`font-semibold text-sm truncate ${isMe ? 'text-brand-orange' : 'group-hover:text-white'}`}>

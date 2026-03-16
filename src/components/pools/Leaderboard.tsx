@@ -1,5 +1,6 @@
 import type { LeaderboardEntry } from '@/types/database'
 import { Trophy } from 'lucide-react'
+import PlayerAvatar from '@/components/ui/PlayerAvatar'
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[]
@@ -63,14 +64,13 @@ export default function Leaderboard({ entries, currentUserId, poolStatus }: Lead
 
               {/* Player */}
               <div className="flex items-center gap-3 min-w-0">
-                {entry.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={entry.avatar_url} alt="" className="w-8 h-8 rounded-full flex-shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-bold text-sm flex-shrink-0">
-                    {(entry.display_name || '?')[0].toUpperCase()}
-                  </div>
-                )}
+                <PlayerAvatar
+                  userId={entry.user_id}
+                  displayName={entry.display_name}
+                  avatarUrl={entry.avatar_url}
+                  size="w-8 h-8"
+                  borderClass={isMe ? 'border-brand-orange' : 'border-brand-border/40'}
+                />
                 <div className="min-w-0">
                   <div className={`font-semibold text-sm truncate ${isMe ? 'text-brand-orange' : ''}`}>
                     {entry.display_name || 'Anonymous'}
