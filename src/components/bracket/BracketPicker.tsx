@@ -503,7 +503,7 @@ export default function BracketPicker({
                   className="btn-secondary text-sm flex items-center gap-2 py-2"
                 >
                   {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle size={14} className="text-green-400" /> : <Save size={14} />}
-                  {saved ? 'Saved!' : 'Save'}
+                  <span className="hidden sm:inline">{saved ? 'Saved!' : 'Save'}</span>
                 </button>
                 <button
                   onClick={() => handleSave(true)}
