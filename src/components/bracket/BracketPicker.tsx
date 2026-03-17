@@ -363,11 +363,11 @@ export default function BracketPicker({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Import Bracket button */}
+            {/* Import Bracket button — hidden on mobile when already submitted (save space) */}
             {!isSubmitted && (
               <button
                 onClick={() => setShowImportModal(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-orange/50"
+                className={clsx('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-orange/50', bracketIsSubmitted && 'hidden sm:flex')}
                 title="Import bracket from ESPN, Yahoo, CBS, or NCAA screenshot"
               >
                 <Download size={12} />
@@ -375,9 +375,9 @@ export default function BracketPicker({
               </button>
             )}
 
-            {/* Quick-fill dropdown */}
+            {/* Quick-fill dropdown — hidden on mobile when already submitted */}
             {!isSubmitted && (
-              <div className="relative">
+              <div className={clsx('relative', bracketIsSubmitted && 'hidden sm:block')}>
                 <button
                   onClick={() => setShowQuickFillMenu(m => !m)}
                   className={clsx(
