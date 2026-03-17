@@ -354,19 +354,7 @@ export default function BracketPicker({
               <span>{bracketTypeMeta.badge}</span>
             </div>
           )}
-          {/* Bracket name — flex-1 so it takes remaining space */}
-          <div className="relative flex-1 min-w-0 group">
-            <input
-              type="text"
-              value={bracketName}
-              onChange={e => setBracketName(e.target.value)}
-              onBlur={() => { if (bracketName !== initialBracketName) handleSave(false, true) }}
-              placeholder="Name your bracket…"
-              maxLength={40}
-              className="w-full bg-transparent border border-brand-border rounded-lg pl-2.5 pr-7 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60"
-            />
-            <Pencil size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-brand-orange transition-colors" />
-          </div>
+
           {/* Progress */}
           <div className="shrink-0 text-sm text-brand-muted whitespace-nowrap">
             <span className="text-white font-bold">{completedPicks}</span>/{totalGames}

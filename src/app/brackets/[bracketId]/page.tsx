@@ -20,6 +20,7 @@ const BracketPicker = nextDynamic(() => import('@/components/bracket/BracketPick
 })
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import BracketNameHeader from '@/components/bracket/BracketNameHeader'
 import { MOCK_TEAMS } from '@/lib/bracket'
 import type { BracketTeam } from '@/lib/bracket'
 import type { Bracket, Team } from '@/types/database'
@@ -227,10 +228,11 @@ export default async function BracketPage({ params }: Props) {
         >
           <ArrowLeft size={20} />
         </Link>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-black truncate">{bracket.bracket_name || bracket.name}</h1>
-          <p className="text-brand-muted text-xs">{pool?.name || 'Pool'}</p>
-        </div>
+        <BracketNameHeader
+          bracketId={bracket.id}
+          initialName={bracket.bracket_name || bracket.name}
+          poolName={pool?.name || 'Pool'}
+        />
         {/* Submitted indicator lives in the BracketPicker toolbar */}
         {/* Share button in toolbar */}
         <ShareButton
