@@ -365,7 +365,7 @@ export default function BracketPicker({
               maxLength={40}
               className="w-full bg-transparent border border-brand-border rounded-lg pl-2.5 pr-7 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60"
             />
-            <Pencil size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none group-focus-within:text-brand-orange transition-colors" />
+            <Pencil size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-brand-orange transition-colors" />
           </div>
           {/* Progress */}
           <div className="shrink-0 text-sm text-brand-muted whitespace-nowrap">
