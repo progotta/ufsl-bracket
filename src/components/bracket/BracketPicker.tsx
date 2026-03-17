@@ -512,7 +512,7 @@ export default function BracketPicker({
                   title={completedPicks < totalGames ? `Complete all ${totalGames} picks first` : bracketIsSubmitted ? 'Update your submitted picks' : 'Submit bracket'}
                 >
                   {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
-                  {bracketIsSubmitted ? `Resubmit (${completedPicks}/${totalGames})` : `Submit (${completedPicks}/${totalGames})`}
+                  {bracketIsSubmitted ? 'Resubmit' : `Submit (${completedPicks}/${totalGames})`}
                 </button>
               </>
             )}
