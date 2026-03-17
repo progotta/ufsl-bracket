@@ -346,32 +346,30 @@ export default function BracketPicker({
 
       {/* Toolbar */}
       <div className="sticky top-0 z-20 bg-brand-dark/90 backdrop-blur-xl border-b border-brand-border py-3 px-4">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            {/* Bracket type badge */}
-            {bracketType !== 'full' && (
-              <div className={`hidden sm:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${bracketTypeMeta.accentBg} border ${bracketTypeMeta.accentBorder} ${bracketTypeMeta.accentText}`}>
-                <span>{bracketTypeMeta.emoji}</span>
-                <span>{bracketTypeMeta.badge}</span>
-              </div>
-            )}
-            {/* Bracket name — always editable (name is separate from picks) */}
-            <input
-              type="text"
-              value={bracketName}
-              onChange={e => setBracketName(e.target.value)}
-              onBlur={() => { if (bracketName !== initialBracketName) handleSave(false, true) }}
-              placeholder="Name your bracket…"
-              maxLength={40}
-              className="bg-transparent border border-brand-border rounded-lg px-2.5 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60 w-32 sm:w-44"
-            />
-            {/* Progress — visible inline on mobile */}
-            <div className="text-sm text-brand-muted">
-              <span className="text-white font-bold">{completedPicks}</span>/{totalGames} picks
+        <div className="max-w-[1600px] mx-auto flex items-center gap-2">
+          {/* Bracket type badge — desktop only */}
+          {bracketType !== 'full' && (
+            <div className={`hidden sm:flex shrink-0 items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${bracketTypeMeta.accentBg} border ${bracketTypeMeta.accentBorder} ${bracketTypeMeta.accentText}`}>
+              <span>{bracketTypeMeta.emoji}</span>
+              <span>{bracketTypeMeta.badge}</span>
             </div>
+          )}
+          {/* Bracket name — flex-1 so it takes remaining space */}
+          <input
+            type="text"
+            value={bracketName}
+            onChange={e => setBracketName(e.target.value)}
+            onBlur={() => { if (bracketName !== initialBracketName) handleSave(false, true) }}
+            placeholder="Name your bracket…"
+            maxLength={40}
+            className="flex-1 min-w-0 bg-transparent border border-brand-border rounded-lg px-2.5 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60"
+          />
+          {/* Progress */}
+          <div className="shrink-0 text-sm text-brand-muted whitespace-nowrap">
+            <span className="text-white font-bold">{completedPicks}</span>/{totalGames}
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Import Bracket button */}
             {!isSubmitted && (
               <button
