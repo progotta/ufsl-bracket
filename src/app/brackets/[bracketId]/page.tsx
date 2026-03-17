@@ -191,7 +191,7 @@ export default async function BracketPage({ params }: Props) {
   }
 
   // Try to load teams from DB; fall back to mock data
-  const { data: dbTeams } = await supabase.from('teams').select('*').eq('is_active', true)
+  const { data: dbTeams } = await supabase.from('teams').select('*').eq('is_active', true).eq('season', 2026)
   const teams: BracketTeam[] = dbTeams && dbTeams.length >= 64
     ? dbTeams.map(teamToPickerTeam)
     : MOCK_TEAMS
