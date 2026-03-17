@@ -281,7 +281,7 @@ export default async function PoolPage({ params }: Props) {
                 <div key={bracket.id} className="space-y-2">
                   {maxBracketsPerMember > 1 && (
                     <div className="text-xs font-semibold text-brand-muted">
-                      {bracket.name || `Bracket ${idx + 1}`}
+                      {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
                     </div>
                   )}
                   <div className="flex items-center justify-between bg-brand-card rounded-xl p-3">
