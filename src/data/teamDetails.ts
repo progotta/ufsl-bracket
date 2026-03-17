@@ -232,7 +232,6 @@ export const TEAM_DETAILS: Record<string, Partial<TeamDetail>> = {
   'm15': { conference: 'OVC',              record: '23-9',  keyPlayers: [{ name: 'Aaron Nkrumah',         position: 'G', ppg: 17.6, rpg: 0,    apg: 0,   jersey: 0  }] },
   'm16': { conference: 'MEAC / America East', record: '—' },
 }
-}
 
 /**
  * Get full team detail, merging stored data with seed-history defaults.
