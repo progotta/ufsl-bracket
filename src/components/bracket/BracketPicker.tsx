@@ -1093,7 +1093,7 @@ function TeamSlot({
         onClick={(e) => { e.stopPropagation(); onInfo() }}
         className={clsx(
           'flex-shrink-0 text-brand-muted transition-all',
-          'opacity-0 group-hover:opacity-100',
+          'opacity-40 group-hover:opacity-100',
           'hover:text-brand-orange'
         )}
         title={`View ${team.name} details`}
