@@ -250,7 +250,7 @@ async function DashboardPageInner() {
                               <span className="text-lg shrink-0 mt-0.5">{meta.emoji}</span>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 min-w-0">
-                                  <span className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.name}</span>
+                                  <span className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.bracket_name || bracket.name}</span>
                                   {intel?.source && (
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 ${
                                       intel.source === 'ESPN' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
