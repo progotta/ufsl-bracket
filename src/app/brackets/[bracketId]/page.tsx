@@ -228,7 +228,7 @@ export default async function BracketPage({ params }: Props) {
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-black truncate">{bracket.name}</h1>
+          <h1 className="text-xl font-black truncate">{bracket.bracket_name || bracket.name}</h1>
           <p className="text-brand-muted text-xs">{pool?.name || 'Pool'}</p>
         </div>
         {bracket.is_submitted && (

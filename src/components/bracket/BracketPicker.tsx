@@ -360,10 +360,10 @@ export default function BracketPicker({
                 onBlur={() => { if (bracketName !== initialBracketName) handleSave(false) }}
                 placeholder="Name your bracket…"
                 maxLength={40}
-                className="hidden sm:block bg-transparent border border-brand-border rounded-lg px-2.5 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60 w-44"
+                className="bg-transparent border border-brand-border rounded-lg px-2.5 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60 w-32 sm:w-44"
               />
             ) : bracketName ? (
-              <span className="hidden sm:block text-sm font-semibold text-white">{bracketName}</span>
+              <span className="text-sm font-semibold text-white">{bracketName}</span>
             ) : null}
             {/* Progress — visible inline on mobile */}
             <div className="text-sm text-brand-muted">
@@ -406,8 +406,8 @@ export default function BracketPicker({
                   <>
                     {/* Backdrop */}
                     <div className="fixed inset-0 z-30" onClick={() => setShowQuickFillMenu(false)} />
-                    {/* Dropdown */}
-                    <div className="absolute right-0 top-full mt-1 z-40 bg-brand-card border border-brand-border rounded-xl shadow-xl min-w-[220px] overflow-hidden">
+                    {/* Dropdown — left-align on mobile so it doesn't go off-screen */}
+                    <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1 z-40 bg-brand-card border border-brand-border rounded-xl shadow-xl min-w-[220px] overflow-hidden">
                       <div className="px-3 py-2 border-b border-brand-border">
                         <p className="text-xs font-bold text-brand-muted uppercase tracking-wide">Quick Fill</p>
                       </div>
