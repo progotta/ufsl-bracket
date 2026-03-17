@@ -500,7 +500,7 @@ export default function BracketPicker({
                 <button
                   onClick={() => handleSave(false)}
                   disabled={saving}
-                  className="btn-secondary text-sm flex items-center gap-2 py-2"
+                  className="btn-secondary text-sm flex items-center gap-2 py-2 !px-2.5 sm:!px-6"
                 >
                   {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle size={14} className="text-green-400" /> : <Save size={14} />}
                   <span className="hidden sm:inline">{saved ? 'Saved!' : 'Save'}</span>
@@ -508,7 +508,7 @@ export default function BracketPicker({
                 <button
                   onClick={() => handleSave(true)}
                   disabled={submitting || completedPicks < totalGames}
-                  className="btn-primary text-sm flex items-center gap-2 py-2"
+                  className="btn-primary text-sm flex items-center gap-2 py-2 !px-3 sm:!px-6"
                   title={completedPicks < totalGames ? `Complete all ${totalGames} picks first` : bracketIsSubmitted ? 'Update your submitted picks' : 'Submit bracket'}
                 >
                   {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
