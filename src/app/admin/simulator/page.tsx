@@ -6,7 +6,7 @@ import { ROUND_NAMES } from '@/lib/bracket'
 import {
   Activity, Play, SkipForward, RefreshCw, Zap, Calendar,
   Clock, ChevronDown, ChevronUp, CheckCircle, Circle, Loader2,
-  AlertTriangle, Trophy, Settings
+  AlertTriangle, Trophy, Settings, Bell
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -403,6 +403,9 @@ function SimulatorContent() {
           </p>
         </div>
 
+        {/* ── Push Notification Test ── */}
+        <PushTestCard busy={busy} showToast={showToast} />
+
         {/* ── Game Results by Round ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -441,6 +444,63 @@ function SimulatorContent() {
             )
           })}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── PushTestCard ────────────────────────────────────────────────────────────
+
+function PushTestCard({ busy, showToast }: { busy: string | null; showToast: (msg: string, type?: 'success' | 'error') => void }) {
+  const [title, setTitle] = useState('\ud83d\udd14 Test Notification')
+  const [body, setBody] = useState('Push notifications are working! \u2014 UFSL Simulator')
+  const [sending, setSending] = useState(false)
+
+  const send = async () => {
+    setSending(true)
+    try {
+      const res = await fetch('/api/admin/test-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body }),
+      })
+      if (!res.ok) throw new Error('Failed to send')
+      showToast('Test push sent \u2713')
+    } catch {
+      showToast('Failed to send test push', 'error')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <Bell size={16} className="text-brand-orange" />
+        <h2 className="font-bold text-lg">Push Notification Test</h2>
+      </div>
+      <p className="text-xs text-brand-muted">Fire a real push to your device to verify notifications are working end-to-end.</p>
+      <div className="space-y-3">
+        <input
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          placeholder="Title"
+          className="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
+        />
+        <input
+          value={body}
+          onChange={e => setBody(e.target.value)}
+          placeholder="Body"
+          className="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
+        />
+        <button
+          onClick={send}
+          disabled={sending || !!busy}
+          className="flex items-center justify-center gap-2 w-full bg-brand-orange text-white font-bold py-2.5 rounded-xl text-sm disabled:opacity-60 hover:bg-brand-orange/90 transition-colors"
+        >
+          {sending ? <Loader2 size={14} className="animate-spin" /> : <Bell size={14} />}
+          {sending ? 'Sending\u2026' : 'Send Test Push'}
+        </button>
       </div>
     </div>
   )

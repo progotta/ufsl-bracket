@@ -10,6 +10,7 @@ import AllSmack from '@/components/smack/AllSmack'
 import RecentAchievements from '@/components/achievements/RecentAchievements'
 import AchievementsPanel from '@/components/achievements/AchievementsPanel'
 import NotificationPrompt from '@/components/NotificationPrompt'
+import PhoneNudgeBanner from '@/components/PhoneNudgeBanner'
 import LiveGames from '@/components/LiveGames'
 import BracketRoundBreakdown from '@/components/BracketRoundBreakdown'
 import BracketCardIntelligence from '@/components/BracketCardIntelligence'
@@ -190,6 +191,9 @@ async function DashboardPageInner() {
           Create Pool
         </Link>
       </div>
+
+      {/* Phone-only account nudge — only visible to phone-only users */}
+      <PhoneNudgeBanner />
 
       {/* ── PRIORITY 1: Brackets ── */}
       <section id="brackets">
@@ -460,11 +464,10 @@ function SecondChanceBanner({ openTypes }: { openTypes: BracketType[] }) {
         <div className="text-4xl">{meta.emoji}</div>
         <div className="flex-1">
           <div className={`font-black text-lg ${meta.accentText}`}>
-            💀 Bracket Busted? Start Fresh.
+            Your bracket is cooked. Start fresh.
           </div>
           <p className="text-brand-muted text-sm mt-1">
-            Your bracket is mathematically eliminated, but the tournament isn&apos;t over.
-            Jump into a {openTypes.map(t => BRACKET_TYPE_META[t].shortLabel).join(' or ')} bracket and get back in the game!
+            Join a 2nd Chance pool or start your own.
           </p>
         </div>
         <div className="flex flex-col gap-2 shrink-0">
@@ -473,7 +476,13 @@ function SecondChanceBanner({ openTypes }: { openTypes: BracketType[] }) {
             className="btn-primary text-sm flex items-center gap-1.5"
           >
             <Zap size={14} />
-            Start Fresh
+            Join a 2nd Chance Pool
+          </Link>
+          <Link
+            href={`/pools/new?bracket_type=${primary}&source=busted`}
+            className="text-center text-xs text-brand-orange hover:underline font-semibold mt-2 block"
+          >
+            Or start your own pool — takes 60 seconds →
           </Link>
           <Link href="/second-chance" className="text-center text-xs text-brand-muted hover:text-white transition-colors">
             Learn more →

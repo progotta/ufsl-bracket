@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, ChevronRight, Share2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/payouts'
 import Link from 'next/link'
@@ -291,6 +292,30 @@ export default function Leaderboard({
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Realtime subscription: refresh pool leaderboard when brackets change
+  useEffect(() => {
+    if (!poolId || activeTab !== 'pool') return
+
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const channel = supabase
+      .channel(`leaderboard-rt-${poolId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'brackets',
+        filter: `pool_id=eq.${poolId}`,
+      }, () => {
+        fetchData()
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [poolId, activeTab, fetchData])
 
   const handleClickUser = (userId: string, bracketId?: string) => {
     if (bracketId) {

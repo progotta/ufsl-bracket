@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { simulateGame } from '@/lib/simulator'
 import { ROUND_POINTS } from '@/lib/bracket'
 import { advanceWinner } from '@/lib/bracketAdvancement'
+import { sendRoundRecap } from '@/lib/roundRecap'
 
 export async function POST(request: Request) {
   try {
@@ -65,7 +66,22 @@ export async function POST(request: Request) {
       // Advance winner to next bracket slot
       await advanceWinner(db, game.game_number, result.winnerId)
       // Update bracket scores
-      await updateBracketScores(db, game.id, result.winnerId, game.round)
+      await updateBracketScores(db, game.id, result.winnerId, game.round, game.game_number, game.region)
+    }
+  }
+
+  // Check if the round is fully complete (all games played)
+  const allRoundGames = games.filter((g: any) => g.round === nextRound)
+  const allCompleted = allRoundGames.every((g: any) => g.status === 'completed' || played.includes(g.id))
+  if (allCompleted) {
+    // Send round recap to all pools
+    const { data: pools } = await db.from('pools').select('id').in('status', ['active', 'open', 'locked'])
+    if (pools) {
+      for (const pool of pools) {
+        sendRoundRecap(pool.id, nextRound).catch(err =>
+          console.error('[roundRecap] Failed for pool', pool.id, err)
+        )
+      }
     }
   }
 
@@ -102,14 +118,42 @@ function findNextUnplayedRound(games: any[]): number | null {
   return null
 }
 
-async function updateBracketScores(db: any, gameId: string, winnerId: string, round: number) {
-  const { data: brackets } = await db.from('brackets').select('id, picks, score')
+function getGameSlug(gameNumber: number, round: number, region: string): string {
+  if (round === 6) return 'championship-r6-g1'
+  if (round === 5) {
+    // Final Four: game_number 61 = ff-r5-g1, 62 = ff-r5-g2
+    const pos = gameNumber === 61 ? 1 : 2
+    return `ff-r5-g${pos}`
+  }
+  // R1-R4: {region}-r{round}-g{within_round_position}
+  // within_round_position: game_number within the region for that round
+  const gamesPerRound: Record<number, number> = { 1: 8, 2: 4, 3: 2, 4: 1 }
+  const gamesPerRegionPerRound = gamesPerRound[round] || 1
+  const withinRound = ((gameNumber - 1) % gamesPerRegionPerRound) + 1
+  return `${region.toLowerCase()}-r${round}-g${withinRound}`
+}
+
+async function updateBracketScores(db: any, gameId: string, winnerId: string, round: number, gameNumber: number, region: string) {
+  const { data: brackets } = await db.from('brackets').select('id, picks, score, correct_picks')
   if (!brackets) return
   const points = ROUND_POINTS[round] || 1
+  const slug = getGameSlug(gameNumber, round, region)
+
+  // Batch all updates into a single upsert instead of N sequential updates
+  const updates: { id: string; score: number; correct_picks: number }[] = []
   for (const bracket of brackets) {
     const picks = (bracket.picks || {}) as Record<string, string>
-    if (picks[gameId] === winnerId) {
-      await db.from('brackets').update({ score: (bracket.score || 0) + points }).eq('id', bracket.id)
+    // Check both slug-keyed (real users) and UUID-keyed (legacy) picks
+    const pickedWinner = picks[slug] || picks[gameId]
+    if (pickedWinner === winnerId) {
+      updates.push({
+        id: bracket.id,
+        score: (bracket.score || 0) + points,
+        correct_picks: (bracket.correct_picks || 0) + 1,
+      })
     }
+  }
+  if (updates.length > 0) {
+    await db.from('brackets').upsert(updates, { onConflict: 'id' })
   }
 }

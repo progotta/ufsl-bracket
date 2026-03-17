@@ -1,6 +1,6 @@
 import { createPayPalOrder, PAYPAL_CONFIGURED } from '@/lib/paypal'
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/ratelimit'
 
@@ -17,13 +17,14 @@ export async function POST(req: Request) {
   }
 
   const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  // M-3: Use getUser() for payment operations (server-validated, not cookie-only)
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (!user || authError) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Rate limit: 5 payment initiations per user per 10 minutes
-  const rlResponse = await rateLimit(session.user.id, 'payment-init', { requests: 5, window: '10 m' })
+  const rlResponse = await rateLimit(user.id, 'payment-init', { requests: 5, window: '10 m' })
   if (rlResponse) return rlResponse
 
   const { data: pool } = await supabase
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
   }
 
   // Get commissioner's PayPal merchant ID
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
   const { data: commissionerProfile } = await adminDb
     .from('profiles')
     .select('*')
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
     pool.entry_fee,
     'USD',
     paypalMerchantId,
-    { pool_id, user_id: session.user.id }
+    { pool_id, user_id: user.id }
   )
 
   if (!order) {

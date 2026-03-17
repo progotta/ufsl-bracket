@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Users, FileCheck, DollarSign, Trophy, Bell, Lock, Download, Share2, Check, Clock, AlertTriangle, Info, Loader2 } from 'lucide-react'
+import { Users, FileCheck, DollarSign, Trophy, Bell, Lock, Download, Share2, Check, Clock, AlertTriangle, Info, Loader2, RefreshCw } from 'lucide-react'
 import clsx from 'clsx'
 import PaymentToggle from '@/components/pools/PaymentToggle'
+import RoleToggle from '@/components/pools/RoleToggle'
+import InvitePanel from '@/components/pools/InvitePanel'
+import { getOpenBracketTypes } from '@/lib/secondChance'
 
 interface MemberData {
   id: string
@@ -29,10 +32,13 @@ interface Props {
   inviteUrl: string
   inviteCode: string
   members: MemberData[]
+  isOwner: boolean
+  ownerUserId: string
+  games: { round: number; status: string; team1_id: string | null; team2_id: string | null; winner_id: string | null }[]
 }
 
 export default function ManageDashboard({
-  poolId, poolName, poolStatus, entryFee, maxMembers, inviteUrl, inviteCode, members,
+  poolId, poolName, poolStatus, entryFee, maxMembers, inviteUrl, inviteCode, members, isOwner, ownerUserId, games,
 }: Props) {
   const [sendingReminder, setSendingReminder] = useState<string | null>(null)
   const [reminderResult, setReminderResult] = useState<string | null>(null)
@@ -45,6 +51,7 @@ export default function ManageDashboard({
   const pendingCount = members.filter(m => m.payment_status === 'pending_verification').length
   const unsubmittedCount = members.filter(m => !m.has_submitted).length
   const prizePool = paidCount * entryFee
+  const openSecondChanceTypes = getOpenBracketTypes(games as any).filter(t => t !== 'full')
 
   const submitted = members.filter(m => m.has_submitted)
   const notSubmitted = members.filter(m => !m.has_submitted)
@@ -147,6 +154,18 @@ export default function ManageDashboard({
         )}
       </div>
 
+      {/* Invite Panel */}
+      <div>
+        <h3 className="font-bold text-sm text-brand-muted uppercase tracking-wider mb-3">Invite People</h3>
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
+          <InvitePanel
+            poolName={poolName}
+            inviteCode={inviteCode}
+            inviteUrl={inviteUrl}
+          />
+        </div>
+      </div>
+
       {/* Action items */}
       {actionItems.length > 0 && (
         <div className="space-y-2">
@@ -203,6 +222,14 @@ export default function ManageDashboard({
                       <p className="text-xs text-brand-muted truncate">{m.bracket_name}</p>
                     )}
                   </div>
+                  {isOwner && m.user_id !== ownerUserId && (
+                    <RoleToggle
+                      memberId={m.id}
+                      poolId={poolId}
+                      currentRole={m.role as 'commissioner' | 'member'}
+                      memberName={m.display_name}
+                    />
+                  )}
                   {m.bracket_submitted_at && (
                     <span className="text-[10px] text-brand-muted whitespace-nowrap">
                       {new Date(m.bracket_submitted_at).toLocaleDateString()}
@@ -228,6 +255,14 @@ export default function ManageDashboard({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{m.display_name}</p>
                   </div>
+                  {isOwner && m.user_id !== ownerUserId && (
+                    <RoleToggle
+                      memberId={m.id}
+                      poolId={poolId}
+                      currentRole={m.role as 'commissioner' | 'member'}
+                      memberName={m.display_name}
+                    />
+                  )}
                   <button
                     onClick={() => sendReminder('submit')}
                     disabled={!!sendingReminder}
@@ -263,7 +298,15 @@ export default function ManageDashboard({
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  {isOwner && m.user_id !== ownerUserId && (
+                    <RoleToggle
+                      memberId={m.id}
+                      poolId={poolId}
+                      currentRole={m.role as 'commissioner' | 'member'}
+                      memberName={m.display_name}
+                    />
+                  )}
                   {m.payment_status === 'waived' ? (
                     <span className="text-xs text-brand-muted bg-brand-surface px-2 py-1 rounded-full border border-brand-border">Waived</span>
                   ) : (
@@ -322,6 +365,22 @@ export default function ManageDashboard({
             label={copied ? 'Copied!' : 'Share pool invite link'}
             onClick={copyInviteLink}
           />
+          {openSecondChanceTypes.length > 0 && (
+            <QuickAction
+              icon={<RefreshCw size={16} />}
+              label="Launch 2nd Chance Pool"
+              onClick={() => {
+                const type = openSecondChanceTypes[0]
+                const params = new URLSearchParams({
+                  bracket_type: type,
+                  from_pool: poolId,
+                  from_name: poolName,
+                })
+                window.location.href = `/pools/new?${params.toString()}`
+              }}
+              variant="secondary"
+            />
+          )}
         </div>
       </div>
     </div>
@@ -356,7 +415,7 @@ function QuickAction({ icon, label, onClick, disabled, variant }: {
   label: string
   onClick: () => void
   disabled?: boolean
-  variant?: 'danger'
+  variant?: 'danger' | 'secondary'
 }) {
   return (
     <button
@@ -366,6 +425,8 @@ function QuickAction({ icon, label, onClick, disabled, variant }: {
         'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-left',
         variant === 'danger'
           ? 'bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20'
+          : variant === 'secondary'
+          ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20'
           : 'bg-brand-surface border border-brand-border hover:bg-brand-card',
         disabled && 'opacity-40 cursor-not-allowed'
       )}

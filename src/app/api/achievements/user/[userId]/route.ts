@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+// Note: createServerClient wraps the SSR client; getSession() uses cookie auth
 
 /**
  * GET /api/achievements/user/[userId]
@@ -15,6 +16,9 @@ export async function GET(
   }
 
   const supabase = createServerClient()
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const [allRes, userRes, xpRes] = await Promise.all([
     supabase.from('achievements').select('*').order('category').order('points', { ascending: false }),

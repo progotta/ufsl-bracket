@@ -3,6 +3,14 @@ import { createRouteClient } from '@/lib/supabase/route'
 import { requireAdmin } from '@/lib/adminAuth'
 import { NextResponse } from 'next/server'
 import { simulateGame } from '@/lib/simulator'
+
+function getGameSlug(gameNumber: number, round: number, region: string): string {
+  if (round === 6) return 'championship-r6-g1'
+  if (round === 5) return `ff-r5-g${gameNumber === 61 ? 1 : 2}`
+  const gamesPerRound: Record<number, number> = { 1: 8, 2: 4, 3: 2, 4: 1 }
+  const withinRound = ((gameNumber - 1) % (gamesPerRound[round] || 1)) + 1
+  return `${region.toLowerCase()}-r${round}-g${withinRound}`
+}
 import { ROUND_POINTS } from '@/lib/bracket'
 import { advanceWinner } from '@/lib/bracketAdvancement'
 
@@ -44,15 +52,25 @@ export async function POST(request: Request) {
   // Advance winner to next bracket slot
   await advanceWinner(db, game.game_number, result.winnerId)
 
-  // Update bracket scores
-  const { data: brackets } = await db.from('brackets').select('id, picks, score')
+  // Update bracket scores — batch upsert instead of N sequential updates
+  const { data: brackets } = await db.from('brackets').select('id, picks, score, correct_picks')
   if (brackets) {
     const points = ROUND_POINTS[game.round] || 1
+    const slug = getGameSlug(game.game_number, game.round, game.region)
+    const updates: { id: string; score: number; correct_picks: number }[] = []
     for (const bracket of brackets) {
       const picks = (bracket.picks || {}) as Record<string, string>
-      if (picks[gameId] === result.winnerId) {
-        await db.from('brackets').update({ score: (bracket.score || 0) + points }).eq('id', bracket.id)
+      const pickedWinner = picks[slug] || picks[gameId]
+      if (pickedWinner === result.winnerId) {
+        updates.push({
+          id: bracket.id,
+          score: (bracket.score || 0) + points,
+          correct_picks: (bracket.correct_picks || 0) + 1,
+        })
       }
+    }
+    if (updates.length > 0) {
+      await db.from('brackets').upsert(updates, { onConflict: 'id' })
     }
   }
 

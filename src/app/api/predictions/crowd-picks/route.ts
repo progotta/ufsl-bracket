@@ -22,6 +22,17 @@ export async function GET(request: NextRequest) {
   const team2sParam = searchParams.get('team2s')
   const poolId = searchParams.get('poolId')
 
+  // M-1: When filtering by pool, verify the requester is a pool member
+  if (poolId) {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { data: membership } = await supabase
+      .from('pool_members').select('id')
+      .eq('pool_id', poolId).eq('user_id', session.user.id).single()
+    if (!membership) return NextResponse.json({ error: 'Not a pool member' }, { status: 403 })
+  }
+
   if (!gameIdsParam || !team1sParam || !team2sParam) {
     return NextResponse.json(
       { error: 'Missing required params: gameIds, team1s, team2s' },

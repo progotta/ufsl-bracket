@@ -1,6 +1,6 @@
 import { capturePayPalOrder, PAYPAL_CONFIGURED } from '@/lib/paypal'
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 // POST { orderID, pool_id }
@@ -16,8 +16,9 @@ export async function POST(req: Request) {
   }
 
   const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  // M-3: Use getUser() for payment operations (server-validated, not cookie-only)
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (!user || authError) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -33,10 +34,10 @@ export async function POST(req: Request) {
         paypal_order_id: orderID,
       } as any)
       .eq('pool_id', pool_id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     // Insert into payments table
-    const adminDb = createReadClient()
+    const adminDb = createServiceClient()
     const { data: pool } = await adminDb
       .from('pools')
       .select('entry_fee')
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
 
     await adminDb.from('payments').insert({
       pool_id,
-      user_id: session.user.id,
+      user_id: user.id,
       amount: Number(pool?.entry_fee) || 0,
       status: 'paid',
       payment_method: 'paypal',

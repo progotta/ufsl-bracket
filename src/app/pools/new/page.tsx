@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Loader2, RefreshCw, Users } from 'lucide-react'
 import Link from 'next/link'
 import {
   BRACKET_TYPE_META,
@@ -38,20 +38,34 @@ export default function NewPoolPage() {
   const supabase = createClient()
 
   // Pre-select bracket type from query param (e.g. from /second-chance page)
+  // Pre-populate pool name when coming from an existing pool
   useEffect(() => {
     const typeParam = searchParams.get('bracket_type') as BracketType | null
     if (typeParam && BRACKET_TYPE_ORDER.includes(typeParam)) {
       setBracketType(typeParam)
     }
+    const fromName = searchParams.get('from_name')
+    if (fromName) {
+      setName(`${fromName} — 2nd Chance`)
+    }
   }, [searchParams])
 
   // Load games to determine which bracket types are open
+  // Also auto-select the first open bracket type if full is no longer available
   useEffect(() => {
     supabase
       .from('games')
       .select('id, round, status, team1_id, team2_id, winner_id, scheduled_at')
       .then(({ data }) => {
-        if (data) setGames(data as Game[])
+        if (data) {
+          setGames(data as Game[])
+          // If no bracket type was pre-selected and full is closed, default to first open type
+          const typeParam = searchParams.get('bracket_type') as BracketType | null
+          if (!typeParam) {
+            const firstOpen = BRACKET_TYPE_ORDER.find(t => isBracketTypeOpen(t, data as Game[]))
+            if (firstOpen && firstOpen !== 'full') setBracketType(firstOpen)
+          }
+        }
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -132,6 +146,13 @@ export default function NewPoolPage() {
       <div className="bg-brand-surface border border-brand-border rounded-2xl p-8">
         <form onSubmit={handleCreate} className="space-y-6">
 
+          {searchParams.get('from_pool') && (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-sm text-blue-400 flex items-center gap-2 mb-4">
+              <Users size={15} />
+              Your existing pool members will be notified when this pool is ready to join.
+            </div>
+          )}
+
           {/* Bracket Type Selector */}
           <div>
             <label className="block text-sm font-semibold mb-3">
@@ -142,8 +163,8 @@ export default function NewPoolPage() {
                 const meta = BRACKET_TYPE_META[type]
                 const isOpen = isBracketTypeOpen(type, games)
                 const isSelected = bracketType === type
-                // Full is always available (pre-tournament), others based on round
-                const isAvailable = type === 'full' || isOpen
+                // Availability based purely on tournament state
+                const isAvailable = isOpen
 
                 return (
                   <button

@@ -1,6 +1,6 @@
 import { getStripe } from '@/lib/stripe'
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/ratelimit'
 
@@ -19,17 +19,18 @@ export async function POST(req: Request) {
   }
 
   const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  // M-3: Use getUser() for payment operations (server-validated, not cookie-only)
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (!user || authError) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Rate limit: 5 payment initiations per user per 10 minutes
-  const rlResponse = await rateLimit(session.user.id, 'payment-init', { requests: 5, window: '10 m' })
+  const rlResponse = await rateLimit(user.id, 'payment-init', { requests: 5, window: '10 m' })
   if (rlResponse) return rlResponse
 
   // Use admin client to get commissioner's Stripe info
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
 
   const { data: pool } = await supabase
     .from('pools')
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
     .from('pool_members')
     .select('id, payment_status')
     .eq('pool_id', pool_id)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single()
 
   if (!member) {
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
     metadata: {
       pool_id,
       member_id: member.id,
-      user_id: session.user.id,
+      user_id: user.id,
     },
     payment_intent_data: {
       transfer_data: {
@@ -111,7 +112,7 @@ export async function POST(req: Request) {
   // Create a pending payment record in payments table
   await adminDb.from('payments').insert({
     pool_id,
-    user_id: session.user.id,
+    user_id: user.id,
     amount: pool.entry_fee,
     status: 'unpaid',
     payment_method: 'stripe',

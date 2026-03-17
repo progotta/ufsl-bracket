@@ -1,5 +1,5 @@
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { notifyCommissioner } from '@/lib/notify'
 
@@ -13,7 +13,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const adminDb = createReadClient()
+  const adminDb = createServiceClient()
 
   // Get pool info (need entry_fee for payment amount)
   const { data: pool } = await adminDb

@@ -1,19 +1,21 @@
-import { createServerClient, createReadClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import ShareStandingsCard from '@/components/pools/ShareStandingsCard'
 import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
 import CommissionerActions from '@/components/pools/CommissionerActions'
+import LeagueNotes from '@/components/pools/LeagueNotes'
 import PaymentToggle from '@/components/pools/PaymentToggle'
 import StripeConnectSection from '@/components/pools/StripeConnectSection'
 import PaymentOptions from '@/components/pools/PaymentOptions'
 import StripeStatusBanner from '@/components/pools/StripeStatusBanner'
-import Nav from '@/components/layout/Nav'
 import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
 import { FEATURES } from '@/lib/features'
+import RealtimeStatus from '@/components/ui/RealtimeStatus'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 // Lazy-load heavy client components to reduce initial bundle
@@ -34,7 +36,7 @@ const SmackTalk = dynamic(() => import('@/components/smack/SmackTalk'), {
   ),
   ssr: false,
 })
-import { BRACKET_TYPE_META, type BracketType } from '@/lib/secondChance'
+import { BRACKET_TYPE_META, isBracketTypeOpen, type BracketType } from '@/lib/secondChance'
 
 interface Props {
   params: { id: string }
@@ -66,25 +68,52 @@ export default async function PoolPage({ params }: Props) {
   if (!membership && !pool.is_public) notFound()
 
   // Use adminDb for members query to get payment fields (RLS may not expose them)
-  const adminDb = createReadClient()
-  const { data: members } = await adminDb
-    .from('pool_members')
-    .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url)')
-    .eq('pool_id', params.id)
+  const adminDb = createServiceClient()
 
-  const { data: commissionerProfile } = await adminDb
-    .from('profiles')
-    .select('display_name, stripe_account_id, stripe_onboarded, paypal_merchant_id, paypal_onboarded')
-    .eq('id', pool.commissioner_id)
-    .single()
-
-  // Get ALL user brackets for this pool (multi-bracket support)
-  const { data: userBrackets } = await supabase
-    .from('brackets')
-    .select('*')
-    .eq('pool_id', params.id)
-    .eq('user_id', session.user.id)
-    .order('created_at', { ascending: true })
+  // Round 2: parallelize all independent queries
+  const [
+    { data: members },
+    { data: commissionerProfile },
+    { data: userBrackets },
+    { data: leaderboard },
+    { data: payments },
+    { data: currentProfile },
+    { data: roundProgress },
+  ] = await Promise.all([
+    adminDb
+      .from('pool_members')
+      .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url)')
+      .eq('pool_id', params.id),
+    adminDb
+      .from('profiles')
+      .select('display_name, stripe_account_id, stripe_onboarded, paypal_merchant_id, paypal_onboarded')
+      .eq('id', pool.commissioner_id)
+      .single(),
+    supabase
+      .from('brackets')
+      .select('*')
+      .eq('pool_id', params.id)
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('leaderboard')
+      .select('*')
+      .eq('pool_id', params.id)
+      .order('rank', { ascending: true })
+      .limit(50),
+    adminDb
+      .from('payments')
+      .select('*')
+      .eq('pool_id', params.id),
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .maybeSingle(),
+    supabase
+      .from('games')
+      .select('round, status, winner_id'),
+  ])
 
   const userBracket = userBrackets?.[0] || null
   const userBracketCount = userBrackets?.length || 0
@@ -92,20 +121,8 @@ export default async function PoolPage({ params }: Props) {
   const feePerBracket = (pool as any).fee_per_bracket ?? true
   const onePayoutPerPerson = (pool as any).one_payout_per_person ?? false
 
-  const { data: leaderboard } = await supabase
-    .from('leaderboard')
-    .select('*')
-    .eq('pool_id', params.id)
-    .order('rank', { ascending: true })
-    .limit(50)
-
-  // Fetch payments from payments table for commissioner tracker
-  const { data: payments } = await adminDb
-    .from('payments')
-    .select('*')
-    .eq('pool_id', params.id)
-
-  const isCommissioner = pool.commissioner_id === session.user.id
+  const isCommissioner = pool.commissioner_id === session.user.id ||
+    members?.some((m: any) => m.user_id === session.user.id && m.role === 'commissioner')
   const isMember = !!membership
   const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/join/${pool.invite_code}`
 
@@ -115,22 +132,10 @@ export default async function PoolPage({ params }: Props) {
   const commissionerPaypalReady = !!(commissionerProfile as any)?.paypal_onboarded && !!(commissionerProfile as any)?.paypal_merchant_id
   const poolPaymentMethods = ((pool as any).payment_methods || []) as any[]
 
-  // Get current user's profile for share + nav
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', session.user.id)
-    .maybeSingle()
-
   // Get current user's rank from leaderboard
   const userLeaderboardEntry = leaderboard?.find(e => e.user_id === session.user.id)
   const userRank = userLeaderboardEntry?.rank ?? undefined
   const userName = currentProfile?.display_name || 'Anonymous'
-
-  // Tournament progress: count games by round
-  const { data: roundProgress } = await supabase
-    .from('games')
-    .select('round, status, winner_id')
 
   const tournamentProgress = (() => {
     if (!roundProgress || roundProgress.length === 0) return null
@@ -167,9 +172,8 @@ export default async function PoolPage({ params }: Props) {
     : []
 
   return (
-    <div className="min-h-screen bg-brand-dark">
-      <Nav profile={currentProfile} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <RealtimeStatus />
       {/* Stripe/Payment status banners */}
       <StripeStatusBanner />
 
@@ -190,7 +194,7 @@ export default async function PoolPage({ params }: Props) {
                       isCurrent ? 'text-brand-orange font-black' :
                       isComplete ? 'text-green-400' : 'text-brand-muted'
                     }>
-                      {isCurrent ? `${label}` : label}
+                      {isComplete ? `✓ ${label}` : isCurrent ? `● ${label}` : label}
                     </span>
                   </span>
                 )
@@ -307,7 +311,7 @@ export default async function PoolPage({ params }: Props) {
               ))}
 
               {/* Add another bracket CTA */}
-              {maxBracketsPerMember > 1 && userBracketCount < maxBracketsPerMember && (
+              {maxBracketsPerMember > 1 && userBracketCount < maxBracketsPerMember && isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) && (
                 <div className="mt-2 p-3 bg-brand-card/50 rounded-xl text-center">
                   <Link
                     href={`/pools/${params.id}/bracket/new`}
@@ -324,6 +328,7 @@ export default async function PoolPage({ params }: Props) {
               )}
             </div>
           ) : isMember ? (
+            isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) ? (
             <div className="space-y-2">
               <Link
                 href={`/pools/${params.id}/bracket/new`}
@@ -342,32 +347,51 @@ export default async function PoolPage({ params }: Props) {
                 </Link>
               </p>
             </div>
+            ) : (
+              <div className="bg-brand-surface border border-brand-border rounded-xl p-4 text-center">
+                <p className="text-sm font-bold text-brand-muted">Submissions Closed</p>
+                <p className="text-xs text-brand-muted mt-1">The window to submit a bracket for this pool has passed.</p>
+              </div>
+            )
           ) : (
             <JoinPoolButton poolId={params.id} />
           )}
         </div>
 
-        {/* Invite */}
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-blue-500/10 rounded-xl p-2.5">
-              <LinkIcon size={22} className="text-blue-400" />
+        {/* Invite (pre-lock) or Share Standings (once games are underway) */}
+        {pool.status === 'locked' || pool.status === 'completed' ||
+         tournamentProgress?.rounds.some(([, { completed }]) => completed > 0) ? (
+          <ShareStandingsCard poolName={pool.name} poolUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/pools/${pool.id}`} leaderboard={leaderboard || []} />
+        ) : (
+          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-blue-500/10 rounded-xl p-2.5">
+                <LinkIcon size={22} className="text-blue-400" />
+              </div>
+              <div>
+                <div className="font-bold">Invite Friends</div>
+                <div className="text-xs text-brand-muted">Share the link to join</div>
+              </div>
             </div>
-            <div>
-              <div className="font-bold">Invite Friends</div>
-              <div className="text-xs text-brand-muted">Share the link to join</div>
-            </div>
+            <InviteSection
+              poolName={pool.name}
+              inviteCode={pool.invite_code}
+              inviteUrl={inviteUrl}
+              inviterName={commissionerProfile?.display_name || undefined}
+              memberCount={members?.length || 0}
+              bracketType={pool.bracket_type}
+            />
           </div>
-          <InviteSection
-            poolName={pool.name}
-            inviteCode={pool.invite_code}
-            inviteUrl={inviteUrl}
-            inviterName={commissionerProfile?.display_name || undefined}
-            memberCount={members?.length || 0}
-            bracketType={pool.bracket_type}
-          />
-        </div>
+        )}
       </div>
+
+      {/* League Notes */}
+      <LeagueNotes
+        poolId={params.id}
+        initialNotes={(pool as any).notes || null}
+        isCommissioner={!!isCommissioner}
+        notesUpdatedAt={(pool as any).notes_updated_at || null}
+      />
 
       {/* Pool Pot */}
       {FEATURES.paidPools && entryFee > 0 && (
@@ -457,7 +481,7 @@ export default async function PoolPage({ params }: Props) {
       )}
 
       {/* Pay entry fee — member only */}
-      {FEATURES.paidPools && !isCommissioner && isMember && entryFee > 0 && (currentMember?.payment_status === 'unpaid' || currentMember?.payment_status === 'pending_verification') && poolPaymentMethods.length > 0 && (
+      {FEATURES.paidPools && !isCommissioner && isMember && entryFee > 0 && (currentMember?.payment_status === 'unpaid' || currentMember?.payment_status === 'pending_verification') && (
         currentMember?.payment_status === 'pending_verification' ? (
           <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
             <span className="text-xl">&#9203;</span>
@@ -623,7 +647,6 @@ export default async function PoolPage({ params }: Props) {
         </div>
       </section>
       </main>
-    </div>
   )
 }
 

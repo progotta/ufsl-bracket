@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server'
 
 // Stateless anon client — no cookie session, reads public data without RLS session filtering
 // (service role preferred but falls back to anon for public tables)
-function createReadClient() {
+function createServiceClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, key)
 }
@@ -25,7 +25,7 @@ export async function GET() {
     }
 
     // Use service role for reads (bypasses RLS — admin only after requireAdmin check above)
-    const db = createReadClient() as any
+    const db = createServiceClient() as any
 
     const [configResult, gamesResult, teamsResult] = await Promise.all([
       db.from('simulation_config').select('*').limit(1).single(),
@@ -57,7 +57,7 @@ export async function PATCH(request: Request) {
   const authError = await requireAdmin()
   if (authError) return authError
 
-  const db = createReadClient() as any
+  const db = createServiceClient() as any
   const body = await request.json()
 
   // Get the config row id first

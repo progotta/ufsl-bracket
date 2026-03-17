@@ -5,30 +5,14 @@
  * Protected: commissioners only.
  */
 import { NextResponse } from 'next/server'
-import { createRouteClient } from '@/lib/supabase/route'
+import { requireAdmin } from '@/lib/adminAuth'
 import { getCacheStats, redisClient } from '@/lib/cache'
 import { isCacheValid, getCache } from '@/lib/liveScores'
 
 export async function GET() {
-  const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const authError = await requireAdmin()
+  if (authError) return authError
 
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // Check commissioner access
-  const db = supabase as any // eslint-disable-line @typescript-eslint/no-explicit-any
-  const { data: membership } = await db
-    .from('pool_members')
-    .select('role')
-    .eq('user_id', session.user.id)
-    .eq('role', 'commissioner')
-    .maybeSingle()
-
-  if (!membership) {
-    return NextResponse.json({ error: 'Forbidden — commissioners only' }, { status: 403 })
-  }
 
   // Collect stats
   const stats = getCacheStats()

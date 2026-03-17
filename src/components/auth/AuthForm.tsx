@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Mail, Phone, ArrowRight, Loader2, CheckCircle, X } from 'lucide-react'
 import clsx from 'clsx'
@@ -9,6 +10,7 @@ type AuthStep = 'choose' | 'email' | 'phone' | 'otp-email' | 'otp-phone'
 type LoadingProvider = 'apple' | 'google' | 'facebook' | 'email' | 'phone' | 'verify' | null
 
 export default function AuthForm({ commissionerMode = false }: { commissionerMode?: boolean }) {
+  const router = useRouter()
   const [step, setStep] = useState<AuthStep>('choose')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -65,9 +67,6 @@ export default function AuthForm({ commissionerMode = false }: { commissionerMod
     setError(null)
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`,
-      },
     })
     if (error) {
       setError(error.message)
@@ -115,8 +114,11 @@ export default function AuthForm({ commissionerMode = false }: { commissionerMod
     if (verifyError) {
       setError(verifyError.message)
       setLoading(null)
+    } else {
+      // Explicit redirect — don't rely solely on auth state change
+      router.push(postAuthRedirect)
+      router.refresh()
     }
-    // On success, the auth state change will redirect
   }
 
   const isDisabled = loading !== null
@@ -239,15 +241,14 @@ export default function AuthForm({ commissionerMode = false }: { commissionerMod
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2 text-brand-muted">6-digit code</label>
+            <label className="block text-sm font-medium mb-2 text-brand-muted">Verification code</label>
             <input
               type="text"
               inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
+              maxLength={8}
               value={otp}
-              onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
+              onChange={e => setOtp(e.target.value.replace(/\s/g, ''))}
+              placeholder={step === 'otp-phone' ? '000000' : '00000000'}
               required
               className="input-base text-center text-2xl tracking-widest font-mono"
               autoFocus

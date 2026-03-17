@@ -1,5 +1,5 @@
 import { createRouteClient } from '@/lib/supabase/route'
-import { createReadClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { notifyCommissioner } from '@/lib/notify'
 import { NextResponse } from 'next/server'
 
@@ -13,7 +13,7 @@ export async function POST(
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const adminDb = createReadClient()
+    const adminDb = createServiceClient()
 
     const { data: bracket } = await adminDb
       .from('brackets')

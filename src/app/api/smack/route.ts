@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/ratelimit'
 
 // GET /api/smack?pool_id=xxx[&before=<iso>&limit=20]
+// Read-only: getSession() is fine for performance
 export async function GET(request: Request) {
   const supabase = createRouteClient()
   const { data: { session } } = await supabase.auth.getSession()
@@ -17,6 +18,25 @@ export async function GET(request: Request) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
+
+  // Verify pool membership (or commissioner access)
+  const { data: memberCheck } = await db
+    .from('pool_members')
+    .select('id')
+    .eq('pool_id', poolId)
+    .eq('user_id', session.user.id)
+    .maybeSingle()
+
+  if (!memberCheck) {
+    const { data: poolCheck } = await db
+      .from('pools')
+      .select('commissioner_id')
+      .eq('id', poolId)
+      .single()
+    if (poolCheck?.commissioner_id !== session.user.id) {
+      return NextResponse.json({ error: 'Not a pool member' }, { status: 403 })
+    }
+  }
 
   let query = db
     .from('smack_messages')
@@ -49,11 +69,12 @@ export async function GET(request: Request) {
 // POST /api/smack — create a message
 export async function POST(request: Request) {
   const supabase = createRouteClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // M-3: Use getUser() for write operations (server-validated, not cookie-only)
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (!user || authError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Rate limit: 20 requests per minute per user
-  const rlResponse = await rateLimit(session.user.id, 'smack-post', { requests: 20, window: '1 m' })
+  const rlResponse = await rateLimit(user.id, 'smack-post', { requests: 20, window: '1 m' })
   if (rlResponse) return rlResponse
 
   const { pool_id, message } = await request.json()
@@ -72,7 +93,7 @@ export async function POST(request: Request) {
     .from('pool_members')
     .select('id')
     .eq('pool_id', pool_id)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .maybeSingle()
 
   // Commissioners can also post (they may not be in pool_members)
@@ -82,7 +103,7 @@ export async function POST(request: Request) {
     .eq('id', pool_id)
     .single()
 
-  const isCommissioner = pool?.commissioner_id === session.user.id
+  const isCommissioner = pool?.commissioner_id === user.id
 
   if (!membership && !isCommissioner) {
     return NextResponse.json({ error: 'You are not a member of this pool' }, { status: 403 })
@@ -92,7 +113,7 @@ export async function POST(request: Request) {
     .from('smack_messages')
     .insert({
       pool_id,
-      user_id: session.user.id,
+      user_id: user.id,
       message: message.trim(),
       reactions: {},
     })
