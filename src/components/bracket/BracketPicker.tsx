@@ -52,7 +52,8 @@ interface BracketPickerProps {
   bracketId: string
   poolId: string
   initialPicks?: Record<string, string>
-  isSubmitted?: boolean
+  isSubmitted?: boolean        // true = picks are locked (pool locked/completed or viewing others)
+  bracketIsSubmitted?: boolean // true = user previously hit Submit (but can still edit if pool is open)
   teams?: BracketTeam[]
   bracketType?: 'full' | 'fresh32' | 'sweet16' | 'elite8' | 'final4'
   userName?: string
@@ -67,6 +68,7 @@ export default function BracketPicker({
   poolId,
   initialPicks = {},
   isSubmitted = false,
+  bracketIsSubmitted = false,
   teams = MOCK_TEAMS,
   bracketType = 'full',
   userName = 'Anonymous',
@@ -492,7 +494,7 @@ export default function BracketPicker({
               </button>
             )}
 
-            {/* Save */}
+            {/* Save / Submit / Resubmit */}
             {!isSubmitted && (
               <>
                 <button
@@ -500,27 +502,22 @@ export default function BracketPicker({
                   disabled={saving}
                   className="btn-secondary text-sm flex items-center gap-2 py-2"
                 >
-                  {saving ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : saved ? (
-                    <CheckCircle size={14} className="text-green-400" />
-                  ) : (
-                    <Save size={14} />
-                  )}
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle size={14} className="text-green-400" /> : <Save size={14} />}
                   {saved ? 'Saved!' : 'Save'}
                 </button>
                 <button
                   onClick={() => handleSave(true)}
                   disabled={submitting || completedPicks < totalGames}
                   className="btn-primary text-sm flex items-center gap-2 py-2"
-                  title={completedPicks < totalGames ? `Complete all ${totalGames} picks first` : 'Submit bracket'}
+                  title={completedPicks < totalGames ? `Complete all ${totalGames} picks first` : bracketIsSubmitted ? 'Update your submitted picks' : 'Submit bracket'}
                 >
                   {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
-                  Submit ({completedPicks}/{totalGames})
+                  {bracketIsSubmitted ? `Resubmit (${completedPicks}/${totalGames})` : `Submit (${completedPicks}/${totalGames})`}
                 </button>
               </>
             )}
-            {isSubmitted && (
+            {/* Locked/read-only view — pool is locked or viewing someone else's bracket */}
+            {isSubmitted && bracketIsSubmitted && (
               <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
                 <CheckCircle size={16} />
                 Submitted

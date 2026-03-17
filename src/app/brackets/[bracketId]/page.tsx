@@ -255,7 +255,8 @@ export default async function BracketPage({ params }: Props) {
           bracketId={bracket.id}
           poolId={bracket.pool_id}
           initialPicks={picks}
-          isSubmitted={bracket.is_submitted || !isOwner}
+          isSubmitted={!isOwner || poolStatus === 'locked' || poolStatus === 'completed'}
+          bracketIsSubmitted={bracket.is_submitted}
           teams={teams}
           userName={userName}
           gameResults={gameResults}
