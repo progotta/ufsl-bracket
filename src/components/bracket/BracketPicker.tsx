@@ -531,7 +531,12 @@ export default function BracketPicker({
                 </button>
               </>
             )}
-            {/* Submitted badge lives in the page header — not duplicated here */}
+            {isSubmitted && (
+              <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
+                <CheckCircle size={16} />
+                Submitted
+              </span>
+            )}
           </div>
         </div>
 

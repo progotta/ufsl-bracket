@@ -231,11 +231,7 @@ export default async function BracketPage({ params }: Props) {
           <h1 className="text-xl font-black truncate">{bracket.bracket_name || bracket.name}</h1>
           <p className="text-brand-muted text-xs">{pool?.name || 'Pool'}</p>
         </div>
-        {bracket.is_submitted && (
-          <span className="text-xs font-semibold text-green-400 bg-green-400/10 border border-green-400/20 px-3 py-1 rounded-full">
-            ✓ Submitted
-          </span>
-        )}
+        {/* Submitted indicator lives in the BracketPicker toolbar */}
         {/* Share button in toolbar */}
         <ShareButton
           bracketId={bracket.id}
