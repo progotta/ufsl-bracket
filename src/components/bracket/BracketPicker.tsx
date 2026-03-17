@@ -363,11 +363,11 @@ export default function BracketPicker({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Import Bracket button — desktop only */}
+            {/* Import Bracket button */}
             {!isSubmitted && (
               <button
                 onClick={() => setShowImportModal(true)}
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-orange/50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all border bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-orange/50"
                 title="Import bracket from ESPN, Yahoo, CBS, or NCAA screenshot"
               >
                 <Download size={12} />
@@ -375,9 +375,9 @@ export default function BracketPicker({
               </button>
             )}
 
-            {/* Quick-fill dropdown — desktop only */}
+            {/* Quick-fill dropdown */}
             {!isSubmitted && (
-              <div className="relative hidden sm:block">
+              <div className="relative">
                 <button
                   onClick={() => setShowQuickFillMenu(m => !m)}
                   className={clsx(
@@ -512,7 +512,10 @@ export default function BracketPicker({
                   title={completedPicks < totalGames ? `Complete all ${totalGames} picks first` : bracketIsSubmitted ? 'Update your submitted picks' : 'Submit bracket'}
                 >
                   {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
-                  {bracketIsSubmitted ? 'Resubmit' : `Submit (${completedPicks}/${totalGames})`}
+                  {bracketIsSubmitted
+                    ? 'Resubmit'
+                    : <><span className="sm:hidden">Submit</span><span className="hidden sm:inline">Submit ({completedPicks}/{totalGames})</span></>
+                  }
                 </button>
               </>
             )}
