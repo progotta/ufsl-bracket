@@ -198,18 +198,22 @@ export default function BracketPicker({
   }).length
   const totalGames = bracketTypeMeta.picks
 
-  const handleSave = async (submit = false) => {
+  const handleSave = async (submit = false, nameOnly = false) => {
     if (submit) setSubmitting(true)
     else setSaving(true)
 
+    const updatePayload: Record<string, unknown> = {
+      bracket_name: bracketName.trim() || null,
+      updated_at: new Date().toISOString(),
+    }
+    if (!nameOnly) {
+      updatePayload.picks = picks
+      updatePayload.is_submitted = submit
+    }
+
     const { error } = await supabase
       .from('brackets')
-      .update({
-        picks,
-        bracket_name: bracketName.trim() || null,
-        is_submitted: submit,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', bracketId)
 
     if (!error) {
@@ -351,20 +355,16 @@ export default function BracketPicker({
                 <span>{bracketTypeMeta.badge}</span>
               </div>
             )}
-            {/* Bracket name input */}
-            {!isSubmitted ? (
-              <input
-                type="text"
-                value={bracketName}
-                onChange={e => setBracketName(e.target.value)}
-                onBlur={() => { if (bracketName !== initialBracketName) handleSave(false) }}
-                placeholder="Name your bracket…"
-                maxLength={40}
-                className="bg-transparent border border-brand-border rounded-lg px-2.5 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60 w-32 sm:w-44"
-              />
-            ) : bracketName ? (
-              <span className="text-sm font-semibold text-white">{bracketName}</span>
-            ) : null}
+            {/* Bracket name — always editable (name is separate from picks) */}
+            <input
+              type="text"
+              value={bracketName}
+              onChange={e => setBracketName(e.target.value)}
+              onBlur={() => { if (bracketName !== initialBracketName) handleSave(false, true) }}
+              placeholder="Name your bracket…"
+              maxLength={40}
+              className="bg-transparent border border-brand-border rounded-lg px-2.5 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60 w-32 sm:w-44"
+            />
             {/* Progress — visible inline on mobile */}
             <div className="text-sm text-brand-muted">
               <span className="text-white font-bold">{completedPicks}</span>/{totalGames} picks
@@ -531,12 +531,7 @@ export default function BracketPicker({
                 </button>
               </>
             )}
-            {isSubmitted && (
-              <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
-                <CheckCircle size={16} />
-                Submitted
-              </span>
-            )}
+            {/* Submitted badge lives in the page header — not duplicated here */}
           </div>
         </div>
 
