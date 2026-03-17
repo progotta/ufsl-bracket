@@ -21,7 +21,7 @@ import {
   FILL_STRATEGY_META,
   type FillStrategy,
 } from '@/lib/quickFill'
-import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, ChevronLeft, ChevronRight, X, Download, Share2 } from 'lucide-react'
+import { Save, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCcw, Info, BarChart2, Shuffle, Zap, Trophy, TrendingDown, Trash2, Undo2, ChevronDown, ChevronLeft, ChevronRight, X, Download, Share2, Pencil } from 'lucide-react'
 import { useLiveScores } from '@/hooks/useLiveScores'
 import GameLiveScore from '@/components/bracket/GameLiveScore'
 import type { LiveGameScore } from '@/lib/liveScores'
@@ -355,15 +355,18 @@ export default function BracketPicker({
             </div>
           )}
           {/* Bracket name — flex-1 so it takes remaining space */}
-          <input
-            type="text"
-            value={bracketName}
-            onChange={e => setBracketName(e.target.value)}
-            onBlur={() => { if (bracketName !== initialBracketName) handleSave(false, true) }}
-            placeholder="Name your bracket…"
-            maxLength={40}
-            className="flex-1 min-w-0 bg-transparent border border-brand-border rounded-lg px-2.5 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60"
-          />
+          <div className="relative flex-1 min-w-0 group">
+            <input
+              type="text"
+              value={bracketName}
+              onChange={e => setBracketName(e.target.value)}
+              onBlur={() => { if (bracketName !== initialBracketName) handleSave(false, true) }}
+              placeholder="Name your bracket…"
+              maxLength={40}
+              className="w-full bg-transparent border border-brand-border rounded-lg pl-2.5 pr-7 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60"
+            />
+            <Pencil size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none group-focus-within:text-brand-orange transition-colors" />
+          </div>
           {/* Progress */}
           <div className="shrink-0 text-sm text-brand-muted whitespace-nowrap">
             <span className="text-white font-bold">{completedPicks}</span>/{totalGames}
