@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Pencil, Check, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -16,6 +17,7 @@ export default function BracketNameHeader({ bracketId, initialName, poolName }: 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(false)
   const supabase = createClient()
+  const router = useRouter()
 
   const save = async () => {
     const trimmed = draft.trim() || name
@@ -32,6 +34,7 @@ export default function BracketNameHeader({ bracketId, initialName, poolName }: 
     }
     setName(trimmed)
     setEditing(false)
+    router.refresh() // revalidate server components (dashboard, etc.)
   }
 
   if (editing) {
