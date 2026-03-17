@@ -107,7 +107,7 @@ export default async function BracketPage({ params }: Props) {
   // Fetch bracket separately to avoid join typing issues
   const { data: bracketRaw } = await supabase
     .from('brackets')
-    .select('id, pool_id, user_id, name, picks, is_submitted, score, max_possible_score')
+    .select('id, pool_id, user_id, name, bracket_name, picks, is_submitted, score, max_possible_score')
     .eq('id', params.bracketId)
     .maybeSingle()
 
@@ -263,6 +263,7 @@ export default async function BracketPage({ params }: Props) {
           gameResults={gameResults}
           poolName={pool?.name || 'UFSL Pool'}
           score={bracket.score || 0}
+          initialBracketName={bracket.bracket_name || ''}
         />
       </div>
 

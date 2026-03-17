@@ -264,6 +264,7 @@ export interface Database {
           pool_id: string
           user_id: string
           name: string
+          bracket_name: string | null
           is_submitted: boolean
           score: number
           max_possible_score: number
@@ -278,6 +279,7 @@ export interface Database {
           pool_id: string
           user_id: string
           name?: string
+          bracket_name?: string | null
           is_submitted?: boolean
           score?: number
           max_possible_score?: number
@@ -292,6 +294,7 @@ export interface Database {
           pool_id?: string
           user_id?: string
           name?: string
+          bracket_name?: string | null
           is_submitted?: boolean
           score?: number
           max_possible_score?: number

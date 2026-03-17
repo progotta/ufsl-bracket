@@ -27,11 +27,11 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .upsert({
-        id: userId,
+      .update({
         display_name: displayName.trim(),
         updated_at: new Date().toISOString(),
       })
+      .eq('id', userId)
 
     if (updateError) {
       setError(updateError.message)

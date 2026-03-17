@@ -59,6 +59,7 @@ interface BracketPickerProps {
   poolName?: string
   score?: number
   gameResults?: Record<string, GameResult>
+  initialBracketName?: string
 }
 
 export default function BracketPicker({
@@ -72,9 +73,11 @@ export default function BracketPicker({
   poolName = 'UFSL Pool',
   score = 0,
   gameResults = {},
+  initialBracketName = '',
 }: BracketPickerProps) {
   const [picks, setPicks] = useState<Record<string, string>>(initialPicks)
   const [undoPicks, setUndoPicks] = useState<Record<string, string> | null>(null)
+  const [bracketName, setBracketName] = useState(initialBracketName)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -203,6 +206,7 @@ export default function BracketPicker({
       .from('brackets')
       .update({
         picks,
+        bracket_name: bracketName.trim() || null,
         is_submitted: submit,
         updated_at: new Date().toISOString(),
       })
@@ -347,6 +351,20 @@ export default function BracketPicker({
                 <span>{bracketTypeMeta.badge}</span>
               </div>
             )}
+            {/* Bracket name input */}
+            {!isSubmitted ? (
+              <input
+                type="text"
+                value={bracketName}
+                onChange={e => setBracketName(e.target.value)}
+                onBlur={() => { if (bracketName !== initialBracketName) handleSave(false) }}
+                placeholder="Name your bracket…"
+                maxLength={40}
+                className="hidden sm:block bg-transparent border border-brand-border rounded-lg px-2.5 py-1 text-sm text-white placeholder-brand-muted focus:outline-none focus:border-brand-orange/60 w-44"
+              />
+            ) : bracketName ? (
+              <span className="hidden sm:block text-sm font-semibold text-white">{bracketName}</span>
+            ) : null}
             {/* Progress — visible inline on mobile */}
             <div className="text-sm text-brand-muted">
               <span className="text-white font-bold">{completedPicks}</span>/{totalGames} picks
