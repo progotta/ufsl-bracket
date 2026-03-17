@@ -459,11 +459,13 @@ function PlayerRow({ player, rank }: { player: { name: string; position: string;
             <span className="text-[10px] text-brand-muted">#{player.jersey}</span>
           )}
         </div>
-        <div className="flex gap-3 mt-1">
-          <StatPill label="PPG" value={player.ppg.toFixed(1)} accent />
-          <StatPill label="RPG" value={player.rpg.toFixed(1)} />
-          <StatPill label="APG" value={player.apg.toFixed(1)} />
-        </div>
+        {player.ppg > 0 && (
+          <div className="flex gap-3 mt-1">
+            <StatPill label="PPG" value={player.ppg.toFixed(1)} accent />
+            <StatPill label="RPG" value={player.rpg.toFixed(1)} />
+            <StatPill label="APG" value={player.apg.toFixed(1)} />
+          </div>
+        )}
       </div>
     </div>
   )
