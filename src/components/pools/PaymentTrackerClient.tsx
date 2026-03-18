@@ -92,12 +92,9 @@ export default function PaymentTrackerClient({ members, allBrackets, initialPaym
           const memberBrackets = allBrackets.filter(b => b.user_id === member.user_id && b.is_submitted)
           const paidCount = memberPayments.filter(p => p.status === 'paid' || p.status === 'waived').length
           const totalBrackets = memberBrackets.length || 1
-          // If no payment records exist yet, member implicitly owes entryFee × submitted brackets
-          const amountOwed = memberPayments.length === 0 && memberBrackets.length > 0
-            ? memberBrackets.length * entryFee
-            : memberPayments
-                .filter(p => p.status === 'unpaid' || p.status === 'pending_verification')
-                .reduce((s, p) => s + (Number(p.amount) || 0), 0)
+          const amountOwed = memberPayments
+            .filter(p => p.status === 'unpaid' || p.status === 'pending_verification')
+            .reduce((s, p) => s + (Number(p.amount) || 0), 0)
 
           const summaryBadge = amountOwed === 0 && paidCount > 0
             ? <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Paid ✓</span>

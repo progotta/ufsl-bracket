@@ -226,34 +226,7 @@ export default function BracketPicker({
         } catch {
           // Non-blocking
         }
-        // Auto-create payment record for this bracket if one doesn't exist
-        try {
-          const { data: poolData } = await supabase.from('pools').select('entry_fee').eq('id', poolId).single()
-          if (poolData?.entry_fee && Number(poolData.entry_fee) > 0) {
-            const { data: { session: sess } } = await supabase.auth.getSession()
-            if (sess) {
-              // Check first to avoid duplicates (no unique constraint on bracket_id+pool_id)
-              const { data: existing } = await supabase
-                .from('payments')
-                .select('id')
-                .eq('bracket_id', bracketId)
-                .eq('pool_id', poolId)
-                .maybeSingle()
-              if (!existing) {
-                await supabase.from('payments').insert({
-                  pool_id: poolId,
-                  bracket_id: bracketId,
-                  user_id: sess.user.id,
-                  amount: Number(poolData.entry_fee),
-                  status: 'unpaid',
-                  payment_method: 'manual',
-                })
-              }
-            }
-          }
-        } catch {
-          // Non-blocking
-        }
+        // Payment record is created automatically by DB trigger on bracket submission
         // Show share prompt before redirecting
         setShowSharePrompt(true)
         setSubmitting(false)
