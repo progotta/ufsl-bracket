@@ -21,7 +21,7 @@ export default async function AchievementsPage() {
 
   // Fetch all achievements + user's unlocked ones
   const [allRes, userRes] = await Promise.all([
-    supabase.from('achievements').select('*').order('category').order('points', { ascending: false }),
+    supabase.from('achievements').select('*').eq('hidden', false).order('category').order('points', { ascending: false }),
     supabase.from('user_achievements').select('*').eq('user_id', session.user.id),
   ])
 

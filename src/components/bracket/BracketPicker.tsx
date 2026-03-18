@@ -220,16 +220,6 @@ export default function BracketPicker({
 
     if (!error) {
       if (submit) {
-        // Trigger achievement check for bracket submission
-        try {
-          await fetch('/api/achievements/check', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event: 'bracket_submitted', context: { poolId } }),
-          })
-        } catch {
-          // Non-blocking — don't prevent submission flow
-        }
         // Notify commissioner of bracket submission
         try {
           await fetch(`/api/brackets/${bracketId}/submit-notify`, { method: 'POST' })

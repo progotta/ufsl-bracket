@@ -250,7 +250,7 @@ export async function getUserAchievements(userId: string) {
   const supabase = createServerClient()
 
   const [allRes, userRes] = await Promise.all([
-    supabase.from('achievements').select('*').order('category').order('rarity'),
+    supabase.from('achievements').select('*').eq('hidden', false).order('category').order('rarity'),
     supabase
       .from('user_achievements')
       .select('*')

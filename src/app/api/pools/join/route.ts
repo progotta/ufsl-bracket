@@ -150,20 +150,5 @@ export async function POST(request: Request) {
       .limit(1)
   }
 
-  // Fire achievement check for pool_joined (non-blocking)
-  try {
-    const { count: poolsJoined } = await adminDb
-      .from('pool_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', session.user.id)
-    const { checkAchievements } = await import('@/lib/achievements')
-    await checkAchievements(session.user.id, 'pool_joined', {
-      poolId: pool.id,
-      poolsJoinedCount: poolsJoined ?? 1,
-    })
-  } catch {
-    // Non-blocking
-  }
-
   return NextResponse.json({ poolId: pool.id, poolName: pool.name })
 }

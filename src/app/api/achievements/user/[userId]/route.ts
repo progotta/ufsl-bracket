@@ -21,7 +21,7 @@ export async function GET(
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const [allRes, userRes, xpRes] = await Promise.all([
-    supabase.from('achievements').select('*').order('category').order('points', { ascending: false }),
+    supabase.from('achievements').select('*').eq('hidden', false).order('category').order('points', { ascending: false }),
     supabase.from('user_achievements').select('*').eq('user_id', userId),
     supabase.from('user_xp').select('*').eq('user_id', userId).maybeSingle(),
   ])
