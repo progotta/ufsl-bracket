@@ -91,14 +91,51 @@ export async function GET(
           }
         }
 
-        // Attach movement to each entry
+        // Fetch per-round correct picks for each bracket in one query
+        const bracketIds = (current || []).map(e => e.bracket_id).filter(Boolean)
+        const roundPicksMap = new Map<string, number[]>() // bracketId → [r1,r2,r3,r4,r5,r6]
+
+        if (bracketIds.length > 0) {
+          // Get all completed games with winner_id and their rounds
+          const { data: games } = await supabase
+            .from('games')
+            .select('id, round, winner_id, season')
+            .eq('season', 2026)
+            .eq('status', 'completed')
+            .not('winner_id', 'is', null)
+
+          if (games && games.length > 0) {
+            // Get picks for all brackets at once
+            const { data: brackets } = await supabase
+              .from('brackets')
+              .select('id, picks')
+              .in('id', bracketIds)
+
+            if (brackets) {
+              for (const bracket of brackets) {
+                const picks = (bracket.picks || {}) as Record<string, string>
+                const roundCounts = [0, 0, 0, 0, 0, 0]
+                for (const game of games) {
+                  const round = game.round as number
+                  if (round >= 1 && round <= 6 && picks[game.id] === game.winner_id) {
+                    roundCounts[round - 1]++
+                  }
+                }
+                roundPicksMap.set(bracket.id, roundCounts)
+              }
+            }
+          }
+        }
+
+        // Attach movement + per-round picks to each entry
         return (current || []).map(entry => {
           const prevRank = prevRankMap.get(entry.user_id)
           let movement: number | null = null
           if (prevRank !== undefined) {
             movement = prevRank - (entry.rank as number) // positive = moved up
           }
-          return { ...entry, movement }
+          const roundPicks = entry.bracket_id ? roundPicksMap.get(entry.bracket_id) ?? null : null
+          return { ...entry, movement, round_picks: roundPicks }
         })
       },
       CACHE_TTL

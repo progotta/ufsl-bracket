@@ -15,9 +15,6 @@ export default function BracketRoundBreakdown({ picks, games, isLeading = false 
   const breakdown = computeRoundBreakdown(picks, games)
   const badges = computeBadgesFromGames(picks, games, isLeading)
 
-  const anyStarted = breakdown.some(rd => rd.started)
-  if (!anyStarted) return null
-
   return (
     <div className="space-y-2">
       {/* Round grid — full width, 6 equal columns */}

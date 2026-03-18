@@ -28,6 +28,7 @@ export interface LeaderboardEntry {
   rank: number
   movement?: number | null
   is_best_bracket?: boolean
+  round_picks?: number[] | null // [r1_correct, r2_correct, ..., r6_correct]
   // Global/Friends
   total_score?: number
   total_correct_picks?: number
@@ -153,7 +154,61 @@ function MovementBadge({ movement }: { movement: number | null | undefined }) {
   return <Minus size={12} className="text-brand-muted" />
 }
 
+// ─── Round Grid (inline for leaderboard rows) ────────────────────────────────
+
+const ROUND_HEADERS = ['R64', 'R32', 'S16', 'E8', 'F4', '🏆']
+const ROUND_TOTALS = [32, 16, 8, 4, 2, 1]
+
+function LeaderboardRoundGrid({ roundPicks }: { roundPicks: number[] | null | undefined }) {
+  // roundPicks: array of 6 correct-pick counts, or null if no games played yet
+  return (
+    <div className="grid grid-cols-6 border border-brand-border/60 rounded-lg overflow-hidden mt-2">
+      {ROUND_HEADERS.map((header, i) => {
+        const correct = roundPicks?.[i] ?? null
+        const total = ROUND_TOTALS[i]
+        const ratio = correct !== null ? correct / total : null
+        const hasData = correct !== null
+
+        const scoreColor =
+          !hasData ? 'text-brand-muted/30' :
+          ratio! >= 0.75 ? 'text-green-400' :
+          ratio! >= 0.5 ? 'text-yellow-400' :
+          'text-red-400'
+
+        const bgColor =
+          !hasData ? '' :
+          ratio! >= 0.75 ? 'bg-green-500/5' :
+          ratio! >= 0.5 ? 'bg-yellow-500/5' :
+          'bg-red-500/5'
+
+        return (
+          <div
+            key={i}
+            className={`flex flex-col items-center py-1.5 ${bgColor} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
+          >
+            <span className="text-[9px] font-semibold text-brand-muted/50 uppercase tracking-wide leading-none mb-1">
+              {header}
+            </span>
+            <span className={`text-sm font-bold leading-none tabular-nums ${scoreColor}`}>
+              {hasData ? correct : '—'}
+            </span>
+            <span className="text-[9px] text-brand-muted/40 leading-none mt-0.5 tabular-nums">
+              {hasData ? `/${total}` : ''}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Table Row ────────────────────────────────────────────────────────────────
+
+const RANK_COLORS: Record<number, string> = {
+  1: 'text-yellow-400 font-bold',
+  2: 'text-slate-300 font-bold',
+  3: 'text-amber-600 font-bold',
+}
 
 function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePayoutPerPerson }: {
   entry: LeaderboardEntry
@@ -165,84 +220,78 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
   onePayoutPerPerson?: boolean
 }) {
   const score = isGlobal ? (entry.total_score ?? 0) : (entry.score ?? 0)
-  const correctPicks = isGlobal ? (entry.total_correct_picks ?? 0) : (entry.correct_picks ?? 0)
   const maxPossible = isGlobal ? (entry.best_score ?? 0) : (entry.max_possible_score ?? 0)
   const display = entry.display_name || 'Anonymous'
+  const rankColor = RANK_COLORS[entry.rank] ?? 'text-brand-muted font-medium'
+  const payout = payouts?.find(p => p.place === entry.rank)
 
   return (
     <button
       onClick={onClick}
-      className={`w-full grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-3 items-center px-4 py-3 border-t border-brand-border text-left cursor-pointer ${
-        isMe ? 'bg-brand-orange/10 border-l-2 border-l-brand-orange hover:bg-brand-orange/15' : 'hover:bg-brand-card/50'
+      className={`w-full px-4 py-2.5 border-t border-brand-border text-left cursor-pointer ${
+        isMe ? 'bg-brand-orange/5 border-l-2 border-l-brand-orange hover:bg-brand-orange/10' : 'hover:bg-brand-card/50'
       } transition-colors group`}
     >
-      {/* Rank */}
-      <div className="w-7 text-center">
-        <span className="text-brand-muted font-mono text-sm">#{entry.rank}</span>
-      </div>
+      {/* Row 1: Rank | Avatar | Name + bracket | movement | score */}
+      <div className="flex items-center gap-2.5">
+        {/* Rank */}
+        <span className={`text-sm tabular-nums w-7 text-center shrink-0 ${rankColor}`}>
+          #{entry.rank}
+        </span>
 
-      {/* Player */}
-      <div className="flex items-center gap-2.5 min-w-0">
+        {/* Avatar */}
         <PlayerAvatar
           userId={entry.user_id}
           displayName={display}
           avatarUrl={entry.avatar_url}
           avatarIcon={entry.avatar_icon}
-          size="w-8 h-8"
+          size="w-7 h-7"
           borderClass={isMe ? 'border-brand-orange' : 'border-brand-border/40'}
         />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`font-semibold text-sm truncate ${isMe ? 'text-brand-orange' : 'group-hover:text-white'}`}>
-              {display}
-              {isMe && <span className="text-xs ml-1 text-brand-muted">(you)</span>}
-            </span>
-            {multiBracket && !isGlobal && (
-              <span className="text-xs text-brand-muted bg-brand-surface px-2 py-0.5 rounded-full flex-shrink-0">
-                {entry.bracket_name || `Bracket ${entry.bracket_number || 1}`}
-              </span>
-            )}
+
+        {/* Name + bracket */}
+        <div className="flex-1 min-w-0">
+          <div className={`text-sm font-medium truncate ${isMe ? 'text-brand-orange' : 'group-hover:text-white'}`}>
+            {display}
+            {isMe && <span className="text-xs ml-1 text-brand-muted font-normal">(you)</span>}
             {onePayoutPerPerson && !isGlobal && entry.is_best_bracket === false && (
-              <span className="text-xs text-brand-muted flex-shrink-0">(not eligible)</span>
+              <span className="text-xs ml-1 text-brand-muted font-normal">(not eligible)</span>
             )}
           </div>
-          {!multiBracket && !isGlobal && entry.bracket_name && (
-            <div className="text-xs text-brand-muted truncate">{entry.bracket_name}</div>
+          {!isGlobal && (entry.bracket_name || multiBracket) && (
+            <div className="text-[11px] text-brand-muted truncate">
+              {entry.bracket_name || `Bracket ${entry.bracket_number || 1}`}
+            </div>
           )}
           {isGlobal && (
-            <div className="text-xs text-brand-muted">{entry.bracket_count} bracket{entry.bracket_count !== 1 ? 's' : ''}</div>
+            <div className="text-[11px] text-brand-muted">{entry.bracket_count} bracket{entry.bracket_count !== 1 ? 's' : ''}</div>
           )}
         </div>
-      </div>
 
-      {/* Movement */}
-      <div className="w-8 flex justify-center">
+        {/* Movement */}
         <MovementBadge movement={entry.movement} />
+
+        {/* Score */}
+        <div className="text-right shrink-0">
+          <div className={`text-sm font-bold tabular-nums ${isMe ? 'text-brand-orange' : 'text-white'}`}>
+            {score}
+          </div>
+          {!isGlobal && maxPossible > 0 && (
+            <div className="text-[10px] text-brand-muted tabular-nums">/{maxPossible}</div>
+          )}
+          {payout && (
+            <div className="text-[10px] font-bold text-green-400">💰 {formatCurrency(payout.amount)}</div>
+          )}
+        </div>
+
+        {/* Chevron */}
+        <ChevronRight size={14} className="shrink-0 text-brand-muted/50 group-hover:text-brand-orange transition-colors" />
       </div>
 
-      {/* Correct picks */}
-      <div className="text-right hidden sm:block">
-        <div className="text-xs text-green-400 font-semibold">{correctPicks}</div>
-        <div className="text-xs text-brand-muted">correct</div>
-      </div>
-
-      {/* Score */}
-      <div className="text-right">
-        <div className={`text-lg font-black ${isMe ? 'text-brand-orange' : 'text-white'}`}>{score}</div>
-        {!isGlobal && maxPossible > 0 && (
-          <div className="text-[10px] text-brand-muted">max {maxPossible}</div>
-        )}
-        {(() => {
-          const payout = payouts?.find(p => p.place === entry.rank)
-          if (!payout) return null
-          return <div className="text-[10px] font-bold text-green-400">💰 {formatCurrency(payout.amount)}</div>
-        })()}
-      </div>
-
-      {/* Chevron — view bracket */}
-      <div className="flex-shrink-0 text-brand-muted group-hover:text-brand-orange transition-colors">
-        <ChevronRight size={14} />
-      </div>
+      {/* Row 2: Round grid (pool tab only) */}
+      {!isGlobal && (
+        <LeaderboardRoundGrid roundPicks={entry.round_picks} />
+      )}
     </button>
   )
 }
