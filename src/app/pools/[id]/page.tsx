@@ -9,7 +9,7 @@ import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
 import CommissionerActions from '@/components/pools/CommissionerActions'
 import LeagueNotes from '@/components/pools/LeagueNotes'
-import PaymentToggle from '@/components/pools/PaymentToggle'
+import PaymentTrackerClient from '@/components/pools/PaymentTrackerClient'
 import StripeConnectSection from '@/components/pools/StripeConnectSection'
 import PaymentOptions from '@/components/pools/PaymentOptions'
 import PayNowButton from '@/components/pools/PayNowButton'
@@ -118,7 +118,7 @@ export default async function PoolPage({ params }: Props) {
       .select('round, status, winner_id'),
     adminDb
       .from('brackets')
-      .select('user_id, is_submitted')
+      .select('id, user_id, is_submitted, bracket_name, name')
       .eq('pool_id', params.id),
   ])
 
@@ -314,11 +314,19 @@ export default async function PoolPage({ params }: Props) {
                       <PayNowButton
                         poolId={params.id}
                         memberId={currentMember.id}
+                        userId={session.user.id}
                         entryFee={entryFee}
-                        bracketsOwed={bracketCountByUser[session.user.id] || userBrackets?.filter(b => b.is_submitted).length || 1}
                         venmoHandle={venmoHandle}
                         paymentInstructions={(pool as any).payment_instructions}
-                        paymentStatus={currentMember.payment_status || 'unpaid'}
+                        paymentStatus={(() => {
+                          const myPayments = (payments || []).filter((p: any) => p.user_id === session.user.id)
+                          if (myPayments.length === 0) return currentMember.payment_status || 'unpaid'
+                          const allPaidOrWaived = myPayments.every((p: any) => p.status === 'paid' || p.status === 'waived')
+                          if (allPaidOrWaived) return 'paid'
+                          const anyPending = myPayments.some((p: any) => p.status === 'pending_verification')
+                          if (anyPending) return 'pending_verification'
+                          return 'unpaid'
+                        })()}
                       />
                     )}
                     {bracket.is_submitted && idx === 0 && (
@@ -569,72 +577,13 @@ export default async function PoolPage({ params }: Props) {
 
       {/* Payment Tracker — commissioner only */}
       {FEATURES.paidPools && isCommissioner && entryFee > 0 && (
-        <section>
-          <h3 className="font-black text-lg mb-3">💳 Payment Tracker</h3>
-          <div className="space-y-2">
-            {members?.map((member: any) => {
-              const profile = member.profiles as any
-              const memberPayments = (payments || []).filter((p: any) => p.user_id === member.user_id)
-              const displayName = profile?.display_name || 'Anonymous'
-              const memberBracketCount = bracketCountByUser[member.user_id] || 1
-              const memberTotalOwed = entryFee * memberBracketCount
-
-              return (
-                <div key={member.user_id} className="bg-brand-surface border border-brand-border rounded-xl p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <PlayerAvatar
-                        userId={member.user_id}
-                        displayName={displayName}
-                        avatarUrl={profile?.avatar_url}
-                        avatarIcon={profile?.avatar_icon}
-                        size="w-8 h-8"
-                        borderClass="border-brand-border/40"
-                      />
-                      <div>
-                        <p className="font-medium text-sm">{displayName}</p>
-                        {!feePerBracket && member.payment_date && (
-                          <p className="text-xs text-brand-muted">
-                            Paid {new Date(member.payment_date).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {/* For flat-fee pools or single-bracket, show the toggle directly */}
-                    <div className="flex items-center gap-2">
-                      {member.payment_status === 'waived' ? (
-                        <span className="text-xs text-brand-muted bg-brand-surface px-2 py-1 rounded-full border border-brand-border">Waived</span>
-                      ) : (
-                        <PaymentToggle
-                          memberId={member.id}
-                          status={member.payment_status || 'unpaid'}
-                          poolId={pool.id}
-                          fee={memberTotalOwed}
-                          memberName={displayName}
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Per-bracket payment breakdown (fee_per_bracket + multi-bracket) */}
-                  {feePerBracket && maxBracketsPerMember > 1 && memberPayments.length > 0 && (
-                    <div className="mt-2 ml-11 space-y-1">
-                      {memberPayments.map((payment: any, idx: number) => (
-                        <div key={payment.id} className="flex items-center justify-between text-sm">
-                          <span className="text-brand-muted text-xs">
-                            {payment.status === 'paid' ? '✅' : '⏳'} Bracket {idx + 1} — ${entryFee} {payment.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-
-                </div>
-              )
-            })}
-          </div>
-        </section>
+        <PaymentTrackerClient
+          members={(members || []) as any}
+          allBrackets={(allBrackets || []) as any}
+          initialPayments={(payments || []).map((p: any) => ({ ...p, amount: Number(p.amount) || 0 }))}
+          entryFee={entryFee}
+          poolId={pool.id}
+        />
       )}
 
       {/* Members */}
@@ -663,16 +612,20 @@ export default async function PoolPage({ params }: Props) {
                   <span className="text-xs text-brand-gold">👑 Commissioner</span>
                 )}
                 {entryFee > 0 && (() => {
-                  const mOwed = entryFee * (bracketCountByUser[member.user_id] || 1)
-                  const isPaid = member.payment_status === 'paid' || member.payment_status === 'waived'
-                  const isPending = member.payment_status === 'pending_verification'
+                  const memberPmts = (payments || []).filter((p: any) => p.user_id === member.user_id)
+                  const memberBracketTotal = (allBrackets || []).filter((b: any) => b.user_id === member.user_id && b.is_submitted).length
+                  const memberPaidCount = memberPmts.filter((p: any) => p.status === 'paid' || p.status === 'waived').length
+                  const memberOwed = memberPmts.filter((p: any) => p.status === 'unpaid' || p.status === 'pending_verification').reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0)
+                  if (memberPmts.length === 0) return null
+                  const allPaid = memberOwed === 0 && memberPaidCount > 0
+                  const partial = memberPaidCount > 0 && memberOwed > 0
                   return (
                     <span className={`text-xs font-bold px-2 py-1 rounded-full border ${
-                      isPaid ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                      : isPending ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                      allPaid ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                      : partial ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                       : 'bg-red-500/20 text-red-400 border-red-500/30'
                     }`}>
-                      {isPaid ? 'Paid ✓' : isPending ? 'Pending' : `$${mOwed.toFixed(0)} owed`}
+                      {allPaid ? 'Paid ✓' : partial ? `${memberPaidCount}/${memberBracketTotal} paid` : `$${memberOwed.toFixed(0)} owed`}
                     </span>
                   )
                 })()}

@@ -7,8 +7,8 @@ import PayNowModal from './PayNowModal'
 interface Props {
   poolId: string
   memberId: string
+  userId: string
   entryFee: number
-  bracketsOwed: number
   venmoHandle: string | null
   paymentInstructions: string | null
   paymentStatus: string
@@ -17,8 +17,8 @@ interface Props {
 export default function PayNowButton({
   poolId,
   memberId,
+  userId,
   entryFee,
-  bracketsOwed,
   venmoHandle,
   paymentInstructions,
   paymentStatus,
@@ -53,13 +53,13 @@ export default function PayNowButton({
       {open && (
         <PayNowModal
           poolId={poolId}
+          userId={userId}
           memberId={memberId}
           entryFee={entryFee}
-          bracketsOwed={bracketsOwed}
           venmoHandle={venmoHandle}
           paymentInstructions={paymentInstructions}
           onClose={() => setOpen(false)}
-          onPaid={() => router.refresh()}
+          onAnyPaid={() => router.refresh()}
         />
       )}
     </>

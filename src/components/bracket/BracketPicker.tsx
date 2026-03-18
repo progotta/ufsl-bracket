@@ -236,6 +236,25 @@ export default function BracketPicker({
         } catch {
           // Non-blocking
         }
+        // Auto-create payment record for this bracket
+        try {
+          const { data: poolData } = await supabase.from('pools').select('entry_fee').eq('id', poolId).single()
+          if (poolData?.entry_fee && Number(poolData.entry_fee) > 0) {
+            const { data: { session: sess } } = await supabase.auth.getSession()
+            if (sess) {
+              await supabase.from('payments').upsert({
+                pool_id: poolId,
+                bracket_id: bracketId,
+                user_id: sess.user.id,
+                amount: Number(poolData.entry_fee),
+                status: 'unpaid',
+                payment_method: 'manual',
+              }, { onConflict: 'bracket_id,pool_id', ignoreDuplicates: true })
+            }
+          }
+        } catch {
+          // Non-blocking
+        }
         // Show share prompt before redirecting
         setShowSharePrompt(true)
         setSubmitting(false)
