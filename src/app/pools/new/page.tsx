@@ -400,7 +400,7 @@ export default function NewPoolPage() {
                     {/* Automated Verification group — Coming Soon */}
                     <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 overflow-hidden cursor-not-allowed select-none">
                       <div className="flex items-center justify-between px-4 py-2.5 border-b border-purple-500/20">
-                        <span className="text-xs font-bold text-purple-300 uppercase tracking-wide">Automated Verification</span>
+                        <span className="text-xs font-bold text-purple-300 uppercase tracking-wide">Auto Verification</span>
                         <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-400/40 px-2 py-0.5 rounded-full font-bold">✦ Coming Soon</span>
                       </div>
                       <div className="divide-y divide-purple-500/10 opacity-60">
@@ -430,7 +430,7 @@ export default function NewPoolPage() {
                       <label className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-brand-surface/50">
                         <input type="checkbox" checked={methods.manual} onChange={e => setMethods(m => ({...m, manual: e.target.checked}))} className="mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium">Other (Venmo, Cash App, Zelle...)</p>
+                          <p className="text-sm font-medium">Venmo, PayPal, Zelle, Cash App...</p>
                           <p className="text-xs text-brand-muted mt-0.5">Members click &quot;I&apos;ve paid&quot; — you confirm</p>
                         </div>
                       </label>
