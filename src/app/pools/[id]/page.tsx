@@ -293,42 +293,73 @@ export default async function PoolPage({ params }: Props) {
           </div>
           {userBrackets && userBrackets.length > 0 ? (
             <div className="space-y-3">
-              {userBrackets.map((bracket, idx) => (
-                <div key={bracket.id} className="space-y-2">
+              {(() => {
+                const myPayments = (payments || []).filter((p: any) => p.user_id === session.user.id)
+                const allPaidOrWaived = myPayments.length > 0 && myPayments.every((p: any) => p.status === 'paid' || p.status === 'waived')
+                const anyPending = myPayments.some((p: any) => p.status === 'pending_verification')
+                const amountOwed = myPayments.filter((p: any) => p.status === 'unpaid').reduce((s: number, p: any) => s + (p.amount || 0), 0)
+                const overallStatus = allPaidOrWaived ? 'paid' : anyPending ? 'pending_verification' : 'unpaid'
 
-                  <div className="flex items-center gap-2 bg-brand-card rounded-xl px-3 py-2.5">
-                    {/* Bracket name + eye icon grouped together, takes remaining space */}
-                    <Link href={`/brackets/${bracket.id}`} className="flex items-center gap-1 flex-1 min-w-0 hover:opacity-80 transition-opacity group" title={bracket.is_submitted ? 'View bracket' : 'Pick teams'}>
-                      <span className="text-sm font-semibold text-white truncate">
-                        {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
-                      </span>
-                      <Eye size={14} className="text-brand-orange shrink-0" />
-                    </Link>
-                    {/* Pay Now or Paid tag — only on first bracket (payment is per-member) */}
-                    {entryFee > 0 && currentMember && idx === 0 && (
-                      <PayNowButton
-                        poolId={params.id}
-                        memberId={currentMember.id}
-                        userId={session.user.id}
-                        entryFee={entryFee}
-                        venmoHandle={venmoHandle}
-                        paymentInstructions={(pool as any).payment_instructions}
-                        paymentStatus={(() => {
-                          const myPayments = (payments || []).filter((p: any) => p.user_id === session.user.id)
-                          if (myPayments.length === 0) return currentMember.payment_status || 'unpaid'
-                          const allPaidOrWaived = myPayments.every((p: any) => p.status === 'paid' || p.status === 'waived')
-                          if (allPaidOrWaived) return 'paid'
-                          const anyPending = myPayments.some((p: any) => p.status === 'pending_verification')
-                          if (anyPending) return 'pending_verification'
-                          return 'unpaid'
-                        })()}
-                      />
+                return (
+                  <>
+                    {userBrackets.map((bracket, idx) => {
+                      // Per-bracket payment status
+                      const bracketPayment = myPayments.find((p: any) => p.bracket_id === bracket.id)
+                      const bStatus = bracketPayment?.status || (entryFee > 0 ? 'unpaid' : null)
+
+                      return (
+                        <div key={bracket.id} className="flex items-center gap-2 bg-brand-card rounded-xl px-3 py-2.5">
+                          {/* Bracket name + eye icon */}
+                          <Link href={`/brackets/${bracket.id}`} className="flex items-center gap-1 flex-1 min-w-0 hover:opacity-80 transition-opacity" title={bracket.is_submitted ? 'View bracket' : 'Pick teams'}>
+                            <span className="text-sm font-semibold text-white truncate">
+                              {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
+                            </span>
+                            <Eye size={14} className="text-brand-orange shrink-0" />
+                          </Link>
+                          {/* Per-bracket payment status pill */}
+                          {entryFee > 0 && bStatus && (
+                            bStatus === 'paid' || bStatus === 'waived' ? (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 shrink-0">Paid</span>
+                            ) : bStatus === 'pending_verification' ? (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 shrink-0">Pending</span>
+                            ) : (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">Unpaid</span>
+                            )
+                          )}
+                          {/* Score */}
+                          <span className="text-lg font-black text-brand-orange shrink-0">{bracket.score ?? 0}</span>
+                        </div>
+                      )
+                    })}
+
+                    {/* Consolidated payment action below all brackets */}
+                    {entryFee > 0 && currentMember && (
+                      <div className="mt-1">
+                        {allPaidOrWaived ? (
+                          <div className="flex items-center justify-center gap-2 py-2 rounded-xl bg-green-500/10 border border-green-500/20">
+                            <span className="text-sm font-bold text-green-400">✅ All Brackets Paid</span>
+                          </div>
+                        ) : anyPending ? (
+                          <div className="flex items-center justify-center gap-2 py-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                            <span className="text-sm font-semibold text-yellow-400">⏳ Payment Pending Commissioner Approval</span>
+                          </div>
+                        ) : (
+                          <PayNowButton
+                            poolId={params.id}
+                            memberId={currentMember.id}
+                            userId={session.user.id}
+                            entryFee={entryFee}
+                            venmoHandle={venmoHandle}
+                            paymentInstructions={(pool as any).payment_instructions}
+                            paymentStatus={overallStatus}
+                            amountOwed={amountOwed}
+                          />
+                        )}
+                      </div>
                     )}
-                    {/* Score */}
-                    <span className="text-lg font-black text-brand-orange shrink-0">{bracket.score ?? 0}</span>
-                  </div>
-                </div>
-              ))}
+                  </>
+                )
+              })()}
 
               {/* Add another bracket CTA */}
               {maxBracketsPerMember > 1 && userBracketCount < maxBracketsPerMember && isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) && (

@@ -12,6 +12,7 @@ interface Props {
   venmoHandle: string | null
   paymentInstructions: string | null
   paymentStatus: string
+  amountOwed?: number
 }
 
 export default function PayNowButton({
@@ -22,6 +23,7 @@ export default function PayNowButton({
   venmoHandle,
   paymentInstructions,
   paymentStatus,
+  amountOwed,
 }: Props) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -46,9 +48,9 @@ export default function PayNowButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="text-xs font-bold px-3 py-1.5 rounded-lg bg-brand-orange text-white hover:opacity-90 transition-opacity"
+        className="w-full py-2.5 rounded-xl bg-brand-orange text-white text-sm font-bold hover:opacity-90 transition-opacity"
       >
-        Pay Now
+        {amountOwed && amountOwed > 0 ? `Pay Now — $${amountOwed.toFixed(0)} owed` : 'Pay Now'}
       </button>
       {open && (
         <PayNowModal
