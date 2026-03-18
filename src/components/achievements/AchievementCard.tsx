@@ -69,9 +69,9 @@ export default function AchievementCard({ achievement, size = 'md' }: Achievemen
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 flex-wrap">
-          <div>
-            <h3 className={`font-bold text-sm leading-tight ${locked ? 'text-brand-muted' : 'text-white'}`}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className={`font-bold text-sm leading-tight truncate ${locked ? 'text-brand-muted' : 'text-white'}`}>
               {achievement.secret && locked ? '???' : achievement.name}
             </h3>
             <p className="text-xs text-brand-muted mt-0.5 leading-snug">
