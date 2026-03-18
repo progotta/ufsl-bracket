@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { getAvatarIcon, getAvatarImageUrl } from '@/lib/avatars'
 
 // ─── Deterministic hash ───────────────────────────────────────────────────────
 function hashUserId(userId: string): number {
@@ -267,6 +268,7 @@ interface PlayerAvatarProps {
   userId: string
   displayName?: string | null
   avatarUrl?: string | null
+  avatarIcon?: string | null
   /** Tailwind size class, e.g. "w-8 h-8" or "w-14 h-14" */
   size?: string
   /** Extra classes on the wrapper */
@@ -280,6 +282,7 @@ export default function PlayerAvatar({
   userId,
   displayName,
   avatarUrl,
+  avatarIcon,
   size = 'w-10 h-10',
   className = '',
   borderClass = 'border-brand-border',
@@ -287,6 +290,41 @@ export default function PlayerAvatar({
 }: PlayerAvatarProps) {
   const roundedClass = rounded === 'full' ? 'rounded-full' : 'rounded-2xl'
 
+  // Priority 1: User-chosen mascot avatar icon
+  if (avatarIcon) {
+    const icon = getAvatarIcon(avatarIcon)
+    if (icon) {
+      const imageUrl = getAvatarImageUrl(avatarIcon)
+      if (imageUrl) {
+        return (
+          <div
+            className={`${size} ${roundedClass} border-2 ${borderClass} flex-shrink-0 overflow-hidden flex items-center justify-center bg-brand-card ${className}`}
+            title={`${displayName ?? 'Player'} (${icon.label})`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={icon.label}
+              className="w-[75%] h-[75%] object-contain"
+            />
+          </div>
+        )
+      }
+      // Polar bear: render native emoji
+      if (icon.emoji) {
+        return (
+          <div
+            className={`${size} ${roundedClass} border-2 ${borderClass} flex-shrink-0 overflow-hidden flex items-center justify-center bg-brand-card ${className}`}
+            title={`${displayName ?? 'Player'} (${icon.label})`}
+          >
+            <span className="text-[1.4em] leading-none">{icon.emoji}</span>
+          </div>
+        )
+      }
+    }
+  }
+
+  // Priority 2: OAuth avatar URL
   if (avatarUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -298,6 +336,7 @@ export default function PlayerAvatar({
     )
   }
 
+  // Priority 3: Deterministic hash-based cartoon avatar
   const idx = hashUserId(userId) % AVATARS.length
   const avatar = AVATARS[idx]
   const Icon = avatar.Icon

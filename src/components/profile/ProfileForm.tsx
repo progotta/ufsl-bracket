@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, CheckCircle, LogOut } from 'lucide-react'
+import { Loader2, CheckCircle, LogOut, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { Profile } from '@/types/database'
 import PlayerAvatar from '@/components/ui/PlayerAvatar'
+import AvatarIcon from '@/components/ui/AvatarIcon'
+import { AVATAR_ICONS, type AvatarIconKey } from '@/lib/avatars'
 
 interface ProfileFormProps {
   profile: Profile | null
@@ -14,9 +16,12 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ profile, userId }: ProfileFormProps) {
   const [displayName, setDisplayName] = useState(profile?.display_name || '')
+  const [avatarIcon, setAvatarIcon] = useState<string | null>(profile?.avatar_icon || null)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [savingIcon, setSavingIcon] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -43,15 +48,105 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
     setLoading(false)
   }
 
+  const handleSelectIcon = async (key: AvatarIconKey) => {
+    setAvatarIcon(key)
+    setPickerOpen(false)
+    setSavingIcon(true)
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        avatar_icon: key,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId)
+
+    if (updateError) {
+      setError(updateError.message)
+      setAvatarIcon(profile?.avatar_icon || null)
+    } else {
+      router.refresh()
+    }
+    setSavingIcon(false)
+  }
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/')
   }
 
-  const initials = (displayName || profile?.email || 'U')[0].toUpperCase()
+  const selectedIcon = AVATAR_ICONS.find(a => a.key === avatarIcon)
 
   return (
     <div className="space-y-6">
+      {/* Mascot Picker */}
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
+        <h2 className="font-bold text-lg mb-4">Choose Your Mascot</h2>
+        <div className="flex items-center gap-5">
+          <div className="relative">
+            <PlayerAvatar
+              userId={userId}
+              displayName={profile?.display_name}
+              avatarUrl={profile?.avatar_url}
+              avatarIcon={avatarIcon}
+              size="w-16 h-16"
+              rounded="2xl"
+              borderClass="border-brand-orange/50"
+            />
+            {savingIcon && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl">
+                <Loader2 size={20} className="animate-spin text-white" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold">
+              {selectedIcon ? selectedIcon.label : 'No mascot selected'}
+            </div>
+            <div className="text-xs text-brand-muted mt-0.5">
+              {selectedIcon ? 'Your mascot shows next to your name everywhere' : 'Pick a mascot to represent you on leaderboards'}
+            </div>
+            <button
+              type="button"
+              onClick={() => setPickerOpen(!pickerOpen)}
+              className="mt-2 text-sm font-semibold text-brand-orange hover:underline"
+            >
+              {selectedIcon ? 'Change Mascot' : 'Pick a Mascot'}
+            </button>
+          </div>
+        </div>
+
+        {/* Picker Grid */}
+        {pickerOpen && (
+          <div className="mt-4 border-t border-brand-border pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-brand-muted">Tap to select</span>
+              <button onClick={() => setPickerOpen(false)} className="text-brand-muted hover:text-white">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+              {AVATAR_ICONS.map((icon) => (
+                <button
+                  key={icon.key}
+                  onClick={() => handleSelectIcon(icon.key)}
+                  className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all hover:bg-brand-card ${
+                    avatarIcon === icon.key
+                      ? 'bg-brand-orange/10 ring-2 ring-brand-orange'
+                      : 'bg-brand-surface'
+                  }`}
+                >
+                  <AvatarIcon avatarKey={icon.key} size={40} />
+                  <span className="text-[10px] text-brand-muted font-medium leading-tight text-center">
+                    {icon.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Avatar section */}
       <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 flex items-center gap-6">
         <div className="relative">
@@ -59,6 +154,7 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
             userId={userId}
             displayName={profile?.display_name}
             avatarUrl={profile?.avatar_url}
+            avatarIcon={avatarIcon}
             size="w-20 h-20"
             rounded="2xl"
             borderClass="border-brand-border"
@@ -67,9 +163,6 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
         <div>
           <div className="font-bold text-lg">{profile?.display_name || 'No name set'}</div>
           <div className="text-brand-muted text-sm">{profile?.email || 'No email'}</div>
-          <div className="text-xs text-brand-muted mt-1">
-            Avatar synced from your OAuth provider
-          </div>
         </div>
       </div>
 

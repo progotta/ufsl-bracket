@@ -16,6 +16,7 @@ export interface Database {
           updated_at: string
           display_name: string | null
           avatar_url: string | null
+          avatar_icon: string | null
           phone: string | null
           email: string | null
           stripe_account_id: string | null
@@ -29,6 +30,7 @@ export interface Database {
           updated_at?: string
           display_name?: string | null
           avatar_url?: string | null
+          avatar_icon?: string | null
           phone?: string | null
           email?: string | null
           stripe_account_id?: string | null
@@ -42,6 +44,7 @@ export interface Database {
           updated_at?: string
           display_name?: string | null
           avatar_url?: string | null
+          avatar_icon?: string | null
           phone?: string | null
           email?: string | null
           stripe_account_id?: string | null
@@ -311,6 +314,7 @@ export interface Database {
           user_id: string
           display_name: string | null
           avatar_url: string | null
+          avatar_icon: string | null
           bracket_id: string
           bracket_name: string
           score: number

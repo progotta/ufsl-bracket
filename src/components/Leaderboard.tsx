@@ -17,6 +17,7 @@ export interface LeaderboardEntry {
   user_id: string
   display_name: string | null
   avatar_url: string | null
+  avatar_icon?: string | null
   // Pool-specific
   bracket_id?: string
   bracket_name?: string
@@ -97,6 +98,7 @@ function Podium({ entries, currentUserId, onClickUser, payouts }: {
                 userId={entry.user_id}
                 displayName={display}
                 avatarUrl={entry.avatar_url}
+                avatarIcon={entry.avatar_icon}
                 size="w-14 h-14"
                 borderClass={isMe ? 'border-brand-orange' : medal.border}
                 className="shadow-lg"
@@ -185,6 +187,7 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
           userId={entry.user_id}
           displayName={display}
           avatarUrl={entry.avatar_url}
+          avatarIcon={entry.avatar_icon}
           size="w-8 h-8"
           borderClass={isMe ? 'border-brand-orange' : 'border-brand-border/40'}
         />

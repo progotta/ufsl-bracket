@@ -10,6 +10,7 @@ import AllSmack from '@/components/smack/AllSmack'
 import RecentAchievements from '@/components/achievements/RecentAchievements'
 import AchievementsPanel from '@/components/achievements/AchievementsPanel'
 import NotificationPrompt from '@/components/NotificationPrompt'
+import PlayerAvatar from '@/components/ui/PlayerAvatar'
 import PhoneNudgeBanner from '@/components/PhoneNudgeBanner'
 import LiveGames from '@/components/LiveGames'
 import BracketRoundBreakdown from '@/components/BracketRoundBreakdown'
@@ -178,13 +179,23 @@ async function DashboardPageInner() {
     <div className="space-y-8">
       {/* Welcome header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black">
-            Hey, <span className="bg-brand-gradient bg-clip-text text-transparent">{displayName}</span> 👋
-          </h1>
-          <p className="text-brand-muted mt-1">
-            2026 NCAA Tournament • March 19 – April 6
-          </p>
+        <div className="flex items-center gap-4">
+          <PlayerAvatar
+            userId={session.user.id}
+            displayName={displayName}
+            avatarUrl={profile?.avatar_url}
+            avatarIcon={profile?.avatar_icon}
+            size="w-12 h-12"
+            borderClass="border-brand-orange/50"
+          />
+          <div>
+            <h1 className="text-3xl font-black">
+              Hey, <span className="bg-brand-gradient bg-clip-text text-transparent">{displayName}</span> 👋
+            </h1>
+            <p className="text-brand-muted mt-1">
+              2026 NCAA Tournament • March 19 – April 6
+            </p>
+          </div>
         </div>
         <Link href="/pools/new" className="btn-primary flex items-center gap-2 self-start sm:self-auto">
           <Plus size={18} />

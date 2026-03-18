@@ -9,6 +9,7 @@ import { LogOut, User, Trophy, Home, Menu, X, Globe, RefreshCw, Medal, Shield } 
 import { useState } from 'react'
 import clsx from 'clsx'
 import NotificationBell from './NotificationBell'
+import PlayerAvatar from '@/components/ui/PlayerAvatar'
 
 interface NavProps {
   profile: Profile | null
@@ -73,18 +74,14 @@ export default function Nav({ profile }: NavProps) {
                 {profile?.display_name || 'Champion'}
               </div>
             </div>
-            {profile?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={profile.avatar_url}
-                alt="Avatar"
-                className="w-8 h-8 rounded-full border border-brand-border"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange text-sm font-bold">
-                {(profile?.display_name || 'C')[0].toUpperCase()}
-              </div>
-            )}
+            <PlayerAvatar
+              userId={profile?.id || ''}
+              displayName={profile?.display_name}
+              avatarUrl={profile?.avatar_url}
+              avatarIcon={profile?.avatar_icon}
+              size="w-8 h-8"
+              borderClass="border-brand-border"
+            />
             {profile && <NotificationBell userId={profile.id} />}
             <button
               onClick={handleSignOut}

@@ -68,6 +68,7 @@ export default function Leaderboard({ entries, currentUserId, poolStatus }: Lead
                   userId={entry.user_id}
                   displayName={entry.display_name}
                   avatarUrl={entry.avatar_url}
+                  avatarIcon={(entry as any).avatar_icon}
                   size="w-8 h-8"
                   borderClass={isMe ? 'border-brand-orange' : 'border-brand-border/40'}
                 />

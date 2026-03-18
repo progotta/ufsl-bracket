@@ -16,6 +16,7 @@ import StripeStatusBanner from '@/components/pools/StripeStatusBanner'
 import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
 import { FEATURES } from '@/lib/features'
 import RealtimeStatus from '@/components/ui/RealtimeStatus'
+import PlayerAvatar from '@/components/ui/PlayerAvatar'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 // Lazy-load heavy client components to reduce initial bundle
@@ -82,7 +83,7 @@ export default async function PoolPage({ params }: Props) {
   ] = await Promise.all([
     adminDb
       .from('pool_members')
-      .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url)')
+      .select('id, user_id, role, payment_status, payment_date, payment_note, profiles(display_name, avatar_url, avatar_icon)')
       .eq('pool_id', params.id),
     adminDb
       .from('profiles')
@@ -554,9 +555,14 @@ export default async function PoolPage({ params }: Props) {
                 <div key={member.user_id} className="bg-brand-surface border border-brand-border rounded-xl p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-sm font-bold text-brand-orange">
-                        {displayName[0].toUpperCase()}
-                      </div>
+                      <PlayerAvatar
+                        userId={member.user_id}
+                        displayName={displayName}
+                        avatarUrl={profile?.avatar_url}
+                        avatarIcon={profile?.avatar_icon}
+                        size="w-8 h-8"
+                        borderClass="border-brand-border/40"
+                      />
                       <div>
                         <p className="font-medium text-sm">{displayName}</p>
                         {!feePerBracket && member.payment_date && (
@@ -627,14 +633,14 @@ export default async function PoolPage({ params }: Props) {
                 key={member.user_id}
                 className={`flex items-center gap-4 px-5 py-4 ${idx > 0 ? 'border-t border-brand-border' : ''}`}
               >
-                {profile?.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full" />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-bold text-sm">
-                    {(profile?.display_name || '?')[0].toUpperCase()}
-                  </div>
-                )}
+                <PlayerAvatar
+                  userId={member.user_id}
+                  displayName={profile?.display_name}
+                  avatarUrl={profile?.avatar_url}
+                  avatarIcon={profile?.avatar_icon}
+                  size="w-9 h-9"
+                  borderClass="border-brand-border/40"
+                />
                 <div className="flex-1">
                   <div className="font-medium">{profile?.display_name || 'Anonymous'}</div>
                 </div>

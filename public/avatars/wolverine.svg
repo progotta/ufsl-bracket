@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Circular badge background -->
+  <circle cx="50" cy="50" r="48" fill="#1a1a2e" stroke="#D4A843" stroke-width="3"/>
+  <!-- Inner gold ring -->
+  <circle cx="50" cy="50" r="42" fill="#3B2506" stroke="#D4A843" stroke-width="1.5"/>
+  <!-- Ears -->
+  <ellipse cx="28" cy="28" rx="10" ry="8" fill="#5C3A1E" stroke="#3B2506" stroke-width="1"/>
+  <ellipse cx="72" cy="28" rx="10" ry="8" fill="#5C3A1E" stroke="#3B2506" stroke-width="1"/>
+  <!-- Head shape -->
+  <ellipse cx="50" cy="52" rx="30" ry="28" fill="#5C3A1E"/>
+  <!-- Dark mask/stripe down center -->
+  <path d="M42 25 Q50 30 58 25 L56 55 Q50 58 44 55 Z" fill="#3B2506"/>
+  <!-- Gold/tan muzzle area -->
+  <ellipse cx="50" cy="62" rx="18" ry="14" fill="#D4A843"/>
+  <!-- Snout/nose bridge -->
+  <ellipse cx="50" cy="56" rx="10" ry="8" fill="#C49A3C"/>
+  <!-- Eyes - fierce, angled -->
+  <ellipse cx="37" cy="44" rx="6" ry="5" fill="#FBBF24" transform="rotate(-10 37 44)"/>
+  <ellipse cx="37" cy="44" rx="3" ry="4" fill="#1a1a2e" transform="rotate(-10 37 44)"/>
+  <circle cx="38" cy="42.5" r="1.2" fill="#FBBF24"/>
+  <ellipse cx="63" cy="44" rx="6" ry="5" fill="#FBBF24" transform="rotate(10 63 44)"/>
+  <ellipse cx="63" cy="44" rx="3" ry="4" fill="#1a1a2e" transform="rotate(10 63 44)"/>
+  <circle cx="64" cy="42.5" r="1.2" fill="#FBBF24"/>
+  <!-- Angry brows -->
+  <path d="M26 37 L42 41" stroke="#1a1a2e" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M74 37 L58 41" stroke="#1a1a2e" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Nose -->
+  <ellipse cx="50" cy="56" rx="5" ry="3.5" fill="#1a1a2e"/>
+  <!-- Mouth / snarl -->
+  <path d="M38 66 Q44 62 50 66 Q56 62 62 66" stroke="#3B2506" stroke-width="2" fill="none"/>
+  <!-- Fangs -->
+  <polygon points="42,64 44,70 46,64" fill="white"/>
+  <polygon points="54,64 56,70 58,64" fill="white"/>
+  <!-- Whisker dots -->
+  <circle cx="35" cy="60" r="1" fill="#3B2506"/>
+  <circle cx="33" cy="63" r="1" fill="#3B2506"/>
+  <circle cx="65" cy="60" r="1" fill="#3B2506"/>
+  <circle cx="67" cy="63" r="1" fill="#3B2506"/>
+</svg>
