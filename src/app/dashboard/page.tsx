@@ -254,9 +254,9 @@ async function DashboardPageInner() {
                             type !== 'full' ? meta.accentBorder : 'border-brand-border'
                           }`}
                         >
-                          {/* Row 1: Name/Pool | Round Breakdown | Score */}
-                          <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-1">
-                            {/* Col 1: Icon + Name + Pool/Rank */}
+                          {/* Row 1: Name/Pool (left) | Rank + Score (right) */}
+                          <div className="flex items-start justify-between gap-3">
+                            {/* Left: Icon + Name + Pool + Champion */}
                             <div className="flex items-start gap-2 min-w-0">
                               <span className="text-lg shrink-0 mt-0.5">{meta.emoji}</span>
                               <div className="min-w-0">
@@ -271,9 +271,7 @@ async function DashboardPageInner() {
                                     }`}>{intel.source}</span>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                  <span className="text-xs text-brand-muted">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
-                                </div>
+                                <div className="text-xs text-brand-muted mt-0.5">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
                                 {intel?.championAbbreviation && (
                                   <div className="flex items-center gap-1 mt-0.5 text-xs text-brand-muted">
                                     <span>🏆</span>
@@ -288,12 +286,7 @@ async function DashboardPageInner() {
                               </div>
                             </div>
 
-                            {/* Col 2: Round Breakdown — centered */}
-                            <div className="[&>div]:mt-0 [&>div>div]:justify-center">
-                              <BracketRoundBreakdown picks={picks} games={games} />
-                            </div>
-
-                            {/* Col 3: Rank + Score */}
+                            {/* Right: Rank + Score */}
                             <div className="text-right shrink-0 flex items-center gap-3">
                               {intel?.currentRank && intel.poolSize > 0 && (
                                 <div className="flex flex-col items-center">
@@ -311,26 +304,25 @@ async function DashboardPageInner() {
                                 <div className="text-[10px] text-brand-muted">pts</div>
                               </div>
                             </div>
+                          </div>
 
-                            {/* Row 2: col 1 + col 2 blank, col 3 has next game */}
-                            <div />
-                            <div />
+                          {/* Row 2: Round breakdown — full width */}
+                          <div className="mt-3">
+                            <BracketRoundBreakdown picks={picks} games={games} />
+                          </div>
 
-                            {/* Col 3: Next game (hide when both teams TBD) */}
-                            <div className="text-[10px] text-brand-muted text-right mt-1">
-                              {intel?.nextGame && (intel.nextGame.team1Abbr !== 'TBD' || intel.nextGame.team2Abbr !== 'TBD') && (
-                                <>
-                                  {intel.nextGame.isLive && <span className="text-red-400 font-bold">LIVE · </span>}
-                                  {intel.nextGame.team1Abbr} vs {intel.nextGame.team2Abbr}
-                                  {intel.nextGame.scheduledAt && !intel.nextGame.isLive && (
-                                    <span className="block opacity-70">
-                                      {new Date(intel.nextGame.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                    </span>
-                                  )}
-                                </>
+                          {/* Next game */}
+                          {intel?.nextGame && (intel.nextGame.team1Abbr !== 'TBD' || intel.nextGame.team2Abbr !== 'TBD') && (
+                            <div className="text-[10px] text-brand-muted text-right mt-2">
+                              {intel.nextGame.isLive && <span className="text-red-400 font-bold">LIVE · </span>}
+                              {intel.nextGame.team1Abbr} vs {intel.nextGame.team2Abbr}
+                              {intel.nextGame.scheduledAt && !intel.nextGame.isLive && (
+                                <span className="block opacity-70">
+                                  {new Date(intel.nextGame.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                </span>
                               )}
                             </div>
-                          </div>
+                          )}
                         </Link>
                       )
                     })}
