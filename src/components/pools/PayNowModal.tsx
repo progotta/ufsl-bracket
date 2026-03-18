@@ -128,66 +128,67 @@ export default function PayNowModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-brand-surface border border-brand-border rounded-2xl w-full max-w-sm p-6 space-y-5" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      <div className="bg-brand-surface border border-brand-border rounded-2xl w-full max-w-sm flex flex-col max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Sticky header */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-brand-border shrink-0">
           <h2 className="font-black text-lg">Entry Fees</h2>
           <button onClick={onClose} className="text-brand-muted hover:text-white transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 size={24} className="animate-spin text-brand-muted" />
-          </div>
-        ) : allPaid && !claimed ? (
-          <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl p-4">
-            <Check size={20} className="text-green-400 shrink-0" />
-            <div>
-              <p className="font-bold text-sm text-green-400">All paid up!</p>
-              <p className="text-xs text-brand-muted mt-0.5">All your brackets are covered.</p>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 size={24} className="animate-spin text-brand-muted" />
             </div>
-          </div>
-        ) : (
-          <>
-            {/* Per-bracket list */}
-            <div className="bg-brand-card border border-brand-border rounded-xl divide-y divide-brand-border">
-              {payments.map((p, idx) => (
-                <div key={p.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {p.bracket_name || `Bracket ${idx + 1}`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold">${p.amount.toFixed(2)}</span>
-                    {statusBadge(p.status)}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Summary */}
-            <div className="bg-brand-card border border-brand-border rounded-xl p-4 space-y-2">
-              {paidAmount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-brand-muted">Paid</span>
-                  <span className="text-green-400 font-bold">${paidAmount.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span className="text-brand-muted">Still owed</span>
-                <span className={`font-black ${owedAmount > 0 ? 'text-brand-orange' : 'text-green-400'}`}>
-                  ${owedAmount.toFixed(2)}
-                </span>
+          ) : allPaid && !claimed ? (
+            <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+              <Check size={20} className="text-green-400 shrink-0" />
+              <div>
+                <p className="font-bold text-sm text-green-400">All paid up!</p>
+                <p className="text-xs text-brand-muted mt-0.5">All your brackets are covered.</p>
               </div>
             </div>
+          ) : (
+            <>
+              {/* Per-bracket list */}
+              <div className="bg-brand-card border border-brand-border rounded-xl divide-y divide-brand-border">
+                {payments.map((p, idx) => (
+                  <div key={p.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {p.bracket_name || `Bracket ${idx + 1}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold">${p.amount.toFixed(2)}</span>
+                      {statusBadge(p.status)}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-            {/* Venmo info + CTA */}
-            {owedAmount > 0 && !claimed && (
-              <>
-                {venmoHandle ? (
+              {/* Summary */}
+              <div className="bg-brand-card border border-brand-border rounded-xl p-4 space-y-2">
+                {paidAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-brand-muted">Paid</span>
+                    <span className="text-green-400 font-bold">${paidAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-brand-muted">Still owed</span>
+                  <span className={`font-black ${owedAmount > 0 ? 'text-brand-orange' : 'text-green-400'}`}>
+                    ${owedAmount.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Venmo info */}
+              {owedAmount > 0 && !claimed && (
+                venmoHandle ? (
                   <div className="space-y-3">
                     <p className="text-sm text-brand-muted">
                       Venmo <strong className="text-white">${owedAmount.toFixed(2)}</strong> to:
@@ -207,32 +208,36 @@ export default function PayNowModal({
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
                     <p className="text-sm text-yellow-400">Contact the commissioner for payment details.</p>
                   </div>
-                )}
+                )
+              )}
 
-                {error && <p className="text-sm text-red-400">{error}</p>}
-
-                <button
-                  onClick={handleClaim}
-                  disabled={claiming}
-                  className="btn-primary w-full flex items-center justify-center gap-2"
-                >
-                  {claiming ? <Loader2 size={16} className="animate-spin" /> : null}
-                  I&apos;ve Paid &mdash; Notify Commissioner
-                </button>
-              </>
-            )}
-
-            {/* Claimed state */}
-            {claimed && (
-              <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl p-4">
-                <Check size={20} className="text-green-400 shrink-0" />
-                <div>
-                  <p className="font-bold text-sm text-green-400">Payment Claimed!</p>
-                  <p className="text-xs text-brand-muted mt-0.5">The commissioner will verify your payment.</p>
+              {/* Claimed state */}
+              {claimed && (
+                <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+                  <Check size={20} className="text-green-400 shrink-0" />
+                  <div>
+                    <p className="font-bold text-sm text-green-400">Payment Claimed!</p>
+                    <p className="text-xs text-brand-muted mt-0.5">The commissioner will verify your payment.</p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Pinned bottom — CTA button */}
+        {owedAmount > 0 && !claimed && !loading && (
+          <div className="px-6 pb-6 pt-3 border-t border-brand-border shrink-0">
+            {error && <p className="text-sm text-red-400 mb-2">{error}</p>}
+            <button
+              onClick={handleClaim}
+              disabled={claiming}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+            >
+              {claiming ? <Loader2 size={16} className="animate-spin" /> : null}
+              I&apos;ve Paid &mdash; Notify Commissioner
+            </button>
+          </div>
         )}
       </div>
     </div>
