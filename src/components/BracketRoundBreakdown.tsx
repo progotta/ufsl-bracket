@@ -15,41 +15,47 @@ export default function BracketRoundBreakdown({ picks, games, isLeading = false 
   const breakdown = computeRoundBreakdown(picks, games)
   const badges = computeBadgesFromGames(picks, games, isLeading)
 
-  // Don't render anything if tournament hasn't started
   const anyStarted = breakdown.some(rd => rd.started)
   if (!anyStarted) return null
 
   return (
-    <div className="space-y-1.5">
-      {/* Round grid — Sleeper-style columns */}
-      <div className="grid grid-cols-6 gap-x-1 text-center">
+    <div className="space-y-2">
+      {/* Round grid — full width, 6 equal columns */}
+      <div className="grid grid-cols-6 border border-brand-border/60 rounded-lg overflow-hidden">
         {breakdown.map((rd, i) => {
-          const label = ROUND_HEADERS[i]
+          const header = ROUND_HEADERS[i]
           const ratio = rd.started && rd.total > 0 ? rd.correct / rd.total : null
 
           const scoreColor =
-            !rd.started ? 'text-brand-muted/40' :
-            ratio === null ? 'text-brand-muted/40' :
+            !rd.started ? 'text-brand-muted/30' :
+            ratio === null ? 'text-brand-muted/30' :
             ratio >= 0.75 ? 'text-green-400' :
             ratio >= 0.5 ? 'text-yellow-400' :
             'text-red-400'
 
+          const bgColor =
+            !rd.started ? '' :
+            ratio !== null && ratio >= 0.75 ? 'bg-green-500/5' :
+            ratio !== null && ratio >= 0.5 ? 'bg-yellow-500/5' :
+            ratio !== null ? 'bg-red-500/5' : ''
+
           return (
-            <div key={rd.round} className="flex flex-col items-center gap-0.5">
+            <div
+              key={rd.round}
+              className={`flex flex-col items-center py-2 ${bgColor} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
+            >
               {/* Round label */}
-              <span className="text-[9px] font-semibold text-brand-muted/60 uppercase tracking-wide leading-none">
-                {label}
+              <span className="text-[9px] font-semibold text-brand-muted/50 uppercase tracking-wide leading-none mb-1">
+                {header}
               </span>
-              {/* Score */}
-              <span className={`text-xs font-bold leading-none tabular-nums ${scoreColor}`}>
+              {/* Correct picks */}
+              <span className={`text-sm font-bold leading-none tabular-nums ${scoreColor}`}>
                 {!rd.started ? '—' : rd.correct}
               </span>
-              {/* Total (denominator) — small and muted */}
-              {rd.started && (
-                <span className="text-[9px] text-brand-muted/50 leading-none tabular-nums">
-                  /{rd.total}
-                </span>
-              )}
+              {/* Denominator */}
+              <span className="text-[9px] text-brand-muted/40 leading-none mt-0.5 tabular-nums">
+                {rd.started ? `/${rd.total}` : ''}
+              </span>
             </div>
           )
         })}
