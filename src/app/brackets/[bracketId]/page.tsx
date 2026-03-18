@@ -250,7 +250,7 @@ export default async function BracketPage({ params }: Props) {
         </div>
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <BracketPicker
           bracketId={bracket.id}
           poolId={bracket.pool_id}
@@ -264,6 +264,29 @@ export default async function BracketPage({ params }: Props) {
           score={bracket.score || 0}
           initialBracketName={bracket.bracket_name || ''}
         />
+
+        {/* Lock overlay — shown when viewing someone else's bracket before pool locks */}
+        {!isOwner && poolStatus === 'open' && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-brand-dark/70">
+            <div className="flex flex-col items-center gap-4 text-center px-8 max-w-sm">
+              <div className="w-16 h-16 rounded-full bg-brand-surface border border-brand-border flex items-center justify-center text-3xl">
+                🔒
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-white mb-1">Picks Hidden</h2>
+                <p className="text-brand-muted text-sm leading-relaxed">
+                  {userName}&apos;s picks will be visible to everyone once the pool locks before the tournament starts.
+                </p>
+              </div>
+              <Link
+                href={`/pools/${bracket.pool_id}`}
+                className="btn-secondary text-sm px-6"
+              >
+                Back to Pool
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Post-bracket invite prompt — only for owner's unsubmitted bracket */}
