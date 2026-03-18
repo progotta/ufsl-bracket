@@ -8,6 +8,12 @@ interface LeaderboardProps {
   poolStatus: string
 }
 
+const RANK_COLORS: Record<number, string> = {
+  1: 'text-yellow-400 font-bold',
+  2: 'text-slate-300 font-bold',
+  3: 'text-amber-600 font-bold',
+}
+
 export default function Leaderboard({ entries, currentUserId, poolStatus }: LeaderboardProps) {
   if (entries.length === 0) {
     return (
@@ -35,8 +41,8 @@ export default function Leaderboard({ entries, currentUserId, poolStatus }: Lead
       </div>
       <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3 border-b border-brand-border text-xs font-semibold text-brand-muted uppercase tracking-wide">
-          <span>Rank</span>
+        <div className="grid grid-cols-[2rem_1fr_auto_auto] gap-3 px-4 py-2.5 border-b border-brand-border text-[11px] font-semibold text-brand-muted uppercase tracking-wide">
+          <span className="text-center">Rk</span>
           <span>Player</span>
           <span className="text-right">Max</span>
           <span className="text-right">Score</span>
@@ -44,51 +50,47 @@ export default function Leaderboard({ entries, currentUserId, poolStatus }: Lead
 
         {entries.map((entry, idx) => {
           const isMe = entry.user_id === currentUserId
-          const rankEmoji = entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : null
+          const rankColor = RANK_COLORS[entry.rank] ?? 'text-brand-muted font-medium'
 
           return (
             <div
               key={entry.bracket_id}
-              className={`grid grid-cols-[auto_1fr_auto_auto] gap-4 items-center px-5 py-4 ${
+              className={`grid grid-cols-[2rem_1fr_auto_auto] gap-3 items-center px-4 py-2.5 ${
                 idx > 0 ? 'border-t border-brand-border' : ''
               } ${isMe ? 'bg-brand-orange/5' : 'hover:bg-brand-card/50'} transition-colors`}
             >
               {/* Rank */}
-              <div className="w-8 text-center">
-                {rankEmoji ? (
-                  <span className="text-xl">{rankEmoji}</span>
-                ) : (
-                  <span className="text-brand-muted font-mono text-sm">#{entry.rank}</span>
-                )}
+              <div className={`text-center text-sm tabular-nums ${rankColor}`}>
+                #{entry.rank}
               </div>
 
               {/* Player */}
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <PlayerAvatar
                   userId={entry.user_id}
                   displayName={entry.display_name}
                   avatarUrl={entry.avatar_url}
                   avatarIcon={(entry as any).avatar_icon}
-                  size="w-8 h-8"
+                  size="w-7 h-7"
                   borderClass={isMe ? 'border-brand-orange' : 'border-brand-border/40'}
                 />
                 <div className="min-w-0">
-                  <div className={`font-semibold text-sm truncate ${isMe ? 'text-brand-orange' : ''}`}>
+                  <div className={`font-medium text-sm truncate ${isMe ? 'text-brand-orange' : 'text-brand-text'}`}>
                     {entry.display_name || 'Anonymous'}
-                    {isMe && <span className="text-xs ml-1.5 text-brand-muted">(you)</span>}
+                    {isMe && <span className="text-xs ml-1.5 text-brand-muted font-normal">(you)</span>}
                   </div>
-                  <div className="text-xs text-brand-muted truncate">{entry.bracket_name}</div>
+                  <div className="text-[11px] text-brand-muted truncate">{entry.bracket_name}</div>
                 </div>
               </div>
 
               {/* Max possible */}
               <div className="text-right">
-                <div className="text-sm text-brand-muted">{entry.max_possible_score}</div>
+                <div className="text-xs text-brand-muted tabular-nums">{entry.max_possible_score}</div>
               </div>
 
               {/* Score */}
               <div className="text-right">
-                <div className={`text-xl font-black ${isMe ? 'text-brand-orange' : 'text-white'}`}>
+                <div className={`text-sm font-bold tabular-nums ${isMe ? 'text-brand-orange' : 'text-white'}`}>
                   {entry.score}
                 </div>
               </div>
