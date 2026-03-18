@@ -246,6 +246,11 @@ async function DashboardPageInner() {
                     {typeBrackets.map((bracket) => {
                       const picks = (bracket.picks || {}) as Record<string, string>
                       const intel = bracketIntelligence.get(bracket.id)
+                      const poolStatus = poolMap.get(bracket.pool_id)?.status || 'open'
+                      const pickCount = Object.keys(picks).length
+                      const isComplete = pickCount >= 63
+                      const showCompletionBadge = poolStatus === 'open'
+
                       return (
                         <Link
                           key={bracket.id}
@@ -260,8 +265,19 @@ async function DashboardPageInner() {
                             <div className="flex items-start gap-2 min-w-0">
                               <span className="text-lg shrink-0 mt-0.5">{meta.emoji}</span>
                               <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 min-w-0">
+                                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                                   <span className="font-semibold text-sm group-hover:text-brand-orange transition-colors truncate">{bracket.bracket_name || bracket.name}</span>
+                                  {showCompletionBadge && (
+                                    isComplete ? (
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-green-500/20 text-green-400 border-green-500/30">
+                                        ✓ Complete
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                        {pickCount}/63
+                                      </span>
+                                    )
+                                  )}
                                   {intel?.source && (
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 ${
                                       intel.source === 'ESPN' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
