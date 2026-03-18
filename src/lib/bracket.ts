@@ -144,8 +144,10 @@ export function buildBracketStructure(teams: BracketTeam[]): BracketGame[] {
     }
 
     // Elite 8: 1 game per region
+    // Routing: East(0) → g1/team1, West(1) → g2/team1, South(2) → g1/team2, Midwest(3) → g2/team2
+    // Final Four matchups: East vs South (g1), West vs Midwest (g2)
     const elite8Id = gameId(region, 4, regionIdx + 1)
-    const ff_gameNum = regionIdx < 2 ? 1 : 2
+    const ff_gameNum = regionIdx % 2 === 0 ? 1 : 2  // East(0),South(2) → g1; West(1),Midwest(3) → g2
     const ffId = `ff-r5-g${ff_gameNum}`
     games.push({
       id: elite8Id,
@@ -155,19 +157,19 @@ export function buildBracketStructure(teams: BracketTeam[]): BracketGame[] {
       slot1: gameId(region, 3, regionIdx * 2 + 1),
       slot2: gameId(region, 3, regionIdx * 2 + 2),
       nextGameId: ffId,
-      nextSlot: regionIdx % 2 === 0 ? 'team1' : 'team2',
+      nextSlot: regionIdx < 2 ? 'team1' : 'team2',  // East(0),West(1) → team1; South(2),Midwest(3) → team2
     })
   })
 
   // Final Four: 2 games
-  // East vs West, South vs Midwest (traditional)
+  // 2026 NCAA bracket: East vs South (g1), West vs Midwest (g2)
   games.push({
     id: 'ff-r5-g1',
     round: 5,
     gameNumber: 1,
     region: 'Final Four',
     slot1: gameId('East', 4, 1),
-    slot2: gameId('West', 4, 2),
+    slot2: gameId('South', 4, 3),
     nextGameId: 'championship-r6-g1',
     nextSlot: 'team1',
   })
@@ -176,7 +178,7 @@ export function buildBracketStructure(teams: BracketTeam[]): BracketGame[] {
     round: 5,
     gameNumber: 2,
     region: 'Final Four',
-    slot1: gameId('South', 4, 3),
+    slot1: gameId('West', 4, 2),
     slot2: gameId('Midwest', 4, 4),
     nextGameId: 'championship-r6-g1',
     nextSlot: 'team2',
