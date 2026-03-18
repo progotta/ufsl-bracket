@@ -81,6 +81,7 @@ export default async function PoolPage({ params }: Props) {
     { data: payments },
     { data: currentProfile },
     { data: roundProgress },
+    { data: allBrackets },
   ] = await Promise.all([
     adminDb
       .from('pool_members')
@@ -115,9 +116,21 @@ export default async function PoolPage({ params }: Props) {
     supabase
       .from('games')
       .select('round, status, winner_id'),
+    adminDb
+      .from('brackets')
+      .select('user_id, is_submitted')
+      .eq('pool_id', params.id),
   ])
 
   const userBracket = userBrackets?.[0] || null
+
+  // Submitted bracket count per user — used to calculate each member's total owed
+  const bracketCountByUser: Record<string, number> = {}
+  for (const b of allBrackets || []) {
+    if (b.is_submitted) {
+      bracketCountByUser[b.user_id] = (bracketCountByUser[b.user_id] || 0) + 1
+    }
+  }
   const userBracketCount = userBrackets?.length || 0
   const maxBracketsPerMember = (pool as any).max_brackets_per_member || 1
   const feePerBracket = (pool as any).fee_per_bracket ?? true
@@ -302,7 +315,7 @@ export default async function PoolPage({ params }: Props) {
                         poolId={params.id}
                         memberId={currentMember.id}
                         entryFee={entryFee}
-                        bracketsOwed={userBrackets.filter(b => b.is_submitted).length || 1}
+                        bracketsOwed={bracketCountByUser[session.user.id] || userBrackets?.filter(b => b.is_submitted).length || 1}
                         venmoHandle={venmoHandle}
                         paymentInstructions={(pool as any).payment_instructions}
                         paymentStatus={currentMember.payment_status || 'unpaid'}
@@ -563,6 +576,8 @@ export default async function PoolPage({ params }: Props) {
               const profile = member.profiles as any
               const memberPayments = (payments || []).filter((p: any) => p.user_id === member.user_id)
               const displayName = profile?.display_name || 'Anonymous'
+              const memberBracketCount = bracketCountByUser[member.user_id] || 1
+              const memberTotalOwed = entryFee * memberBracketCount
 
               return (
                 <div key={member.user_id} className="bg-brand-surface border border-brand-border rounded-xl p-3">
@@ -586,21 +601,19 @@ export default async function PoolPage({ params }: Props) {
                       </div>
                     </div>
                     {/* For flat-fee pools or single-bracket, show the toggle directly */}
-                    {(!feePerBracket || maxBracketsPerMember === 1) && (
-                      <div className="flex items-center gap-2">
-                        {member.payment_status === 'waived' ? (
-                          <span className="text-xs text-brand-muted bg-brand-surface px-2 py-1 rounded-full border border-brand-border">Waived</span>
-                        ) : (
-                          <PaymentToggle
-                            memberId={member.id}
-                            status={member.payment_status || 'unpaid'}
-                            poolId={pool.id}
-                            fee={entryFee}
-                            memberName={displayName}
-                          />
-                        )}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {member.payment_status === 'waived' ? (
+                        <span className="text-xs text-brand-muted bg-brand-surface px-2 py-1 rounded-full border border-brand-border">Waived</span>
+                      ) : (
+                        <PaymentToggle
+                          memberId={member.id}
+                          status={member.payment_status || 'unpaid'}
+                          poolId={pool.id}
+                          fee={memberTotalOwed}
+                          memberName={displayName}
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Per-bracket payment breakdown (fee_per_bracket + multi-bracket) */}
@@ -623,7 +636,7 @@ export default async function PoolPage({ params }: Props) {
                         memberId={member.id}
                         status={member.payment_status || 'unpaid'}
                         poolId={pool.id}
-                        fee={entryFee}
+                        fee={memberTotalOwed}
                         memberName={displayName}
                       />
                     </div>
@@ -660,21 +673,20 @@ export default async function PoolPage({ params }: Props) {
                 {member.role === 'commissioner' && (
                   <span className="text-xs text-brand-gold">👑 Commissioner</span>
                 )}
-                {entryFee > 0 && (
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full border ${
-                    member.payment_status === 'paid' || member.payment_status === 'waived'
-                      ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                      : member.payment_status === 'pending_verification'
-                      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                {entryFee > 0 && (() => {
+                  const mOwed = entryFee * (bracketCountByUser[member.user_id] || 1)
+                  const isPaid = member.payment_status === 'paid' || member.payment_status === 'waived'
+                  const isPending = member.payment_status === 'pending_verification'
+                  return (
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full border ${
+                      isPaid ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                      : isPending ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                       : 'bg-red-500/20 text-red-400 border-red-500/30'
-                  }`}>
-                    {member.payment_status === 'paid' || member.payment_status === 'waived'
-                      ? 'Paid ✓'
-                      : member.payment_status === 'pending_verification'
-                      ? 'Pending'
-                      : 'Unpaid'}
-                  </span>
-                )}
+                    }`}>
+                      {isPaid ? 'Paid ✓' : isPending ? 'Pending' : `$${mOwed.toFixed(0)} owed`}
+                    </span>
+                  )
+                })()}
               </div>
             )
           })}
