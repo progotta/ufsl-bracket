@@ -307,6 +307,11 @@ export default async function PoolPage({ params }: Props) {
                       const bracketPayment = myPayments.find((p: any) => p.bracket_id === bracket.id)
                       const bStatus = bracketPayment?.status || (entryFee > 0 ? 'unpaid' : null)
 
+                      const picks = (bracket.picks || {}) as Record<string, string>
+                      const pickCount = Object.keys(picks).length
+                      const isComplete = pickCount >= 63
+                      const showCompletionBadge = pool.status === 'open'
+
                       return (
                         <div key={bracket.id} className="flex items-center gap-2 bg-brand-card rounded-xl px-3 py-2.5">
                           {/* Bracket name + eye icon */}
@@ -316,6 +321,14 @@ export default async function PoolPage({ params }: Props) {
                             </span>
                             <Eye size={14} className="text-brand-orange shrink-0" />
                           </Link>
+                          {/* Completion badge */}
+                          {showCompletionBadge && (
+                            isComplete ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-green-500/20 text-green-400 border-green-500/30">✓ Complete</span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-red-500/20 text-red-400 border-red-500/30">⚠ Incomplete · {pickCount}/63</span>
+                            )
+                          )}
                           {/* Per-bracket payment status pill */}
                           {entryFee > 0 && bStatus && (
                             bStatus === 'paid' || bStatus === 'waived' ? (
