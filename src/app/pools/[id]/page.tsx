@@ -296,16 +296,16 @@ export default async function PoolPage({ params }: Props) {
               {userBrackets.map((bracket, idx) => (
                 <div key={bracket.id} className="space-y-2">
 
-                  <div className="flex items-center justify-between bg-brand-card rounded-xl p-3">
-                    <Link href={`/brackets/${bracket.id}`} className="text-sm font-semibold text-white hover:text-brand-orange transition-colors truncate flex-1 min-w-0 mr-3">
+                  <div className="flex items-center gap-2 bg-brand-card rounded-xl px-3 py-2.5">
+                    {/* Bracket name — takes remaining space */}
+                    <span className="text-sm font-semibold text-white truncate flex-1 min-w-0">
                       {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
+                    </span>
+                    {/* View link */}
+                    <Link href={`/brackets/${bracket.id}`} className="text-xs font-bold text-brand-orange hover:opacity-80 transition-opacity shrink-0">
+                      {bracket.is_submitted ? 'View' : 'Pick'}
                     </Link>
-                    <span className="text-2xl font-black text-brand-orange shrink-0">{bracket.score ?? 0}</span>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <Link href={`/brackets/${bracket.id}`} className="btn-primary flex-1 text-center block text-sm">
-                      {bracket.is_submitted ? 'View Bracket' : 'Continue Picking'}
-                    </Link>
+                    {/* Pay Now or Paid tag — only on first bracket (payment is per-member) */}
                     {entryFee > 0 && currentMember && idx === 0 && (
                       <PayNowButton
                         poolId={params.id}
@@ -325,18 +325,8 @@ export default async function PoolPage({ params }: Props) {
                         })()}
                       />
                     )}
-                    {bracket.is_submitted && idx === 0 && (
-                      <ShareButton
-                        bracketId={bracket.id}
-                        userName={userName}
-                        poolName={pool.name}
-                        score={bracket.score || 0}
-                        rank={userRank}
-                        poolStatus={pool.status}
-                        className="btn-secondary flex items-center gap-2 text-sm px-4"
-                        label="Share"
-                      />
-                    )}
+                    {/* Score */}
+                    <span className="text-lg font-black text-brand-orange shrink-0">{bracket.score ?? 0}</span>
                   </div>
                 </div>
               ))}
