@@ -79,7 +79,7 @@ export default function AchievementsPanel({ userId, maxVisible = 9 }: Achievemen
     )
   }
 
-  const { currentLevel, nextLevel, levelIndex, xpInLevel, xpForNext, progress, nextThreshold } = getLevelInfo(xp)
+  const { currentLevel, nextLevel, levelIndex, xpInLevel, xpForNext, progress } = getLevelInfo(xp)
 
   // Sort: unlocked first (by rarity), then locked
   const rarityOrder: Record<string, number> = { legendary: 0, epic: 1, rare: 2, common: 3 }
@@ -103,7 +103,7 @@ export default function AchievementsPanel({ userId, maxVisible = 9 }: Achievemen
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-brand-muted font-bold">
-            {xp} / {nextThreshold ?? '—'} XP
+            {xp} / {nextLevel?.threshold ?? '—'} XP
           </span>
           {nextLevel && (
             <span className="text-[10px] text-brand-orange font-bold">
