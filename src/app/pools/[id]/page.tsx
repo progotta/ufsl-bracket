@@ -297,13 +297,12 @@ export default async function PoolPage({ params }: Props) {
                 <div key={bracket.id} className="space-y-2">
 
                   <div className="flex items-center gap-2 bg-brand-card rounded-xl px-3 py-2.5">
-                    {/* Bracket name — takes remaining space */}
-                    <span className="text-sm font-semibold text-white truncate flex-1 min-w-0">
-                      {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
-                    </span>
-                    {/* Eye icon — links to bracket page */}
-                    <Link href={`/brackets/${bracket.id}`} className="text-brand-orange hover:opacity-80 transition-opacity shrink-0" title={bracket.is_submitted ? 'View bracket' : 'Pick teams'}>
-                      <Eye size={16} />
+                    {/* Bracket name + eye icon grouped together, takes remaining space */}
+                    <Link href={`/brackets/${bracket.id}`} className="flex items-center gap-1 flex-1 min-w-0 hover:opacity-80 transition-opacity group" title={bracket.is_submitted ? 'View bracket' : 'Pick teams'}>
+                      <span className="text-sm font-semibold text-white truncate">
+                        {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
+                      </span>
+                      <Eye size={14} className="text-brand-orange shrink-0" />
                     </Link>
                     {/* Pay Now or Paid tag — only on first bracket (payment is per-member) */}
                     {entryFee > 0 && currentMember && idx === 0 && (
