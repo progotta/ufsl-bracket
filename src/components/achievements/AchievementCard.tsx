@@ -37,12 +37,12 @@ export default function AchievementCard({ achievement, size = 'md' }: Achievemen
     return (
       <div
         title={`${achievement.name}: ${achievement.description}`}
-        className={`relative flex flex-col items-center gap-1 p-3 rounded-xl border ${rarity.border} ${
+        className={`relative flex flex-col items-center gap-1 p-3 rounded-xl border w-20 ${rarity.border} ${
           locked ? 'opacity-40 grayscale' : `shadow-lg ${rarity.glow}`
         } bg-brand-card transition-all hover:scale-105 cursor-default`}
       >
         <span className="text-2xl leading-none select-none">{achievement.emoji}</span>
-        <span className="text-xs font-semibold text-center leading-tight line-clamp-1">{achievement.name}</span>
+        <span className="text-xs font-semibold text-center leading-tight line-clamp-1 w-full truncate">{achievement.name}</span>
         {!locked && (
           <span className={`text-[10px] font-bold ${rarity.labelColor}`}>{rarity.label}</span>
         )}
