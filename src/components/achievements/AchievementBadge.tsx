@@ -19,8 +19,8 @@ export default function AchievementBadge({
 }: AchievementBadgeProps) {
   const sizeClasses = {
     sm: 'w-14 h-14 text-xl',
-    md: 'w-20 h-20 text-3xl',
-    lg: 'w-28 h-28 text-5xl',
+    md: 'w-20 h-20 text-2xl',
+    lg: 'w-28 h-28 text-4xl',
   }
 
   const labelSize = {
@@ -45,7 +45,7 @@ export default function AchievementBadge({
           }
         `}
       >
-        <span className={earned ? '' : 'opacity-60'}>{emoji}</span>
+        <span className={`leading-none select-none ${earned ? '' : 'opacity-60'}`} style={{fontSize:'inherit'}}>{emoji}</span>
       </div>
       <span className={`${labelSize[size]} font-bold text-center leading-tight line-clamp-1 ${earned ? 'text-white' : 'text-brand-muted'}`}>
         {name}

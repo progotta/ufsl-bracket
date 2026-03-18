@@ -41,7 +41,7 @@ export default function AchievementCard({ achievement, size = 'md' }: Achievemen
           locked ? 'opacity-40 grayscale' : `shadow-lg ${rarity.glow}`
         } bg-brand-card transition-all hover:scale-105 cursor-default`}
       >
-        <span className="text-2xl">{achievement.emoji}</span>
+        <span className="text-2xl leading-none select-none">{achievement.emoji}</span>
         <span className="text-xs font-semibold text-center leading-tight line-clamp-1">{achievement.name}</span>
         {!locked && (
           <span className={`text-[10px] font-bold ${rarity.labelColor}`}>{rarity.label}</span>
@@ -60,7 +60,7 @@ export default function AchievementCard({ achievement, size = 'md' }: Achievemen
     >
       {/* Emoji badge */}
       <div
-        className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-3xl ${
+        className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
           locked ? 'bg-brand-border/20' : 'bg-brand-surface'
         }`}
       >
