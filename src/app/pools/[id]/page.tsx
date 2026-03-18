@@ -1,7 +1,7 @@
 import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench } from 'lucide-react'
+import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench, Eye } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import ShareStandingsCard from '@/components/pools/ShareStandingsCard'
 import InviteSection from '@/components/pools/InviteSection'
@@ -301,9 +301,9 @@ export default async function PoolPage({ params }: Props) {
                     <span className="text-sm font-semibold text-white truncate flex-1 min-w-0">
                       {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
                     </span>
-                    {/* View link */}
-                    <Link href={`/brackets/${bracket.id}`} className="text-xs font-bold text-brand-orange hover:opacity-80 transition-opacity shrink-0">
-                      {bracket.is_submitted ? 'View' : 'Pick'}
+                    {/* Eye icon — links to bracket page */}
+                    <Link href={`/brackets/${bracket.id}`} className="text-brand-orange hover:opacity-80 transition-opacity shrink-0" title={bracket.is_submitted ? 'View bracket' : 'Pick teams'}>
+                      <Eye size={16} />
                     </Link>
                     {/* Pay Now or Paid tag — only on first bracket (payment is per-member) */}
                     {entryFee > 0 && currentMember && idx === 0 && (
