@@ -17,6 +17,7 @@ export type AchievementEvent =
   | 'round_complete'
   | 'bracket_submitted'
   | 'pool_joined'
+  | 'pool_created'
   | 'pool_won'
   | 'pool_second'
   | 'pool_busted_leader'
@@ -205,6 +206,13 @@ export async function checkAchievements(
     // ─── Second chance ────────────────────────────────────────────────────
     case 'second_chance_won': {
       toAward.push({ id: 'second_chance', metadata: { pool_id: context.poolId } })
+      break
+    }
+
+    // ─── Pool created ─────────────────────────────────────────────────────
+    case 'pool_created': {
+      // commissioner: first pool created
+      toAward.push({ id: 'commissioner', metadata: { pool_id: context.poolId } })
       break
     }
   }

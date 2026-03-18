@@ -139,6 +139,13 @@ export default function NewPoolPage() {
       role: 'commissioner',
     })
 
+    // Award Commissioner achievement (fire and forget)
+    fetch('/api/achievements/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'pool_created', context: { poolId: pool.id } }),
+    }).catch(() => {})
+
     router.push(`/pools/${pool.id}`)
   }
 
