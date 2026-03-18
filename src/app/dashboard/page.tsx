@@ -273,8 +273,8 @@ async function DashboardPageInner() {
                                         ✓ Complete
                                       </span>
                                     ) : (
-                                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                                        {pickCount}/63
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-red-500/20 text-red-400 border-red-500/30">
+                                        ⚠ Incomplete · {pickCount}/63
                                       </span>
                                     )
                                   )}
