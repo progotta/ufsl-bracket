@@ -295,16 +295,12 @@ export default async function PoolPage({ params }: Props) {
             <div className="space-y-3">
               {userBrackets.map((bracket, idx) => (
                 <div key={bracket.id} className="space-y-2">
-                  {maxBracketsPerMember > 1 && (
-                    <div className="text-xs font-semibold text-brand-muted">
-                      {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
-                    </div>
-                  )}
+
                   <div className="flex items-center justify-between bg-brand-card rounded-xl p-3">
-                    <span className="text-sm text-brand-muted">
-                      {bracket.is_submitted ? 'Score' : 'In progress'}
-                    </span>
-                    <span className="text-2xl font-black text-brand-orange">{bracket.score}</span>
+                    <Link href={`/brackets/${bracket.id}`} className="text-sm font-semibold text-white hover:text-brand-orange transition-colors truncate flex-1 min-w-0 mr-3">
+                      {bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
+                    </Link>
+                    <span className="text-2xl font-black text-brand-orange shrink-0">{bracket.score ?? 0}</span>
                   </div>
                   <div className="flex gap-2 items-center">
                     <Link href={`/brackets/${bracket.id}`} className="btn-primary flex-1 text-center block text-sm">
