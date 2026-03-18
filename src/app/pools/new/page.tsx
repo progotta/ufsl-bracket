@@ -398,26 +398,26 @@ export default function NewPoolPage() {
                   </label>
                   <div className="space-y-2">
                     {/* Credit/Debit — Coming Soon */}
-                    <div className="flex items-start gap-3 p-3 rounded-xl border border-brand-border/40 opacity-50 cursor-not-allowed select-none">
+                    <div className="flex items-start gap-3 p-3 rounded-xl border border-purple-500/20 bg-purple-500/5 opacity-60 cursor-not-allowed select-none">
                       <input type="checkbox" disabled className="mt-0.5 cursor-not-allowed" />
                       <div>
                         <div className="flex items-center gap-2 font-medium text-sm text-brand-muted">
                           <span>Credit/Debit Card</span>
-                          <span className="text-xs bg-brand-surface text-brand-muted px-2 py-0.5 rounded-full border border-brand-border">Coming Soon</span>
+                          <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-400/40 px-2 py-0.5 rounded-full font-bold">✦ Coming Soon</span>
                         </div>
-                        <p className="text-xs text-brand-muted/60 mt-0.5">Credit/debit cards, Apple Pay, Google Pay via Stripe</p>
+                        <p className="text-xs text-brand-muted/70 mt-0.5">Credit/debit cards, Apple Pay, Google Pay via Stripe</p>
                       </div>
                     </div>
 
                     {/* PayPal — Coming Soon */}
-                    <div className="flex items-start gap-3 p-3 rounded-xl border border-brand-border/40 opacity-50 cursor-not-allowed select-none">
+                    <div className="flex items-start gap-3 p-3 rounded-xl border border-purple-500/20 bg-purple-500/5 opacity-60 cursor-not-allowed select-none">
                       <input type="checkbox" disabled className="mt-0.5 cursor-not-allowed" />
                       <div>
                         <div className="flex items-center gap-2 font-medium text-sm text-brand-muted">
                           <span>PayPal</span>
-                          <span className="text-xs bg-brand-surface text-brand-muted px-2 py-0.5 rounded-full border border-brand-border">Coming Soon</span>
+                          <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-400/40 px-2 py-0.5 rounded-full font-bold">✦ Coming Soon</span>
                         </div>
-                        <p className="text-xs text-brand-muted/60 mt-0.5">PayPal balance or any card</p>
+                        <p className="text-xs text-brand-muted/70 mt-0.5">PayPal balance or any card</p>
                       </div>
                     </div>
 
@@ -427,7 +427,7 @@ export default function NewPoolPage() {
                       <div>
                         <div className="flex items-center gap-2 font-medium text-sm">
                           <span>Other (Venmo, Cash App, Zelle...)</span>
-                          <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">Manual tracking</span>
+                          <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-bold">Available Now</span>
                         </div>
                         <p className="text-xs text-brand-muted mt-0.5">You track payments manually — members click &quot;I&apos;ve paid&quot;</p>
                       </div>
