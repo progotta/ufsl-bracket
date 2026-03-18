@@ -127,8 +127,8 @@ export default function PayNowModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-brand-surface border border-brand-border rounded-2xl w-full max-w-sm flex flex-col max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-brand-surface border border-brand-border rounded-2xl w-full max-w-sm flex flex-col max-h-[75vh] overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Sticky header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-brand-border shrink-0">
           <h2 className="font-black text-lg">Entry Fees</h2>
