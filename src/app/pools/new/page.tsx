@@ -396,42 +396,45 @@ export default function NewPoolPage() {
                   <label className="text-sm text-brand-muted mb-3 block font-medium">
                     How will you collect payment? (pick any)
                   </label>
-                  <div className="space-y-2">
-                    {/* Credit/Debit — Coming Soon */}
-                    <div className="flex items-start gap-3 p-3 rounded-xl border border-purple-500/20 bg-purple-500/5 opacity-60 cursor-not-allowed select-none">
-                      <input type="checkbox" disabled className="mt-0.5 cursor-not-allowed" />
-                      <div>
-                        <div className="flex items-center gap-2 font-medium text-sm text-brand-muted">
-                          <span>Credit/Debit Card</span>
-                          <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-400/40 px-2 py-0.5 rounded-full font-bold">✦ Coming Soon</span>
+                  <div className="space-y-3">
+                    {/* Automated Verification group — Coming Soon */}
+                    <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 overflow-hidden cursor-not-allowed select-none">
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-purple-500/20">
+                        <span className="text-xs font-bold text-purple-300 uppercase tracking-wide">Automated Verification</span>
+                        <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-400/40 px-2 py-0.5 rounded-full font-bold">✦ Coming Soon</span>
+                      </div>
+                      <div className="divide-y divide-purple-500/10 opacity-60">
+                        <div className="flex items-start gap-3 px-4 py-3">
+                          <input type="checkbox" disabled className="mt-0.5 cursor-not-allowed" />
+                          <div>
+                            <p className="text-sm font-medium text-brand-muted">Credit/Debit Card</p>
+                            <p className="text-xs text-brand-muted/60 mt-0.5">Cards, Apple Pay, Google Pay via Stripe</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-brand-muted/70 mt-0.5">Credit/debit cards, Apple Pay, Google Pay via Stripe</p>
+                        <div className="flex items-start gap-3 px-4 py-3">
+                          <input type="checkbox" disabled className="mt-0.5 cursor-not-allowed" />
+                          <div>
+                            <p className="text-sm font-medium text-brand-muted">PayPal</p>
+                            <p className="text-xs text-brand-muted/60 mt-0.5">PayPal balance or any card</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* PayPal — Coming Soon */}
-                    <div className="flex items-start gap-3 p-3 rounded-xl border border-purple-500/20 bg-purple-500/5 opacity-60 cursor-not-allowed select-none">
-                      <input type="checkbox" disabled className="mt-0.5 cursor-not-allowed" />
-                      <div>
-                        <div className="flex items-center gap-2 font-medium text-sm text-brand-muted">
-                          <span>PayPal</span>
-                          <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-400/40 px-2 py-0.5 rounded-full font-bold">✦ Coming Soon</span>
-                        </div>
-                        <p className="text-xs text-brand-muted/70 mt-0.5">PayPal balance or any card</p>
+                    {/* Manual Verification group — Available Now */}
+                    <div className="rounded-xl border border-green-500/30 overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-green-500/20 bg-green-500/5">
+                        <span className="text-xs font-bold text-green-400 uppercase tracking-wide">Manual Verification</span>
+                        <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-bold">Available Now</span>
                       </div>
+                      <label className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-brand-surface/50">
+                        <input type="checkbox" checked={methods.manual} onChange={e => setMethods(m => ({...m, manual: e.target.checked}))} className="mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium">Other (Venmo, Cash App, Zelle...)</p>
+                          <p className="text-xs text-brand-muted mt-0.5">Members click &quot;I&apos;ve paid&quot; — you confirm</p>
+                        </div>
+                      </label>
                     </div>
-
-                    {/* Other — pre-checked, fully functional */}
-                    <label className="flex items-start gap-3 p-3 rounded-xl border border-brand-border cursor-pointer hover:bg-brand-surface/50">
-                      <input type="checkbox" checked={methods.manual} onChange={e => setMethods(m => ({...m, manual: e.target.checked}))} className="mt-0.5" />
-                      <div>
-                        <div className="flex items-center gap-2 font-medium text-sm">
-                          <span>Other (Venmo, Cash App, Zelle...)</span>
-                          <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-bold">Available Now</span>
-                        </div>
-                        <p className="text-xs text-brand-muted mt-0.5">You track payments manually — members click &quot;I&apos;ve paid&quot;</p>
-                      </div>
-                    </label>
 
                     {methods.manual && (
                       <div className="pl-7 space-y-2">
