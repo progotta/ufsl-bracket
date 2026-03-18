@@ -295,8 +295,8 @@ export default function SmackTalk({ poolId, currentUserId, currentUserName }: Sm
                         <span>{msg.reactions[emoji].length}</span>
                       </button>
                     ))}
-                    {/* Add reaction buttons (show on hover) */}
-                    <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                    {/* Add reaction buttons — always visible on mobile, hover on desktop */}
+                    <div className={`flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity`}>
                       {REACTIONS.filter(e => !msg.reactions?.[e]?.length).map(emoji => (
                         <button
                           key={emoji}
