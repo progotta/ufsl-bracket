@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/ui/Logo'
 import type { Profile } from '@/types/database'
-import { LogOut, User, Trophy, Home, Menu, X, Globe, RefreshCw, Medal, Shield } from 'lucide-react'
+import { LogOut, User, Trophy, Home, Menu, X, Globe, RefreshCw, Medal, Shield, Bell } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
 import NotificationBell from './NotificationBell'
@@ -128,10 +128,19 @@ export default function Nav({ profile }: NavProps) {
               </Link>
             ))}
             {profile && (
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-brand-muted">
-                <NotificationBell userId={profile.id} />
+              <Link
+                href="/notifications"
+                onClick={() => setMenuOpen(false)}
+                className={clsx(
+                  'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
+                  pathname === '/notifications'
+                    ? 'bg-brand-orange/10 text-brand-orange'
+                    : 'text-brand-muted hover:text-white hover:bg-brand-card'
+                )}
+              >
+                <Bell size={16} />
                 <span>Notifications</span>
-              </div>
+              </Link>
             )}
             <button
               onClick={handleSignOut}
