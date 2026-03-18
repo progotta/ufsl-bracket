@@ -12,6 +12,7 @@ import LeagueNotes from '@/components/pools/LeagueNotes'
 import PaymentToggle from '@/components/pools/PaymentToggle'
 import StripeConnectSection from '@/components/pools/StripeConnectSection'
 import PaymentOptions from '@/components/pools/PaymentOptions'
+import PayNowButton from '@/components/pools/PayNowButton'
 import StripeStatusBanner from '@/components/pools/StripeStatusBanner'
 import { calculatePayouts, formatCurrency, type PayoutStructure } from '@/lib/payouts'
 import { FEATURES } from '@/lib/features'
@@ -132,6 +133,7 @@ export default async function PoolPage({ params }: Props) {
   const commissionerStripeReady = !!commissionerProfile?.stripe_onboarded && !!commissionerProfile?.stripe_account_id
   const commissionerPaypalReady = !!(commissionerProfile as any)?.paypal_onboarded && !!(commissionerProfile as any)?.paypal_merchant_id
   const poolPaymentMethods = ((pool as any).payment_methods || []) as any[]
+  const venmoHandle = poolPaymentMethods.find((m: any) => m.platform === 'Venmo')?.handle || null
 
   // Get current user's rank from leaderboard
   const userLeaderboardEntry = leaderboard?.find(e => e.user_id === session.user.id)
@@ -291,10 +293,21 @@ export default async function PoolPage({ params }: Props) {
                     </span>
                     <span className="text-2xl font-black text-brand-orange">{bracket.score}</span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     <Link href={`/brackets/${bracket.id}`} className="btn-primary flex-1 text-center block text-sm">
                       {bracket.is_submitted ? 'View Bracket' : 'Continue Picking'}
                     </Link>
+                    {entryFee > 0 && currentMember && idx === 0 && (
+                      <PayNowButton
+                        poolId={params.id}
+                        memberId={currentMember.id}
+                        entryFee={entryFee}
+                        bracketsOwed={userBrackets.filter(b => b.is_submitted).length || 1}
+                        venmoHandle={venmoHandle}
+                        paymentInstructions={(pool as any).payment_instructions}
+                        paymentStatus={currentMember.payment_status || 'unpaid'}
+                      />
+                    )}
                     {bracket.is_submitted && idx === 0 && (
                       <ShareButton
                         bracketId={bracket.id}
@@ -646,6 +659,21 @@ export default async function PoolPage({ params }: Props) {
                 </div>
                 {member.role === 'commissioner' && (
                   <span className="text-xs text-brand-gold">👑 Commissioner</span>
+                )}
+                {entryFee > 0 && (
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full border ${
+                    member.payment_status === 'paid' || member.payment_status === 'waived'
+                      ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                      : member.payment_status === 'pending_verification'
+                      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                      : 'bg-red-500/20 text-red-400 border-red-500/30'
+                  }`}>
+                    {member.payment_status === 'paid' || member.payment_status === 'waived'
+                      ? 'Paid ✓'
+                      : member.payment_status === 'pending_verification'
+                      ? 'Pending'
+                      : 'Unpaid'}
+                  </span>
                 )}
               </div>
             )

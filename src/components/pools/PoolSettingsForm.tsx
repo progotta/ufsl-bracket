@@ -19,6 +19,8 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
   const [maxBrackets, setMaxBrackets] = useState<string>(String(pool.max_brackets_per_member ?? 1))
   const [entryFee, setEntryFee] = useState<string>(pool.entry_fee != null ? String(pool.entry_fee) : '')
   const [joinRequiresApproval, setJoinRequiresApproval] = useState(pool.join_requires_approval || false)
+  const existingVenmo = ((pool as any).payment_methods as any[])?.find((m: any) => m.platform === 'Venmo')?.handle?.replace(/^@/, '') || ''
+  const [venmoHandle, setVenmoHandle] = useState(existingVenmo)
   const [inviteCode, setInviteCode] = useState(pool.invite_code)
   const [regenerating, setRegenerating] = useState(false)
   const inviteUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/join/${inviteCode}`
@@ -34,6 +36,12 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
     setSaving(true)
     setError(null)
 
+    const existingMethods = ((pool as any).payment_methods as any[]) || []
+    const otherMethods = existingMethods.filter((m: any) => m.platform !== 'Venmo')
+    const newMethods = venmoHandle.trim()
+      ? [...otherMethods, { type: 'manual', platform: 'Venmo', handle: `@${venmoHandle.trim()}` }]
+      : otherMethods
+
     const { error: updateError } = await supabase
       .from('pools')
       .update({
@@ -48,6 +56,8 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
         entry_fee: entryFee ? parseFloat(entryFee) : null as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         join_requires_approval: joinRequiresApproval as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        payment_methods: newMethods as any,
       })
       .eq('id', pool.id)
 
@@ -172,6 +182,24 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
               />
               <p className="text-xs text-brand-muted mt-1">Leave blank for free entry</p>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Venmo Handle <span className="text-brand-muted font-normal">(for collecting entry fees)</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-muted text-sm">@</span>
+              <input
+                type="text"
+                value={venmoHandle}
+                onChange={e => setVenmoHandle(e.target.value.replace(/^@/, ''))}
+                placeholder="yourvenmo"
+                maxLength={30}
+                className="input-base pl-7"
+              />
+            </div>
+            <p className="text-xs text-brand-muted mt-1">Players will see this when paying entry fees</p>
           </div>
 
           <div>
