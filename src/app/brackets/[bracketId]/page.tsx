@@ -200,7 +200,18 @@ export default async function BracketPage({ params }: Props) {
   const isOwner = bracket.user_id === session.user.id
   const pool = poolRaw as { name: string; status: string; id: string; invite_code: string } | null
 
-  const userName = profile?.display_name || 'Anonymous'
+  // If viewing someone else's bracket, fetch the owner's display name for the overlay
+  let ownerName = profile?.display_name || 'Anonymous' // default: viewer's own name (used when isOwner)
+  if (!isOwner) {
+    const { data: ownerProfile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', bracket.user_id)
+      .maybeSingle()
+    ownerName = ownerProfile?.display_name || 'This player'
+  }
+
+  const userName = isOwner ? (profile?.display_name || 'Anonymous') : ownerName
   const poolStatus = pool?.status || 'open'
 
   // Translate picks from UUID game keys → slug keys using the same corrected gameIdMap
