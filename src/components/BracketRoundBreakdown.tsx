@@ -9,48 +9,48 @@ interface BracketRoundBreakdownProps {
   isLeading?: boolean
 }
 
+const ROUND_HEADERS = ['R64', 'R32', 'S16', 'E8', 'F4', '🏆']
+
 export default function BracketRoundBreakdown({ picks, games, isLeading = false }: BracketRoundBreakdownProps) {
   const breakdown = computeRoundBreakdown(picks, games)
   const badges = computeBadgesFromGames(picks, games, isLeading)
-
-  // Overall progress
-  let totalCorrect = 0
-  let totalPossible = 0
-  for (const rd of breakdown) {
-    if (rd.started) {
-      totalCorrect += rd.correct
-      // Count only completed games for the denominator
-      const roundGames = games.filter(g => g.round === rd.round)
-      const completed = roundGames.filter(g => g.status === 'completed').length
-      totalPossible += completed
-    }
-  }
-  const pct = totalPossible > 0 ? Math.round((totalCorrect / totalPossible) * 100) : 0
 
   // Don't render anything if tournament hasn't started
   const anyStarted = breakdown.some(rd => rd.started)
   if (!anyStarted) return null
 
   return (
-    <div className="mt-2 space-y-1.5">
-      {/* Round breakdown row */}
-      <div className="flex flex-nowrap items-center gap-x-2 text-xs">
-        {breakdown.map((rd) => {
-          if (!rd.started) return null
+    <div className="space-y-1.5">
+      {/* Round grid — Sleeper-style columns */}
+      <div className="grid grid-cols-6 gap-x-1 text-center">
+        {breakdown.map((rd, i) => {
+          const label = ROUND_HEADERS[i]
+          const ratio = rd.started && rd.total > 0 ? rd.correct / rd.total : null
 
-          const ratio = rd.total > 0 ? rd.correct / rd.total : 0
-          const colorClass =
-            ratio >= 1 ? 'text-green-400' :
-            ratio > 0.75 ? 'text-green-400' :
+          const scoreColor =
+            !rd.started ? 'text-brand-muted/40' :
+            ratio === null ? 'text-brand-muted/40' :
+            ratio >= 0.75 ? 'text-green-400' :
             ratio >= 0.5 ? 'text-yellow-400' :
             'text-red-400'
 
           return (
-            <span key={rd.round} className={colorClass}>
-              <span className="font-medium">{rd.label}:</span>{' '}
-              <span className="font-bold">{rd.correct}</span>
-              <span className="opacity-60">/{rd.total}</span>
-            </span>
+            <div key={rd.round} className="flex flex-col items-center gap-0.5">
+              {/* Round label */}
+              <span className="text-[9px] font-semibold text-brand-muted/60 uppercase tracking-wide leading-none">
+                {label}
+              </span>
+              {/* Score */}
+              <span className={`text-xs font-bold leading-none tabular-nums ${scoreColor}`}>
+                {!rd.started ? '—' : rd.correct}
+              </span>
+              {/* Total (denominator) — small and muted */}
+              {rd.started && (
+                <span className="text-[9px] text-brand-muted/50 leading-none tabular-nums">
+                  /{rd.total}
+                </span>
+              )}
+            </div>
           )
         })}
       </div>
@@ -69,8 +69,6 @@ export default function BracketRoundBreakdown({ picks, games, isLeading = false 
           ))}
         </div>
       )}
-
-
     </div>
   )
 }
