@@ -33,6 +33,14 @@ export default function NewPoolPage() {
   const [manualPlatform, setManualPlatform] = useState('')
   const [manualHandle, setManualHandle] = useState('')
   const [manualMemo, setManualMemo] = useState('')
+
+  const platformConfigs: Record<string, { prefix?: string; placeholder: string; label: string; strip?: RegExp }> = {
+    Venmo:    { prefix: '@', placeholder: 'yourvenmo', label: 'Venmo username', strip: /^@/ },
+    PayPal:   { placeholder: 'you@email.com or paypal.me/yourname', label: 'PayPal email or PayPal.me link' },
+    'Cash App': { prefix: '$', placeholder: 'yourcashtag', label: 'Cash App $cashtag', strip: /^\$/ },
+    Zelle:    { placeholder: 'phone number or email', label: 'Zelle phone or email' },
+    Other:    { placeholder: 'handle, link, or instructions', label: 'Payment handle or link' },
+  }
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -89,7 +97,9 @@ export default function NewPoolPage() {
         paymentMethods.push({
           type: 'manual',
           platform: manualPlatform,
-          handle: manualHandle.trim() || undefined,
+          handle: manualHandle.trim()
+            ? (manualPlatform === 'Venmo' ? `@${manualHandle.trim()}` : manualPlatform === 'Cash App' ? `$${manualHandle.trim()}` : manualHandle.trim())
+            : undefined,
           link: undefined,
           instructions: manualMemo.trim() || undefined,
         })
@@ -438,14 +448,34 @@ export default function NewPoolPage() {
 
                     {methods.manual && (
                       <div className="pl-7 space-y-2">
-                        <select value={manualPlatform} onChange={e => setManualPlatform(e.target.value)} className="input-base w-full">
+                        <select value={manualPlatform} onChange={e => { setManualPlatform(e.target.value); setManualHandle('') }} className="input-base w-full">
                           <option value="">Select platform...</option>
                           <option value="Venmo">Venmo</option>
-                          <option value="Cash App">Cash App</option>
+                          <option value="PayPal">PayPal</option>
                           <option value="Zelle">Zelle</option>
+                          <option value="Cash App">Cash App</option>
                           <option value="Other">Other</option>
                         </select>
-                        <input type="text" placeholder="@handle or link (e.g. venmo.com/yourname)" value={manualHandle} onChange={e => setManualHandle(e.target.value)} className="input-base w-full" />
+                        {manualPlatform && (() => {
+                          const cfg = platformConfigs[manualPlatform] || platformConfigs.Other
+                          return (
+                            <div className="space-y-1">
+                              <label className="text-xs text-brand-muted">{cfg.label}</label>
+                              <div className="flex items-center input-base p-0 overflow-hidden">
+                                {cfg.prefix && (
+                                  <span className="px-3 py-2.5 text-brand-muted font-bold bg-brand-card border-r border-brand-border select-none">{cfg.prefix}</span>
+                                )}
+                                <input
+                                  type="text"
+                                  placeholder={cfg.placeholder}
+                                  value={manualHandle}
+                                  onChange={e => setManualHandle(cfg.strip ? e.target.value.replace(cfg.strip, '') : e.target.value)}
+                                  className="flex-1 bg-transparent px-3 py-2.5 outline-none text-sm"
+                                />
+                              </div>
+                            </div>
+                          )
+                        })()}
                         <input type="text" placeholder='Memo instructions (e.g. "bracket + your name")' value={manualMemo} onChange={e => setManualMemo(e.target.value)} className="input-base w-full" />
                       </div>
                     )}
