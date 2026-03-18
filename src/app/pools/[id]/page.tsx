@@ -321,12 +321,12 @@ export default async function PoolPage({ params }: Props) {
                             </span>
                             <Eye size={14} className="text-brand-orange shrink-0" />
                           </Link>
-                          {/* Completion badge */}
+                          {/* Completion badge — tappable, goes to bracket */}
                           {showCompletionBadge && (
                             isComplete ? (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-green-500/20 text-green-400 border-green-500/30">✓ Complete</span>
+                              <Link href={`/brackets/${bracket.id}`} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/30 transition-colors">✓ Complete</Link>
                             ) : (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-red-500/20 text-red-400 border-red-500/30">⚠ Incomplete · {pickCount}/63</span>
+                              <Link href={`/brackets/${bracket.id}`} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 transition-colors">⚠ Incomplete · {pickCount}/63</Link>
                             )
                           )}
                           {/* Per-bracket payment status pill */}
