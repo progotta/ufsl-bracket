@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bell, Check, X } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import clsx from 'clsx'
 
@@ -126,9 +127,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-brand-surface border border-brand-border rounded-xl shadow-xl z-50">
+        <div className="fixed left-4 right-4 sm:absolute sm:left-auto sm:right-0 sm:w-80 top-auto sm:top-full mt-2 max-h-96 overflow-y-auto bg-brand-surface border border-brand-border rounded-xl shadow-xl z-[200]">
           <div className="flex items-center justify-between px-4 py-3 border-b border-brand-border">
-            <span className="font-bold text-sm">Notifications</span>
+            <Link href="/notifications" onClick={() => setOpen(false)} className="font-bold text-sm hover:text-brand-orange transition-colors">
+              Notifications
+            </Link>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
