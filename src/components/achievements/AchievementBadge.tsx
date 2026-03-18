@@ -47,7 +47,7 @@ export default function AchievementBadge({
       >
         <span className={`leading-none select-none ${earned ? '' : 'opacity-60'}`} style={{fontSize:'inherit'}}>{emoji}</span>
       </div>
-      <span className={`${labelSize[size]} font-bold text-center leading-tight line-clamp-1 ${earned ? 'text-white' : 'text-brand-muted'}`}>
+      <span className={`${labelSize[size]} font-bold text-center leading-tight line-clamp-1 w-full max-w-[4rem] overflow-hidden ${earned ? 'text-white' : 'text-brand-muted'}`}>
         {name}
       </span>
       {earned && (
