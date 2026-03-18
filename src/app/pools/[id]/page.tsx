@@ -644,8 +644,11 @@ export default async function PoolPage({ params }: Props) {
                   const memberPmts = (payments || []).filter((p: any) => p.user_id === member.user_id)
                   const memberBracketTotal = (allBrackets || []).filter((b: any) => b.user_id === member.user_id && b.is_submitted).length
                   const memberPaidCount = memberPmts.filter((p: any) => p.status === 'paid' || p.status === 'waived').length
-                  const memberOwed = memberPmts.filter((p: any) => p.status === 'unpaid' || p.status === 'pending_verification').reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0)
-                  if (memberPmts.length === 0) return null
+                  // If no payment records, member implicitly owes entryFee × submitted brackets
+                  const memberOwed = memberPmts.length === 0 && memberBracketTotal > 0
+                    ? memberBracketTotal * entryFee
+                    : memberPmts.filter((p: any) => p.status === 'unpaid' || p.status === 'pending_verification').reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0)
+                  if (memberPmts.length === 0 && memberBracketTotal === 0) return null
                   const allPaid = memberOwed === 0 && memberPaidCount > 0
                   const partial = memberPaidCount > 0 && memberOwed > 0
                   return (
