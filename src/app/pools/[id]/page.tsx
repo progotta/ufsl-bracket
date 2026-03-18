@@ -629,18 +629,7 @@ export default async function PoolPage({ params }: Props) {
                     </div>
                   )}
 
-                  {/* Flat fee with per-bracket: just show main toggle */}
-                  {feePerBracket && maxBracketsPerMember > 1 && memberPayments.length === 0 && (
-                    <div className="mt-2 ml-11">
-                      <PaymentToggle
-                        memberId={member.id}
-                        status={member.payment_status || 'unpaid'}
-                        poolId={pool.id}
-                        fee={memberTotalOwed}
-                        memberName={displayName}
-                      />
-                    </div>
-                  )}
+
                 </div>
               )
             })}
