@@ -16,6 +16,8 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
   const [isPublic, setIsPublic] = useState(pool.is_public)
   const [status, setStatus] = useState(pool.status)
   const [maxMembers, setMaxMembers] = useState<string>(pool.max_members ? String(pool.max_members) : '')
+  const [maxBrackets, setMaxBrackets] = useState<string>(String(pool.max_brackets_per_member ?? 1))
+  const [entryFee, setEntryFee] = useState<string>(pool.entry_fee != null ? String(pool.entry_fee) : '')
   const [joinRequiresApproval, setJoinRequiresApproval] = useState(pool.join_requires_approval || false)
   const [inviteCode, setInviteCode] = useState(pool.invite_code)
   const [regenerating, setRegenerating] = useState(false)
@@ -41,6 +43,9 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
         status,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         max_members: maxMembers ? parseInt(maxMembers) : null as any,
+        max_brackets_per_member: Math.max(1, Math.min(10, parseInt(maxBrackets) || 1)),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        entry_fee: entryFee ? parseFloat(entryFee) : null as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         join_requires_approval: joinRequiresApproval as any,
       })
@@ -135,6 +140,38 @@ export default function PoolSettingsForm({ pool }: PoolSettingsFormProps) {
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${joinRequiresApproval ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                Brackets per Player
+              </label>
+              <input
+                type="number"
+                value={maxBrackets}
+                onChange={e => setMaxBrackets(e.target.value)}
+                min={1}
+                max={10}
+                className="input-base"
+              />
+              <p className="text-xs text-brand-muted mt-1">How many brackets each member can submit (1–10)</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                Cost per Bracket <span className="text-brand-muted font-normal">($)</span>
+              </label>
+              <input
+                type="number"
+                value={entryFee}
+                onChange={e => setEntryFee(e.target.value)}
+                min={0}
+                step={0.01}
+                placeholder="Free"
+                className="input-base"
+              />
+              <p className="text-xs text-brand-muted mt-1">Leave blank for free entry</p>
+            </div>
           </div>
 
           <div>
