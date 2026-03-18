@@ -130,25 +130,13 @@ export default function AuthForm({ commissionerMode = false }: { commissionerMod
           <h1 className="text-2xl font-bold text-center">{commissionerMode ? 'Start your pool' : 'Sign In'}</h1>
           <p className="text-white/50 text-sm text-center -mt-3">{commissionerMode ? 'Sign in to create your bracket pool' : 'Sign in or create your free account'}</p>
 
-          {/* OAuth Buttons */}
+          {/* OAuth Buttons — Apple and Facebook hidden until configured */}
           <div className="space-y-3">
-            <OAuthButton
-              provider="apple"
-              onClick={() => handleOAuthLogin('apple')}
-              disabled={isDisabled}
-              loading={loading === 'apple'}
-            />
             <OAuthButton
               provider="google"
               onClick={() => handleOAuthLogin('google')}
               disabled={isDisabled}
               loading={loading === 'google'}
-            />
-            <OAuthButton
-              provider="facebook"
-              onClick={() => handleOAuthLogin('facebook')}
-              disabled={isDisabled}
-              loading={loading === 'facebook'}
             />
           </div>
 
