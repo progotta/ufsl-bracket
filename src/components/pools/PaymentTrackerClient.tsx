@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, CheckCircle2, Circle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/payouts'
 import PlayerAvatar from '@/components/ui/PlayerAvatar'
@@ -96,6 +96,8 @@ export default function PaymentTrackerClient({ members, allBrackets, initialPaym
             .filter(p => p.status === 'unpaid' || p.status === 'pending_verification')
             .reduce((s, p) => s + (Number(p.amount) || 0), 0)
 
+          const hasSubmittedBracket = allBrackets.some(b => b.user_id === member.user_id && b.is_submitted)
+
           const summaryBadge = amountOwed === 0 && paidCount > 0
             ? <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Paid ✓</span>
             : <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">{formatCurrency(amountOwed)} owed</span>
@@ -114,7 +116,13 @@ export default function PaymentTrackerClient({ members, allBrackets, initialPaym
                     borderClass="border-brand-border/40"
                   />
                   <div>
-                    <p className="font-medium text-sm">{displayName}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium text-sm">{displayName}</p>
+                      {hasSubmittedBracket
+                        ? <CheckCircle2 size={14} className="text-green-400 shrink-0" />
+                        : <Circle size={14} className="text-gray-500 shrink-0" />
+                      }
+                    </div>
                     <p className="text-xs text-brand-muted">{paidCount}/{totalBrackets} brackets paid</p>
                   </div>
                 </div>
