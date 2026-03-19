@@ -112,9 +112,12 @@ async function DashboardPageInner() {
   // Fetch display names for all unique users in pool brackets
   const poolBracketUserIds = Array.from(new Set((allPoolBracketsRaw || []).map((b: { user_id: string }) => b.user_id).filter(Boolean)))
   const { data: poolUserProfiles } = poolBracketUserIds.length > 0
-    ? await supabase.from('user_profiles').select('id, display_name').in('id', poolBracketUserIds)
+    ? await supabase.from('user_profiles').select('id, display_name, email').in('id', poolBracketUserIds)
     : { data: [] }
-  const poolUserNameMap = new Map((poolUserProfiles || []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name]))
+  const poolUserNameMap = new Map((poolUserProfiles || []).map((p: { id: string; display_name: string | null; email: string | null }) => [
+    p.id,
+    p.display_name || (p.email ? p.email.split('@')[0] : null),
+  ]))
 
 
 
