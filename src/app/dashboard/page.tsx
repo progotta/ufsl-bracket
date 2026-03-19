@@ -327,8 +327,9 @@ async function DashboardPageInner() {
                               <div>
                                 <div className="text-base font-black text-brand-orange leading-tight">
                                   {bracket.score ?? 0}
-                                  {intel?.maxPossibleScore != null && intel.maxPossibleScore > (bracket.score ?? 0) && (
-                                    <span className="text-brand-muted font-normal text-xs"> / {intel.maxPossibleScore}</span>
+                                  {(intel?.maxPossibleScore ?? bracket.max_possible_score) != null &&
+                                   (intel?.maxPossibleScore ?? bracket.max_possible_score)! > (bracket.score ?? 0) && (
+                                    <span className="text-brand-muted font-normal text-xs"> / {intel?.maxPossibleScore ?? bracket.max_possible_score}</span>
                                   )}
                                 </div>
                                 <div className="text-[10px] text-brand-muted">pts</div>
