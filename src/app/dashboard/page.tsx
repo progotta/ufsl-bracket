@@ -312,14 +312,8 @@ async function DashboardPageInner() {
                               </div>
                             </div>
 
-                            {/* Right: Rank + Score */}
+                            {/* Right: Score + Rank */}
                             <div className="text-right shrink-0 flex items-center gap-3">
-                              {intel?.currentRank && intel.poolSize > 0 && (
-                                <div className="flex flex-col items-center">
-                                  <span className="text-2xl font-black text-white leading-none">#{intel.currentRank}</span>
-                                  <span className="text-[10px] text-brand-muted">of {intel.poolSize}</span>
-                                </div>
-                              )}
                               <div>
                                 <div className="text-base font-black text-brand-orange leading-tight">
                                   {bracket.score ?? 0}
@@ -330,6 +324,12 @@ async function DashboardPageInner() {
                                 </div>
                                 <div className="text-[10px] text-brand-muted">pts</div>
                               </div>
+                              {intel?.currentRank && intel.poolSize > 0 && (
+                                <div className="flex flex-col items-center">
+                                  <span className="text-2xl font-black text-white leading-none">#{intel.currentRank}</span>
+                                  <span className="text-[10px] text-brand-muted">of {intel.poolSize}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
