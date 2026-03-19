@@ -39,7 +39,8 @@ export async function DELETE(
       )
     }
 
-    // Delete the payment record (if unpaid) first, then the bracket
+    // Delete the unpaid payment record before deleting the bracket
+    // (FK is SET NULL, so it would orphan rather than cascade — clean it up explicitly)
     if (payment) {
       await adminDb.from('payments').delete().eq('id', payment.id)
     }
