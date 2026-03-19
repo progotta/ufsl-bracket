@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, ChevronRight, Share2 } from 'lucide-react'
-import { formatCurrency } from '@/lib/payouts'
+import { formatCurrency, getConsolationPrize } from '@/lib/payouts'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import PlayerAvatar from '@/components/ui/PlayerAvatar'
@@ -117,12 +117,12 @@ function Podium({ entries, currentUserId, onClickUser, payouts }: {
               <div className="text-xs text-brand-muted">pts</div>
               {(() => {
                 const payout = payouts?.find(p => p.place === entry.rank)
-                if (!payout || score === 0) return null
-                return (
-                  <div className="text-xs font-bold text-green-400 mt-0.5">
-                    {formatCurrency(payout.amount)}
-                  </div>
-                )
+                if (score === 0) return null
+                if (payout) return <div className="text-xs font-bold text-green-400 mt-0.5">{formatCurrency(payout.amount)}</div>
+                if (payouts && payouts.length > 0 && entry.rank > 1) {
+                  return <div className="text-[10px] text-brand-muted/70 italic mt-0.5">{getConsolationPrize(entry.rank)}</div>
+                }
+                return null
               })()}
             </div>
 
@@ -279,8 +279,11 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
           {!isGlobal && maxPossible > 0 && (
             <div className="text-[10px] text-brand-muted tabular-nums">/{maxPossible}</div>
           )}
-          {payout && score > 0 && (
+          {score > 0 && payout && (
             <div className="text-[10px] font-bold text-green-400">💰 {formatCurrency(payout.amount)}</div>
+          )}
+          {score > 0 && !payout && payouts && payouts.length > 0 && entry.rank > 1 && (
+            <div className="text-[10px] text-brand-muted/70 italic">{getConsolationPrize(entry.rank)}</div>
           )}
         </div>
 

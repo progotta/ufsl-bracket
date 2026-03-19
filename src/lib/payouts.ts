@@ -36,3 +36,38 @@ export function calculatePayouts(
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
 }
+
+// Consolation prizes for positions that don't receive a monetary payout
+// Shown on the leaderboard whenever a pool has a payout structure but a rank isn't in the paid spots
+export const CONSOLATION_PRIZES = [
+  'Enlightenment',       // 2nd — the classic
+  'Vibes',               // 3rd — chef's kiss
+  'Inner Peace',
+  'Moral Superiority',
+  'A Firm Handshake',
+  'Eternal Glory',
+  'Bragging Rights (Unofficial)',
+  'The Warmth of Knowing',
+  'Spiritual Growth',
+  'A Great Story to Tell',
+  'The Respect of Your Peers',
+  'Character Building',
+  'Humble Pie',
+  'Unbridled Optimism',
+  'A Sense of Closure',
+  'Participation Energy',
+  'Lifelong Memories',
+  'The Journey Itself',
+  'Happiness',
+  'Satisfaction',
+]
+
+/**
+ * Returns a consolation prize label for a given rank (1-indexed).
+ * Rank 1 should never need this — it's for ranks that don't pay out money.
+ */
+export function getConsolationPrize(rank: number): string {
+  // rank 2 → index 0 ("Enlightenment"), rank 3 → index 1 ("Vibes"), etc.
+  const idx = (rank - 2) % CONSOLATION_PRIZES.length
+  return CONSOLATION_PRIZES[Math.max(0, idx)]
+}
