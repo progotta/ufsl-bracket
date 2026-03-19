@@ -171,11 +171,14 @@ async function DashboardPageInner() {
     const sorted = [...poolBrackets].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     const entries: PoolLbEntry[] = sorted.slice(0, 3).map((b, i) => {
       const profileName = poolUserNameMap.get(b.user_id) ?? null
-      const bracketLabel = b.bracket_name || b.name || null
-      // Always show "DisplayName (Bracket Name)"
+      const rawBracketLabel = b.bracket_name || b.name || null
+      // Suppress generic default bracket names
+      const isGenericName = !rawBracketLabel || /^(my bracket|bracket \d+)$/i.test(rawBracketLabel.trim())
+      const bracketLabel = isGenericName ? null : rawBracketLabel
+      // Show "DisplayName (Bracket Name)" or just "DisplayName" if bracket name is generic
       const name = profileName && bracketLabel
         ? `${profileName} (${bracketLabel})`
-        : profileName || bracketLabel || 'Player'
+        : profileName || rawBracketLabel || 'Player'
       return {
         userId: b.user_id,
         displayName: name,
