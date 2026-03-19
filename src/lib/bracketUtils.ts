@@ -1,5 +1,28 @@
 import type { Game } from '@/types/database'
 
+/** Round offsets: DB game_number → pick-slug game number */
+const ROUND_OFFSETS: Record<number, number> = {
+  1: 0,
+  2: 32,
+  3: 48,
+  4: 56,
+  5: 60,
+  6: 0, // unused — R6 is always championship-r6-g1
+}
+
+/**
+ * Derive the pick-slot slug from a DB game record.
+ * R1-R4: {region}-r{round}-g{adjusted_number}
+ * R5:    ff-r5-g{adjusted_number}
+ * R6:    championship-r6-g1
+ */
+export function getPickSlug(game: Game): string {
+  if (game.round === 6) return 'championship-r6-g1'
+  const adjusted = game.game_number - (ROUND_OFFSETS[game.round] || 0)
+  if (game.round === 5) return `ff-r5-g${adjusted}`
+  return `${(game.region || '').toLowerCase()}-r${game.round}-g${adjusted}`
+}
+
 export interface RoundBreakdown {
   round: number
   label: string
@@ -42,9 +65,7 @@ export function computeRoundBreakdown(
 
     let correct = 0
     for (const game of completedGames) {
-      // Picks are keyed by slug (e.g. "east-r1-g2"), not UUID
-      const slug = `${(game.region || '').toLowerCase()}-r${game.round}-g${game.game_number}`
-      if (picks[slug] === game.winner_id) {
+      if (picks[getPickSlug(game)] === game.winner_id) {
         correct++
       }
     }
@@ -119,9 +140,7 @@ export function computeBadgesFromGames(
 
     let correct = 0
     for (const game of completedGames) {
-      // Picks are keyed by slug (e.g. "east-r1-g2"), not UUID
-      const slug = `${(game.region || '').toLowerCase()}-r${game.round}-g${game.game_number}`
-      if (picks[slug] === game.winner_id) {
+      if (picks[getPickSlug(game)] === game.winner_id) {
         correct++
       }
     }

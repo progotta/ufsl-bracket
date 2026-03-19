@@ -23,14 +23,15 @@ BEGIN
       FROM games g
       WHERE g.status != 'completed'
     LOOP
-      -- Derive slug: R6 = championship-r6-g1, R5 = ff-r5-gN, else region-rR-gN
-      IF v_game.round = 6 THEN
-        v_slug := 'championship-r6-g1';
-      ELSIF v_game.round = 5 THEN
-        v_slug := 'ff-r5-g' || v_game.game_number;
-      ELSE
-        v_slug := lower(v_game.region) || '-r' || v_game.round || '-g' || v_game.game_number;
-      END IF;
+      -- Derive slug with round offsets: DB game_number → pick-slug game number
+      v_slug := CASE
+        WHEN v_game.round = 6 THEN 'championship-r6-g1'
+        WHEN v_game.round = 5 THEN 'ff-r5-g' || (v_game.game_number - 60)
+        WHEN v_game.round = 4 THEN lower(v_game.region) || '-r4-g' || (v_game.game_number - 56)
+        WHEN v_game.round = 3 THEN lower(v_game.region) || '-r3-g' || (v_game.game_number - 48)
+        WHEN v_game.round = 2 THEN lower(v_game.region) || '-r2-g' || (v_game.game_number - 32)
+        ELSE lower(v_game.region) || '-r' || v_game.round || '-g' || v_game.game_number
+      END;
 
       -- Safely extract picked team ID from JSONB
       BEGIN

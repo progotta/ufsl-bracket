@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { ROUND_POINTS } from '@/lib/bracket'
 import { requireAdmin } from '@/lib/adminAuth'
 import { getCached, invalidateCache } from '@/lib/cache'
+import { getPickSlug } from '@/lib/bracketUtils'
 
 export async function POST(request: Request) {
   const authError = await requireAdmin()
@@ -47,8 +48,7 @@ export async function POST(request: Request) {
 
   // Batch recalculate scores — single SQL UPDATE via RPC instead of N+1 loop
   // Picks are stored by slug (e.g. "east-r1-g2"), not UUID — derive it from game fields
-  const regionSlug = (game.region as string || '').toLowerCase()
-  const gameSlug = `${regionSlug}-r${game.round}-g${game.game_number}`
+  const gameSlug = getPickSlug(game)
   const roundPoints = ROUND_POINTS[game.round as number] || 1
   const { error: rpcError } = await db.rpc('recalculate_scores_for_game', {
     p_game_id: gameSlug,
