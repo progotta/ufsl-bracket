@@ -86,7 +86,7 @@ async function DashboardPageInner() {
       ? supabase.from('pool_members').select('pool_id').in('pool_id', allPoolIds)
       : Promise.resolve({ data: [] }),
     bracketPoolIds.length > 0
-      ? supabase.from('brackets').select('*').in('pool_id', bracketPoolIds).not('picks', 'is', null)
+      ? supabase.from('brackets').select('*, user_profiles(display_name)').in('pool_id', bracketPoolIds).not('picks', 'is', null)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -159,12 +159,21 @@ async function DashboardPageInner() {
   }>()
   for (const [poolId, poolBrackets] of Array.from(allPoolBrackets.entries())) {
     const sorted = [...poolBrackets].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    const entries: PoolLbEntry[] = sorted.slice(0, 3).map((b, i) => ({
-      userId: b.user_id,
-      displayName: b.name?.replace(/\'s bracket$/i, '').replace(/\'s 2025$/i, '') || 'Player',
-      score: b.score ?? 0,
-      rank: i + 1,
-    }))
+    const entries: PoolLbEntry[] = sorted.slice(0, 3).map((b, i) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const profileName = (b as any).user_profiles?.display_name as string | null
+      const bracketLabel = b.bracket_name || b.name || null
+      // Show "DisplayName (Bracket Name)" if bracket name differs from display name, otherwise just display name
+      const name = profileName
+        ? (bracketLabel && bracketLabel.toLowerCase() !== profileName.toLowerCase() ? `${profileName} (${bracketLabel})` : profileName)
+        : (bracketLabel || 'Player')
+      return {
+        userId: b.user_id,
+        displayName: name,
+        score: b.score ?? 0,
+        rank: i + 1,
+      }
+    })
     const userRank = sorted.findIndex(b => b.user_id === session.user.id)
     const userBracket = sorted[userRank]
     poolLeaderboards.set(poolId, {
