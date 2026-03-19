@@ -300,18 +300,14 @@ async function DashboardPageInner() {
                                       'bg-brand-orange/20 text-brand-orange border-brand-orange/30'
                                     }`}>{intel.source}</span>
                                   )}
-                                </div>
-                                <div className="flex items-center gap-1.5 text-xs text-brand-muted mt-0.5">
-                                  <span>{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
                                   {intel?.championAbbreviation && (
-                                    <>
-                                      <span className="opacity-30">·</span>
-                                      <span>🏆</span>
-                                      <span className={intel.championAlive === false ? 'line-through opacity-50' : intel.championAlive ? 'text-green-400' : ''}>
-                                        {intel.championAbbreviation}
-                                      </span>
-                                    </>
+                                    <span className={`text-[10px] font-semibold shrink-0 flex items-center gap-0.5 ${intel.championAlive === false ? 'line-through opacity-40' : intel.championAlive ? 'text-green-400' : 'text-brand-muted'}`}>
+                                      🏆 {intel.championAbbreviation}
+                                    </span>
                                   )}
+                                </div>
+                                <div className="text-xs text-brand-muted mt-0.5">
+                                  {bracketPoolMap.get(bracket.pool_id) || 'Pool'}
                                 </div>
                               </div>
                             </div>
