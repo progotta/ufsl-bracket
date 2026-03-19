@@ -46,9 +46,12 @@ export async function POST(request: Request) {
   }
 
   // Batch recalculate scores — single SQL UPDATE via RPC instead of N+1 loop
+  // Picks are stored by slug (e.g. "east-r1-g2"), not UUID — derive it from game fields
+  const regionSlug = (game.region as string || '').toLowerCase()
+  const gameSlug = `${regionSlug}-r${game.round}-g${game.game_number}`
   const roundPoints = ROUND_POINTS[game.round as number] || 1
   const { error: rpcError } = await db.rpc('recalculate_scores_for_game', {
-    p_game_id: gameId,
+    p_game_id: gameSlug,
     p_winner_id: winnerId,
     p_round_points: roundPoints,
   })
