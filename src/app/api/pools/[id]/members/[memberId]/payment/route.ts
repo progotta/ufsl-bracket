@@ -75,13 +75,11 @@ export async function PATCH(
     return NextResponse.json({ error: memberError.message }, { status: 500 })
   }
 
-  // Upsert into payments table
+  // Update payments table
+  // Prefer updating bracket-specific records (created by trigger on submit).
+  // Only fall back to null-bracket records or insert if none exist.
   const entryFee = Number(pool?.entry_fee) || 0
-  const paymentData = {
-    pool_id: params.id,
-    user_id: member.user_id,
-    bracket_id: bracket_id || null,
-    amount: entryFee,
+  const paymentUpdate = {
     status: status,
     payment_date: status === 'paid' ? new Date().toISOString() : null,
     payment_note: note || null,
@@ -89,24 +87,34 @@ export async function PATCH(
     updated_at: new Date().toISOString(),
   }
 
-  // Check if a payment record exists for this user+pool (no bracket_id for flat fee)
-  const { data: existingPayment } = await adminDb
-    .from('payments')
-    .select('id')
-    .eq('pool_id', params.id)
-    .eq('user_id', member.user_id)
-    .is('bracket_id', bracket_id || null)
-    .maybeSingle()
-
-  if (existingPayment) {
-    await adminDb
-      .from('payments')
-      .update(paymentData)
-      .eq('id', existingPayment.id)
+  // If a specific bracket_id was given, update just that record
+  if (bracket_id) {
+    await adminDb.from('payments').update(paymentUpdate).eq('pool_id', params.id).eq('user_id', member.user_id).eq('bracket_id', bracket_id)
   } else {
-    await adminDb
+    // No bracket_id — update ALL bracket-specific records for this user+pool
+    const { data: bracketPayments } = await adminDb
       .from('payments')
-      .insert(paymentData)
+      .select('id')
+      .eq('pool_id', params.id)
+      .eq('user_id', member.user_id)
+      .not('bracket_id', 'is', null)
+
+    if (bracketPayments && bracketPayments.length > 0) {
+      // Update all bracket-specific records
+      await adminDb.from('payments').update(paymentUpdate)
+        .eq('pool_id', params.id)
+        .eq('user_id', member.user_id)
+        .not('bracket_id', 'is', null)
+    } else {
+      // No bracket records yet — fall back to null-bracket upsert (legacy)
+      const { data: existingPayment } = await adminDb
+        .from('payments').select('id').eq('pool_id', params.id).eq('user_id', member.user_id).is('bracket_id', null).maybeSingle()
+      if (existingPayment) {
+        await adminDb.from('payments').update({ ...paymentUpdate, amount: entryFee }).eq('id', existingPayment.id)
+      } else {
+        await adminDb.from('payments').insert({ pool_id: params.id, user_id: member.user_id, bracket_id: null, amount: entryFee, ...paymentUpdate })
+      }
+    }
   }
 
   // Notify commissioner when member marks pending_verification
