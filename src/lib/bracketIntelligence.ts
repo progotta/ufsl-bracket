@@ -75,6 +75,18 @@ function isTeamAlive(teamId: string, games: Game[]): boolean | null {
 }
 
 /**
+ * Derive the pick-slot slug from a DB game record.
+ * R1-R4: {region}-r{round}-g{game_number}  (e.g. "east-r1-g3")
+ * R5:    ff-r5-g{game_number}
+ * R6:    championship-r6-g1
+ */
+function gameSlug(game: Game): string {
+  if (game.round === 6) return 'championship-r6-g1'
+  if (game.round === 5) return `ff-r5-g${game.game_number}`
+  return `${(game.region || '').toLowerCase()}-r${game.round}-g${game.game_number}`
+}
+
+/**
  * Compute max possible score for a bracket.
  * Current score + points for all remaining games where the user's pick could still win.
  */
@@ -88,7 +100,8 @@ function computeMaxPossible(
   for (const game of games) {
     if (game.status === 'completed') continue // already counted in currentScore
 
-    const userPick = picks[game.id]
+    const slug = gameSlug(game)
+    const userPick = picks[slug]
     if (!userPick) continue
 
     // Check if the user's picked team is still alive (not eliminated in a prior game)
@@ -112,7 +125,7 @@ function findNextPivotalGame(
 ): BracketIntelligence['nextGame'] {
   const upcoming = games
     .filter(g => g.status === 'scheduled' || g.status === 'in_progress')
-    .filter(g => picks[g.id]) // user has a pick on this game
+    .filter(g => picks[gameSlug(g)]) // user has a pick on this game
     .sort((a, b) => {
       // Live games first, then by scheduled time
       if (a.status === 'in_progress' && b.status !== 'in_progress') return -1

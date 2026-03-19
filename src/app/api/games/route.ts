@@ -60,6 +60,15 @@ export async function POST(request: Request) {
     console.error('[games POST] RPC recalculate_scores_for_game error:', rpcError)
   }
 
+  // Recalculate max_possible_score for all brackets (loser's picks are now dead)
+  const loserId = game.team1_id === winnerId ? game.team2_id : game.team1_id
+  const { error: maxError } = await db.rpc('recalculate_max_possible_for_game', {
+    p_loser_id: loserId,
+  })
+  if (maxError) {
+    console.error('[games POST] RPC recalculate_max_possible_for_game error:', maxError)
+  }
+
   // Invalidate games cache after result update
   await invalidateCache('games:all')
 
