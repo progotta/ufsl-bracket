@@ -117,7 +117,7 @@ function Podium({ entries, currentUserId, onClickUser, payouts }: {
               <div className="text-xs text-brand-muted">pts</div>
               {(() => {
                 const payout = payouts?.find(p => p.place === entry.rank)
-                if (!payout) return null
+                if (!payout || score === 0) return null
                 return (
                   <div className="text-xs font-bold text-green-400 mt-0.5">
                     {formatCurrency(payout.amount)}
@@ -279,7 +279,7 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
           {!isGlobal && maxPossible > 0 && (
             <div className="text-[10px] text-brand-muted tabular-nums">/{maxPossible}</div>
           )}
-          {payout && (
+          {payout && score > 0 && (
             <div className="text-[10px] font-bold text-green-400">💰 {formatCurrency(payout.amount)}</div>
           )}
         </div>
