@@ -14,6 +14,7 @@ import PlayerAvatar from '@/components/ui/PlayerAvatar'
 import PhoneNudgeBanner from '@/components/PhoneNudgeBanner'
 import LiveGames from '@/components/LiveGames'
 import BracketRoundBreakdown from '@/components/BracketRoundBreakdown'
+import LivePicksRow from '@/components/LivePicksRow'
 import BracketCardIntelligence from '@/components/BracketCardIntelligence'
 import { computeAllBracketIntelligence } from '@/lib/bracketIntelligence'
 import {
@@ -334,6 +335,9 @@ async function DashboardPageInner() {
                               </div>
                             </div>
                           </div>
+
+                          {/* Live picks: show picked teams in live games */}
+                          <LivePicksRow picks={picks} teams={teams} />
 
                           {/* Row 2: Round breakdown — full width */}
                           <div className="mt-3">
