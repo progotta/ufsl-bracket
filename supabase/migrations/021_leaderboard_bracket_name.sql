@@ -1,5 +1,7 @@
--- Fix leaderboard view to use bracket_name (user-set display name) over the auto-generated name
--- bracket_name column was added in 016 but the view was never updated to use it
+-- Fix leaderboard view:
+-- 1. Use COALESCE(bracket_name, name) so user-set display names show correctly
+--    (bracket_name column added in 016 but view was never updated)
+-- 2. Filter to is_submitted = true so draft/incomplete brackets don't appear
 DROP VIEW IF EXISTS leaderboard;
 CREATE OR REPLACE VIEW leaderboard AS
 SELECT
@@ -15,4 +17,5 @@ SELECT
   b.bracket_type,
   RANK() OVER (PARTITION BY b.pool_id ORDER BY b.score DESC) AS rank
 FROM brackets b
-LEFT JOIN profiles p ON p.id = b.user_id;
+LEFT JOIN profiles p ON p.id = b.user_id
+WHERE b.is_submitted = true;
