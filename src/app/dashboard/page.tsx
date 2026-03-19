@@ -301,18 +301,18 @@ async function DashboardPageInner() {
                                     }`}>{intel.source}</span>
                                   )}
                                 </div>
-                                <div className="text-xs text-brand-muted mt-0.5">{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</div>
-                                {intel?.championAbbreviation && (
-                                  <div className="flex items-center gap-1 mt-0.5 text-xs text-brand-muted">
-                                    <span>🏆</span>
-                                    <span className={intel.championAlive === false ? 'line-through opacity-50' : intel.championAlive ? 'text-green-400' : ''}>
-                                      {intel.championAbbreviation}
-                                    </span>
-                                    {intel.championPopularity != null && (
-                                      <span className="opacity-50">· {intel.championPopularity}% picked</span>
-                                    )}
-                                  </div>
-                                )}
+                                <div className="flex items-center gap-1.5 text-xs text-brand-muted mt-0.5">
+                                  <span>{bracketPoolMap.get(bracket.pool_id) || 'Pool'}</span>
+                                  {intel?.championAbbreviation && (
+                                    <>
+                                      <span className="opacity-30">·</span>
+                                      <span>🏆</span>
+                                      <span className={intel.championAlive === false ? 'line-through opacity-50' : intel.championAlive ? 'text-green-400' : ''}>
+                                        {intel.championAbbreviation}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
 
