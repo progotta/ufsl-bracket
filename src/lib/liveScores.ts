@@ -95,7 +95,7 @@ export function parseEspnScoreboard(json: any): LiveGameScore[] {
             return rank && rank >= 1 && rank <= 16 ? rank : undefined
           })(),
           score: parseInt(c.score ?? '0', 10),
-          isWinning: c.winner === true,
+          isWinning: c.winner === true, // finalized below after both scores known
         })
       }
 
@@ -103,6 +103,19 @@ export function parseEspnScoreboard(json: any): LiveGameScore[] {
 
       // Sort: home team (homeAway === 'home') first as team1, else keep original order
       const [team1, team2] = competitors[0]?.abbreviation ? competitors : [competitors[1], competitors[0]]
+
+      // Fix isWinning: ESPN only sets c.winner on final result, not during live games.
+      // Compare scores directly so live games show correct winning/losing state.
+      if (team1 && team2) {
+        if (team1.score !== team2.score) {
+          team1.isWinning = team1.score > team2.score
+          team2.isWinning = team2.score > team1.score
+        } else {
+          // Tied — neither is winning
+          team1.isWinning = false
+          team2.isWinning = false
+        }
+      }
 
       const statusName: string = event.status?.type?.name ?? ''
       const statusDesc: string = event.status?.type?.description ?? ''
