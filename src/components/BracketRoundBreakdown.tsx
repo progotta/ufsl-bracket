@@ -49,10 +49,7 @@ export default function BracketRoundBreakdown({ picks, games, isLeading = false 
               <span className={`text-sm font-bold leading-none tabular-nums ${scoreColor}`}>
                 {!rd.started ? '—' : rd.correct}
               </span>
-              {/* Denominator */}
-              <span className="text-[9px] text-brand-muted/40 leading-none mt-0.5 tabular-nums">
-                {rd.started ? `/${rd.total}` : ''}
-              </span>
+
             </div>
           )
         })}
