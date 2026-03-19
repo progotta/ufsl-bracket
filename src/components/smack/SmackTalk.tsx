@@ -69,7 +69,14 @@ export default function SmackTalk({ poolId, currentUserId, currentUserName }: Sm
   const newestTsRef = useRef<string | null>(null)
 
   const scrollToBottom = useCallback((smooth = true) => {
-    bottomRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' })
+    // Scroll within the feed container only — scrollIntoView() scrolls the whole page
+    if (feedRef.current) {
+      if (smooth) {
+        feedRef.current.scrollTo({ top: feedRef.current.scrollHeight, behavior: 'smooth' })
+      } else {
+        feedRef.current.scrollTop = feedRef.current.scrollHeight
+      }
+    }
   }, [])
 
   const fetchMessages = useCallback(async (opts?: { before?: string; append?: boolean }) => {
