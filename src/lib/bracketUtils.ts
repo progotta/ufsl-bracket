@@ -42,7 +42,9 @@ export function computeRoundBreakdown(
 
     let correct = 0
     for (const game of completedGames) {
-      if (picks[game.id] === game.winner_id) {
+      // Picks are keyed by slug (e.g. "east-r1-g2"), not UUID
+      const slug = `${(game.region || '').toLowerCase()}-r${game.round}-g${game.game_number}`
+      if (picks[slug] === game.winner_id) {
         correct++
       }
     }
@@ -117,7 +119,9 @@ export function computeBadgesFromGames(
 
     let correct = 0
     for (const game of completedGames) {
-      if (picks[game.id] === game.winner_id) {
+      // Picks are keyed by slug (e.g. "east-r1-g2"), not UUID
+      const slug = `${(game.region || '').toLowerCase()}-r${game.round}-g${game.game_number}`
+      if (picks[slug] === game.winner_id) {
         correct++
       }
     }
