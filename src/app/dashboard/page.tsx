@@ -345,18 +345,7 @@ async function DashboardPageInner() {
                             <BracketRoundBreakdown picks={picks} games={games} />
                           </div>
 
-                          {/* Next game */}
-                          {intel?.nextGame && (intel.nextGame.team1Abbr !== 'TBD' || intel.nextGame.team2Abbr !== 'TBD') && (
-                            <div className="text-[10px] text-brand-muted text-right mt-2">
-                              {intel.nextGame.isLive && <span className="text-red-400 font-bold">LIVE · </span>}
-                              {intel.nextGame.team1Abbr} vs {intel.nextGame.team2Abbr}
-                              {intel.nextGame.scheduledAt && !intel.nextGame.isLive && (
-                                <span className="block opacity-70">
-                                  {new Date(intel.nextGame.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                </span>
-                              )}
-                            </div>
-                          )}
+
                         </Link>
                       )
                     })}
