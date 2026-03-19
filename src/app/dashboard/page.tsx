@@ -78,6 +78,7 @@ async function DashboardPageInner() {
     { data: poolsRaw },
     { data: memberRows },
     { data: allPoolBracketsRaw },
+    { data: lbViewRaw },
   ] = await Promise.all([
     allPoolIds.length > 0
       ? supabase.from('pools').select('*').in('id', allPoolIds).order('created_at', { ascending: false })
@@ -87,6 +88,9 @@ async function DashboardPageInner() {
       : Promise.resolve({ data: [] }),
     bracketPoolIds.length > 0
       ? supabase.from('brackets').select('*').in('pool_id', bracketPoolIds).not('picks', 'is', null)
+      : Promise.resolve({ data: [] }),
+    allPoolIds.length > 0
+      ? supabase.from('leaderboard').select('pool_id, user_id, display_name, bracket_name, score, rank').in('pool_id', allPoolIds)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -109,15 +113,13 @@ async function DashboardPageInner() {
     allPoolBrackets.get(b.pool_id)!.push(b)
   }
 
-  // Fetch display names for all unique users in pool brackets
-  const poolBracketUserIds = Array.from(new Set((allPoolBracketsRaw || []).map((b: { user_id: string }) => b.user_id).filter(Boolean)))
-  const { data: poolUserProfiles } = poolBracketUserIds.length > 0
-    ? await supabase.from('user_profiles').select('id, display_name, email').in('id', poolBracketUserIds)
-    : { data: [] }
-  const poolUserNameMap = new Map((poolUserProfiles || []).map((p: { id: string; display_name: string | null; email: string | null }) => [
-    p.id,
-    p.display_name || (p.email ? p.email.split('@')[0] : null),
-  ]))
+  // Build pool leaderboard map from the leaderboard view (has display_name + bracket_name already)
+  type LbViewEntry = { pool_id: string; user_id: string; display_name: string | null; bracket_name: string | null; score: number; rank: number }
+  const lbViewByPool = new Map<string, LbViewEntry[]>()
+  for (const row of (lbViewRaw || []) as LbViewEntry[]) {
+    if (!lbViewByPool.has(row.pool_id)) lbViewByPool.set(row.pool_id, [])
+    lbViewByPool.get(row.pool_id)!.push(row)
+  }
 
 
 
@@ -158,8 +160,7 @@ async function DashboardPageInner() {
   // Tournament started = any game is completed or in_progress
   const tournamentStarted = games.some(g => g.status === 'completed' || g.status === 'in_progress')
 
-  // Build pool leaderboard previews from allPoolBrackets
-  // Map poolId -> { entries: top3, currentUserRank, currentUserScore }
+  // Build pool leaderboard previews directly from the leaderboard view
   type PoolLbEntry = { userId: string; displayName: string; score: number; rank: number }
   const poolLeaderboards = new Map<string, {
     entries: PoolLbEntry[]
@@ -167,32 +168,24 @@ async function DashboardPageInner() {
     currentUserScore?: number
     totalMembers: number
   }>()
-  for (const [poolId, poolBrackets] of Array.from(allPoolBrackets.entries())) {
-    const sorted = [...poolBrackets].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    const entries: PoolLbEntry[] = sorted.slice(0, 3).map((b, i) => {
-      const profileName = poolUserNameMap.get(b.user_id) ?? null
-      const rawBracketLabel = b.bracket_name || b.name || null
-      // Suppress generic default bracket names
-      const isGenericName = !rawBracketLabel || /^(my bracket|bracket \d+)$/i.test(rawBracketLabel.trim())
-      const bracketLabel = isGenericName ? null : rawBracketLabel
-      // Show "DisplayName (Bracket Name)" or just "DisplayName" if bracket name is generic
-      const name = profileName && bracketLabel
-        ? `${profileName} (${bracketLabel})`
-        : profileName || rawBracketLabel || 'Player'
+  for (const poolId of allPoolIds) {
+    const rows = (lbViewByPool.get(poolId) || []).sort((a, b) => a.rank - b.rank)
+    const entries: PoolLbEntry[] = rows.slice(0, 3).map(r => {
+      const isGeneric = !r.bracket_name || /^(my bracket|bracket \d+)$/i.test(r.bracket_name.trim())
+      const label = !isGeneric ? ` (${r.bracket_name})` : ''
       return {
-        userId: b.user_id,
-        displayName: name,
-        score: b.score ?? 0,
-        rank: i + 1,
+        userId: r.user_id,
+        displayName: `${r.display_name || 'Player'}${label}`,
+        score: r.score ?? 0,
+        rank: r.rank,
       }
     })
-    const userRank = sorted.findIndex(b => b.user_id === session.user.id)
-    const userBracket = sorted[userRank]
+    const myRow = rows.find(r => r.user_id === session.user.id)
     poolLeaderboards.set(poolId, {
       entries,
-      currentUserRank: userRank >= 0 ? userRank + 1 : undefined,
-      currentUserScore: userBracket?.score ?? 0,
-      totalMembers: poolMemberCounts.get(poolId) ?? sorted.length,
+      currentUserRank: myRow?.rank,
+      currentUserScore: myRow?.score ?? 0,
+      totalMembers: poolMemberCounts.get(poolId) ?? rows.length,
     })
   }
 
