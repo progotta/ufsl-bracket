@@ -8,6 +8,7 @@ import ShareStandingsCard from '@/components/pools/ShareStandingsCard'
 import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
 import ShareButton from '@/components/bracket/ShareButton'
+import DeleteBracketButton from '@/components/bracket/DeleteBracketButton'
 import CommissionerActions from '@/components/pools/CommissionerActions'
 import LeagueNotes from '@/components/pools/LeagueNotes'
 import PaymentTrackerClient from '@/components/pools/PaymentTrackerClient'
@@ -384,6 +385,12 @@ export default async function PoolPage({ params }: Props) {
                           )}
                           {/* Score */}
                           <span className="text-lg font-black text-brand-orange shrink-0">{bracket.score ?? 0}</span>
+                          {/* Delete — only if not paid */}
+                          <DeleteBracketButton
+                            bracketId={bracket.id}
+                            bracketName={bracket.bracket_name || bracket.name || `Bracket ${idx + 1}`}
+                            canDelete={!bStatus || bStatus === 'unpaid'}
+                          />
                         </div>
                       )
                     })}
