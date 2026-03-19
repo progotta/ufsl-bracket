@@ -1,7 +1,7 @@
 import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench, Eye } from 'lucide-react'
+import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench, Eye, AlertTriangle } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import ScrollToTop from '@/components/ScrollToTop'
 import ShareStandingsCard from '@/components/pools/ShareStandingsCard'
@@ -210,6 +210,27 @@ export default async function PoolPage({ params }: Props) {
       {/* Stripe/Payment status banners */}
       <StripeStatusBanner />
 
+      {/* Unpaid bracket warning banner */}
+      {FEATURES.paidPools && !isCommissioner && isMember && entryFee > 0 && (() => {
+        const myPayments = (payments || []).filter((p: any) => p.user_id === session.user.id)
+        const hasUnpaid = myPayments.some((p: any) => p.status === 'unpaid')
+        if (!hasUnpaid) return null
+        return (
+          <div className="flex items-center justify-between gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AlertTriangle size={16} className="text-yellow-400 shrink-0" />
+              <p className="text-sm font-medium text-yellow-200">You have brackets showing as unpaid.</p>
+            </div>
+            <a
+              href="#my-brackets"
+              className="shrink-0 text-xs font-bold px-3 py-1.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/30 transition-colors whitespace-nowrap"
+            >
+              Pay Now
+            </a>
+          </div>
+        )
+      })()}
+
       {/* Tournament Progress */}
       {tournamentProgress && tournamentProgress.rounds.length > 0 && (
         <div className="bg-brand-surface border border-brand-border rounded-xl px-4 py-3">
@@ -292,7 +313,7 @@ export default async function PoolPage({ params }: Props) {
       {/* Action card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Bracket action */}
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
+        <div id="my-brackets" className="bg-brand-surface border border-brand-border rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-brand-orange/10 rounded-xl p-2.5">
               <Trophy size={22} className="text-brand-orange" />
