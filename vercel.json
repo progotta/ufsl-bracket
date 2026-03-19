@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/achievements",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/sync-scores",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
