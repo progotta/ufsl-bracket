@@ -3,7 +3,11 @@ import { useEffect } from 'react'
 
 export default function ScrollToTop() {
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' })
+    // Disable browser's native scroll restoration so it can't override us on back navigation
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual'
+    }
+    window.scrollTo(0, 0)
   }, [])
   return null
 }
