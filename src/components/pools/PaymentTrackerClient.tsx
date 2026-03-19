@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, CheckCircle2, Circle } from 'lucide-react'
+import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/payouts'
 import PlayerAvatar from '@/components/ui/PlayerAvatar'
@@ -120,7 +120,7 @@ export default function PaymentTrackerClient({ members, allBrackets, initialPaym
                       <p className="font-medium text-sm">{displayName}</p>
                       {hasSubmittedBracket
                         ? <CheckCircle2 size={14} className="text-green-400 shrink-0" />
-                        : <Circle size={14} className="text-gray-500 shrink-0" />
+                        : <AlertTriangle size={14} className="text-yellow-400 shrink-0" />
                       }
                     </div>
                     <p className="text-xs text-brand-muted">{paidCount}/{totalBrackets} brackets paid</p>
