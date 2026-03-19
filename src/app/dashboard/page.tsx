@@ -59,7 +59,7 @@ async function DashboardPageInner() {
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle(),
     supabase.from('brackets').select('*').eq('user_id', session.user.id).order('updated_at', { ascending: false }),
-    supabase.from('games').select('id, round, status, game_number, team1_id, team2_id, winner_id, scheduled_at'),
+    supabase.from('games').select('id, round, region, status, game_number, team1_id, team2_id, winner_id, scheduled_at'),
     supabase.from('teams').select('id, name, abbreviation, seed, region, primary_color, espn_id'),
     supabase.from('pool_members').select('role, pool_id').eq('user_id', session.user.id),
   ])
