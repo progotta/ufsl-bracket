@@ -169,10 +169,10 @@ async function DashboardPageInner() {
     const entries: PoolLbEntry[] = sorted.slice(0, 3).map((b, i) => {
       const profileName = poolUserNameMap.get(b.user_id) ?? null
       const bracketLabel = b.bracket_name || b.name || null
-      // Show "DisplayName (Bracket Name)" if bracket name differs from display name, otherwise just display name
-      const name = profileName
-        ? (bracketLabel && bracketLabel.toLowerCase() !== profileName.toLowerCase() ? `${profileName} (${bracketLabel})` : profileName)
-        : (bracketLabel || 'Player')
+      // Always show "DisplayName (Bracket Name)"
+      const name = profileName && bracketLabel
+        ? `${profileName} (${bracketLabel})`
+        : profileName || bracketLabel || 'Player'
       return {
         userId: b.user_id,
         displayName: name,
