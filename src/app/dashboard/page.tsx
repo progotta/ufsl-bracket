@@ -171,11 +171,10 @@ async function DashboardPageInner() {
   for (const poolId of allPoolIds) {
     const rows = (lbViewByPool.get(poolId) || []).sort((a, b) => a.rank - b.rank)
     const entries: PoolLbEntry[] = rows.slice(0, 3).map(r => {
-      const isGeneric = !r.bracket_name || /^(my bracket|bracket \d+)$/i.test(r.bracket_name.trim())
-      const label = !isGeneric ? ` (${r.bracket_name})` : ''
+      const bracketLabel = r.bracket_name ? ` (${r.bracket_name})` : ''
       return {
         userId: r.user_id,
-        displayName: `${r.display_name || 'Player'}${label}`,
+        displayName: `${r.display_name || 'Player'}${bracketLabel}`,
         score: r.score ?? 0,
         rank: r.rank,
       }
