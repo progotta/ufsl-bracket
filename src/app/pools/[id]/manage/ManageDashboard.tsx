@@ -7,6 +7,7 @@ import PaymentToggle from '@/components/pools/PaymentToggle'
 import RoleToggle from '@/components/pools/RoleToggle'
 import InvitePanel from '@/components/pools/InvitePanel'
 import { getOpenBracketTypes } from '@/lib/secondChance'
+import { PRESET_PAYOUTS, type PayoutStructure } from '@/lib/payouts'
 
 interface MemberData {
   id: string
@@ -28,6 +29,7 @@ interface Props {
   poolName: string
   poolStatus: string
   entryFee: number
+  payoutStructure: PayoutStructure | null
   maxMembers: number | null
   inviteUrl: string
   inviteCode: string
@@ -38,12 +40,30 @@ interface Props {
 }
 
 export default function ManageDashboard({
-  poolId, poolName, poolStatus, entryFee, maxMembers, inviteUrl, inviteCode, members, isOwner, ownerUserId, games,
+  poolId, poolName, poolStatus, entryFee, payoutStructure, maxMembers, inviteUrl, inviteCode, members, isOwner, ownerUserId, games,
 }: Props) {
   const [sendingReminder, setSendingReminder] = useState<string | null>(null)
   const [reminderResult, setReminderResult] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [selectedPayout, setSelectedPayout] = useState(payoutStructure ? JSON.stringify(payoutStructure) : JSON.stringify(PRESET_PAYOUTS[0].value))
+  const [savingPayout, setSavingPayout] = useState(false)
+  const [payoutSaved, setPayoutSaved] = useState(false)
   const paymentsRef = useRef<HTMLDivElement>(null)
+
+  const handleSavePayout = async () => {
+    setSavingPayout(true)
+    try {
+      await fetch(`/api/pools/${poolId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payout_structure: JSON.parse(selectedPayout) }),
+      })
+      setPayoutSaved(true)
+      setTimeout(() => setPayoutSaved(false), 2000)
+    } finally {
+      setSavingPayout(false)
+    }
+  }
 
   const submittedCount = members.filter(m => m.has_submitted).length
   const paidCount = members.filter(m => m.payment_status === 'paid' || m.payment_status === 'waived').length
@@ -324,6 +344,33 @@ export default function ManageDashboard({
             <div className="border-t border-brand-border px-4 py-3 flex justify-between items-center bg-brand-card">
               <span className="text-sm font-medium text-brand-muted">Total collected</span>
               <span className="font-black text-brand-orange">${prizePool}</span>
+            </div>
+          </div>
+
+          {/* Payout Structure */}
+          <div className="rounded-xl border border-brand-border bg-brand-card p-4 space-y-3">
+            <h3 className="text-sm font-bold text-brand-muted uppercase tracking-wider">Payout Structure</h3>
+            {!payoutStructure && (
+              <p className="text-xs text-amber-400">⚠️ No payout structure set — players can't see who wins what.</p>
+            )}
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedPayout}
+                onChange={e => setSelectedPayout(e.target.value)}
+                className="input-base flex-1"
+              >
+                {PRESET_PAYOUTS.map(p => (
+                  <option key={p.label} value={JSON.stringify(p.value)}>{p.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleSavePayout}
+                disabled={savingPayout}
+                className="px-3 py-2 rounded-lg bg-brand-orange text-black text-sm font-bold hover:bg-brand-orange/90 transition-colors disabled:opacity-50 flex items-center gap-1"
+              >
+                {savingPayout ? <Loader2 size={14} className="animate-spin" /> : payoutSaved ? <Check size={14} /> : null}
+                {payoutSaved ? 'Saved!' : 'Save'}
+              </button>
             </div>
           </div>
         </div>

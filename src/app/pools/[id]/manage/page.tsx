@@ -96,6 +96,7 @@ export default async function ManagePoolPage({ params }: Props) {
           poolName={pool.name}
           poolStatus={pool.status}
           entryFee={entryFee}
+          payoutStructure={(pool as any).payout_structure ?? null}
           maxMembers={pool.max_members}
           inviteUrl={inviteUrl}
           inviteCode={pool.invite_code}

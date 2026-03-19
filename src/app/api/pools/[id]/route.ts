@@ -26,7 +26,7 @@ export async function PATCH(
   }
 
   const body = await req.json()
-  const allowedFields: Record<string, boolean> = { status: true, name: true, description: true }
+  const allowedFields: Record<string, boolean> = { status: true, name: true, description: true, payout_structure: true }
   const updates: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(body)) {

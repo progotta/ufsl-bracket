@@ -88,6 +88,18 @@ export default function NewPoolPage() {
       return
     }
 
+    // Validate: entry fee requires a payout structure
+    if (hasFee && (!entryFee || parseFloat(entryFee) <= 0)) {
+      setError('Please enter an entry fee amount greater than $0.')
+      setLoading(false)
+      return
+    }
+    if (hasFee && entryFee && parseFloat(entryFee) > 0 && !payoutPreset) {
+      setError('Please select a payout structure for your paid pool.')
+      setLoading(false)
+      return
+    }
+
     // Build payment_methods JSONB array
     const paymentMethods: any[] = []
     if (hasFee) {
