@@ -425,7 +425,7 @@ export default async function PoolPage({ params }: Props) {
               })()}
 
               {/* Add another bracket CTA */}
-              {maxBracketsPerMember > 1 && userBracketCount < maxBracketsPerMember && isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) && (
+              {maxBracketsPerMember > 1 && userBracketCount < maxBracketsPerMember && pool.status === 'open' && isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) && (
                 <div className="mt-2 p-3 bg-brand-card/50 rounded-xl text-center">
                   <Link
                     href={`/pools/${params.id}/bracket/new`}
@@ -442,7 +442,7 @@ export default async function PoolPage({ params }: Props) {
               )}
             </div>
           ) : isMember ? (
-            isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) ? (
+            pool.status === 'open' && isBracketTypeOpen(pool.bracket_type as BracketType, (roundProgress || []) as any) ? (
             <div className="space-y-2">
               <Link
                 href={`/pools/${params.id}/bracket/new`}
