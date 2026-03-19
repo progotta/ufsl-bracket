@@ -99,7 +99,7 @@ export async function GET(
           // Get all completed games with winner_id and their rounds
           const { data: games } = await supabase
             .from('games')
-            .select('id, round, winner_id, season')
+            .select('id, round, game_number, region, winner_id, season')
             .eq('season', 2026)
             .eq('status', 'completed')
             .not('winner_id', 'is', null)
@@ -117,7 +117,9 @@ export async function GET(
                 const roundCounts = [0, 0, 0, 0, 0, 0]
                 for (const game of games) {
                   const round = game.round as number
-                  if (round >= 1 && round <= 6 && picks[game.id] === game.winner_id) {
+                  // Picks are keyed by slug (e.g. "east-r1-g2"), not UUID
+                  const slug = `${(game.region as string || '').toLowerCase()}-r${game.round}-g${game.game_number}`
+                  if (round >= 1 && round <= 6 && picks[slug] === game.winner_id) {
                     roundCounts[round - 1]++
                   }
                 }
