@@ -45,7 +45,7 @@ export default function PoolLeaderboardPreview({
           >
             <span className="flex items-center gap-1.5">
               <span className="w-4 text-right opacity-60">{entry.rank}.</span>
-              <span className="truncate max-w-[160px]">{isMe ? 'You' : entry.displayName}</span>
+              <span className="truncate max-w-[250px]">{isMe ? 'You' : entry.displayName}</span>
             </span>
             <span className="font-mono">{entry.score}pts</span>
           </div>
