@@ -86,7 +86,7 @@ async function DashboardPageInner() {
       ? supabase.from('pool_members').select('pool_id').in('pool_id', allPoolIds)
       : Promise.resolve({ data: [] }),
     bracketPoolIds.length > 0
-      ? supabase.from('brackets').select('*, user_profiles(display_name)').in('pool_id', bracketPoolIds).not('picks', 'is', null)
+      ? supabase.from('brackets').select('*').in('pool_id', bracketPoolIds).not('picks', 'is', null)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -108,6 +108,13 @@ async function DashboardPageInner() {
     if (!allPoolBrackets.has(b.pool_id)) allPoolBrackets.set(b.pool_id, [])
     allPoolBrackets.get(b.pool_id)!.push(b)
   }
+
+  // Fetch display names for all unique users in pool brackets
+  const poolBracketUserIds = Array.from(new Set((allPoolBracketsRaw || []).map((b: { user_id: string }) => b.user_id).filter(Boolean)))
+  const { data: poolUserProfiles } = poolBracketUserIds.length > 0
+    ? await supabase.from('user_profiles').select('id, display_name').in('id', poolBracketUserIds)
+    : { data: [] }
+  const poolUserNameMap = new Map((poolUserProfiles || []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name]))
 
 
 
@@ -160,8 +167,7 @@ async function DashboardPageInner() {
   for (const [poolId, poolBrackets] of Array.from(allPoolBrackets.entries())) {
     const sorted = [...poolBrackets].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     const entries: PoolLbEntry[] = sorted.slice(0, 3).map((b, i) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const profileName = (b as any).user_profiles?.display_name as string | null
+      const profileName = poolUserNameMap.get(b.user_id) ?? null
       const bracketLabel = b.bracket_name || b.name || null
       // Show "DisplayName (Bracket Name)" if bracket name differs from display name, otherwise just display name
       const name = profileName
