@@ -211,9 +211,14 @@ export default async function PoolPage({ params }: Props) {
       <StripeStatusBanner />
 
       {/* Unpaid bracket warning banner */}
-      {FEATURES.paidPools && !isCommissioner && isMember && entryFee > 0 && (() => {
+      {FEATURES.paidPools && isMember && entryFee > 0 && (() => {
         const myPayments = (payments || []).filter((p: any) => p.user_id === session.user.id)
-        const hasUnpaid = myPayments.some((p: any) => p.status === 'unpaid')
+        const mySubmittedBrackets = (userBrackets || []).filter((b: any) => b.is_submitted)
+        // A bracket is unpaid if its payment record says unpaid, OR if it has no payment record at all
+        const hasUnpaid = mySubmittedBrackets.some((b: any) => {
+          const pmt = myPayments.find((p: any) => p.bracket_id === b.id)
+          return !pmt || pmt.status === 'unpaid'
+        })
         if (!hasUnpaid) return null
         return (
           <div className="flex items-center justify-between gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
