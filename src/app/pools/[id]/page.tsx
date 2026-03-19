@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Users, Link as LinkIcon, Settings, Plus, Wrench, Eye } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import ScrollToTop from '@/components/ScrollToTop'
 import ShareStandingsCard from '@/components/pools/ShareStandingsCard'
 import InviteSection from '@/components/pools/InviteSection'
 import PoolLeaderboard from '@/components/pools/Leaderboard'
@@ -188,6 +189,7 @@ export default async function PoolPage({ params }: Props) {
     : []
 
   return (
+      <ScrollToTop />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       <RealtimeStatus />
       {/* Stripe/Payment status banners */}
