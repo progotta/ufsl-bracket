@@ -179,16 +179,31 @@ export default async function PoolPage({ params }: Props) {
     return { rounds: sortedRounds, labels: ROUND_LABELS, currentRound, gamesRemaining, allComplete }
   })()
 
-  // Payment data
+  // Payment data — source of truth is the payments table, not pool_members.payment_status
   const entryFee = (pool as any).entry_fee ? Number((pool as any).entry_fee) : 0
   const memberCount = members?.length || 0
-  const paidCount = members?.filter((m: any) => m.payment_status === 'paid').length || 0
-  const totalPot = memberCount * entryFee
+  // Actual collected: sum of paid payment records
+  const actualPaidAmount = (payments || [])
+    .filter((p: any) => p.status === 'paid')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+  const paidBracketCount = (payments || []).filter((p: any) => p.status === 'paid').length
+
+  // Max pot: all submitted brackets × fee (or all members × fee for flat-fee pools)
+  const submittedBracketCount = Object.values(bracketCountByUser).reduce((s, n) => s + n, 0)
+  const maxPot = feePerBracket
+    ? submittedBracketCount * entryFee
+    : memberCount * entryFee
+
+  // paidCount for backward compat (e.g. payout calculations)
+  const paidCount = paidBracketCount
+  const totalPot = actualPaidAmount
+
   const payouts = entryFee > 0 && (pool as any).payout_structure
-    ? calculatePayouts(totalPot, (pool as any).payout_structure as PayoutStructure, paidCount)
+    ? calculatePayouts(maxPot, (pool as any).payout_structure as PayoutStructure, paidCount)
     : []
 
   return (
+    <>
       <ScrollToTop />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       <RealtimeStatus />
@@ -465,20 +480,20 @@ export default async function PoolPage({ params }: Props) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-black text-lg">💰 Pool Pot</h3>
             <span className="text-2xl font-black text-brand-orange">
-              {formatCurrency(paidCount * entryFee)}
+              {formatCurrency(actualPaidAmount)}
             </span>
           </div>
 
           {/* Progress bar */}
           <div className="mb-3">
             <div className="flex justify-between text-sm text-brand-muted mb-1">
-              <span>{paidCount} of {memberCount} paid</span>
-              <span>{formatCurrency(memberCount * entryFee)} when full</span>
+              <span>{paidBracketCount} of {submittedBracketCount} bracket{submittedBracketCount !== 1 ? 's' : ''} paid</span>
+              <span>{formatCurrency(maxPot)} when full</span>
             </div>
             <div className="h-2 bg-brand-surface rounded-full">
               <div
                 className="h-2 bg-brand-orange rounded-full transition-all"
-                style={{ width: `${memberCount > 0 ? (paidCount / memberCount) * 100 : 0}%` }}
+                style={{ width: `${maxPot > 0 ? (actualPaidAmount / maxPot) * 100 : 0}%` }}
               />
             </div>
           </div>
@@ -666,6 +681,7 @@ export default async function PoolPage({ params }: Props) {
         </div>
       </section>
       </main>
+    </>
   )
 }
 
