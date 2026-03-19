@@ -15,7 +15,11 @@ export default function LivePicksRow({ picks, teams }: LivePicksRowProps) {
 
   const livePicks = useMemo(() => {
     const pickedIds = new Set(Object.values(picks))
-    const teamMap = new Map(teams.map(t => [t.id, t]))
+    // Build two lookup maps: by DB UUID and by ESPN ID (string)
+    const teamById = new Map(teams.map(t => [t.id, t]))
+    const teamByEspnId = new Map(
+      teams.filter(t => t.espn_id != null).map(t => [String(t.espn_id), t])
+    )
 
     const results: {
       teamId: string
@@ -27,16 +31,21 @@ export default function LivePicksRow({ picks, teams }: LivePicksRowProps) {
 
     for (const game of activeGames) {
       for (const side of [game.team1, game.team2] as const) {
-        if (side.id && pickedIds.has(side.id)) {
-          const dbTeam = teamMap.get(side.id)
-          results.push({
-            teamId: side.id,
-            abbreviation: dbTeam?.abbreviation ?? side.abbreviation,
-            espnId: dbTeam?.espn_id ?? null,
-            isWinning: side.isWinning,
-            isTied: game.team1.score === game.team2.score,
-          })
-        }
+        // Match by DB UUID (database source) OR by ESPN team ID (ESPN source)
+        const dbTeam =
+          (side.id ? teamById.get(side.id) : undefined) ??
+          (side.espnTeamId ? teamByEspnId.get(side.espnTeamId) : undefined)
+
+        if (!dbTeam) continue
+        if (!pickedIds.has(dbTeam.id)) continue
+
+        results.push({
+          teamId: dbTeam.id,
+          abbreviation: dbTeam.abbreviation ?? side.abbreviation,
+          espnId: dbTeam.espn_id ?? null,
+          isWinning: side.isWinning,
+          isTied: game.team1.score === game.team2.score,
+        })
       }
     }
 
