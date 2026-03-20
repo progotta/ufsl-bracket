@@ -17,13 +17,18 @@ const ESPN_SCOREBOARD_URL =
  * Requires CRON_SECRET env var set in Vercel dashboard.
  */
 export async function GET(req: NextRequest) {
-  // ── Auth: verify CRON_SECRET (skip in dev) ──────────────────────────
-  if (process.env.NODE_ENV !== 'development') {
+  // ── Auth: verify CRON_SECRET ─────────────────────────────────────────
+  // Always enforce in production. Skip only in local dev (no CRON_SECRET set).
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret) {
     const authHeader = req.headers.get('authorization')
     const secret = authHeader?.replace('Bearer ', '')
-    if (secret !== process.env.CRON_SECRET) {
+    if (!secret || secret !== cronSecret) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+  } else if (process.env.NODE_ENV === 'production') {
+    // CRON_SECRET must be set in production — fail closed
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
   }
 
   // ── Time window check: 10am–10pm Mountain Time ──────────────────────
