@@ -311,12 +311,13 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
         <ChevronRight size={14} className="shrink-0 text-brand-muted/50 group-hover:text-brand-orange transition-colors" />
       </div>
 
-      {/* Row 2: Round grid (pool tab only) */}
-      {!isGlobal && (
-        <LeaderboardRoundGrid roundPicks={entry.round_picks} />
-      )}
+      {/* Row 2: Live picks (pool tab only) */}
       {!isGlobal && picks && teams.length > 0 && (
         <LivePicksRow picks={picks} teams={teams} />
+      )}
+      {/* Row 3: Round grid (pool tab only) */}
+      {!isGlobal && (
+        <LeaderboardRoundGrid roundPicks={entry.round_picks} />
       )}
     </button>
   )
