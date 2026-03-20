@@ -420,7 +420,7 @@ export default function Leaderboard({
   })
 
   const top3 = filtered.slice(0, 3)
-  const rest = filtered.slice(3)
+  const rest = filtered
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; show: boolean }[] = [
     { key: 'pool', label: 'Pool', icon: <Users size={14} />, show: !!poolId },
