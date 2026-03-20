@@ -34,7 +34,9 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname === route ||
     req.nextUrl.pathname.startsWith('/auth/') ||
     req.nextUrl.pathname.startsWith('/join/') ||
-    req.nextUrl.pathname.startsWith('/api/public/')
+    req.nextUrl.pathname.startsWith('/api/public/') ||
+    req.nextUrl.pathname.startsWith('/api/cron/') ||
+    req.nextUrl.pathname.startsWith('/api/scores/')
   )
 
   // Redirect to auth if not logged in
