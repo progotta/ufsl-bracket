@@ -68,7 +68,30 @@ export function useLiveScores(options: UseLiveScoresOptions = {}): UseLiveScores
     return () => { mountedRef.current = false }
   }, [disabled, fetchScores])
 
-  // Realtime subscription: refetch whenever games table updates
+  // Polling interval: 30s when games are live, 5 min when idle
+  useEffect(() => {
+    if (disabled) return
+
+    const ACTIVE_INTERVAL = 30_000
+    const IDLE_INTERVAL = 5 * 60_000
+
+    let timerId: ReturnType<typeof setTimeout>
+
+    const schedule = () => {
+      const hasActive = (data?.games ?? []).some(
+        g => g.status === 'in_progress' || g.status === 'halftime'
+      )
+      timerId = setTimeout(async () => {
+        await fetchScores()
+        schedule()
+      }, hasActive ? ACTIVE_INTERVAL : IDLE_INTERVAL)
+    }
+
+    schedule()
+    return () => clearTimeout(timerId)
+  }, [disabled, fetchScores, data?.games])
+
+  // Realtime subscription: refetch whenever games table updates (game completions)
   useEffect(() => {
     if (disabled) return
 
