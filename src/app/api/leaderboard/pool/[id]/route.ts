@@ -129,73 +129,7 @@ export async function GET(
           }
         }
 
-        // Extract champion picks and check alive status
-        const championMap = new Map<string, { name: string; abbr: string; alive: boolean }>()
-
-        if (bracketIds.length > 0) {
-          // Reuse brackets data already fetched above (or fetch if needed)
-          const { data: champBrackets } = await supabase
-            .from('brackets')
-            .select('id, picks')
-            .in('id', bracketIds)
-
-          if (champBrackets) {
-            const championTeamIds = new Set<string>()
-            const bracketChampionMap = new Map<string, string>() // bracketId → teamId
-
-            for (const bracket of champBrackets) {
-              const picks = (bracket.picks || {}) as Record<string, string>
-              const champId = picks['championship-r6-g1']
-              if (champId) {
-                championTeamIds.add(champId)
-                bracketChampionMap.set(bracket.id, champId)
-              }
-            }
-
-            if (championTeamIds.size > 0) {
-              // Fetch champion team details
-              const { data: teams } = await supabase
-                .from('teams')
-                .select('id, name, abbreviation')
-                .in('id', Array.from(championTeamIds))
-
-              // Fetch eliminated teams (losers of completed games)
-              const { data: completedGames } = await supabase
-                .from('games')
-                .select('team1_id, team2_id, winner_id')
-                .eq('status', 'completed')
-                .not('winner_id', 'is', null)
-
-              const eliminatedSet = new Set<string>()
-              if (completedGames) {
-                for (const g of completedGames) {
-                  const loserId = g.team1_id === g.winner_id ? g.team2_id : g.team1_id
-                  if (loserId) eliminatedSet.add(loserId)
-                }
-              }
-
-              const teamMap = new Map<string, { name: string; abbreviation: string }>()
-              if (teams) {
-                for (const t of teams) {
-                  teamMap.set(t.id, { name: t.name, abbreviation: t.abbreviation })
-                }
-              }
-
-              for (const [bracketId, teamId] of Array.from(bracketChampionMap.entries())) {
-                const team = teamMap.get(teamId)
-                if (team) {
-                  championMap.set(bracketId, {
-                    name: team.name,
-                    abbr: team.abbreviation,
-                    alive: !eliminatedSet.has(teamId),
-                  })
-                }
-              }
-            }
-          }
-        }
-
-        // Attach movement + per-round picks + champion to each entry
+        // Attach movement + per-round picks to each entry
         return (current || []).map(entry => {
           const prevRank = prevRankMap.get(entry.user_id)
           let movement: number | null = null
@@ -203,13 +137,7 @@ export async function GET(
             movement = prevRank - (entry.rank as number) // positive = moved up
           }
           const roundPicks = entry.bracket_id ? roundPicksMap.get(entry.bracket_id) ?? null : null
-          const champ = entry.bracket_id ? championMap.get(entry.bracket_id) : undefined
-          return {
-            ...entry,
-            movement,
-            round_picks: roundPicks,
-            ...(champ ? { champion_name: champ.name, champion_abbr: champ.abbr, champion_alive: champ.alive } : {}),
-          }
+          return { ...entry, movement, round_picks: roundPicks }
         })
       },
       CACHE_TTL
