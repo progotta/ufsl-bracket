@@ -129,6 +129,21 @@ export async function GET(
           }
         }
 
+        // Build raw picks map (bracketId → picks object) for live picks display
+        const bracketPicksMap = new Map<string, Record<string, string>>()
+        if (bracketIds.length > 0) {
+          // Reuse the brackets already fetched for roundPicksMap
+          const { data: picksBrackets } = await supabase
+            .from('brackets')
+            .select('id, picks')
+            .in('id', bracketIds)
+          if (picksBrackets) {
+            for (const b of picksBrackets) {
+              bracketPicksMap.set(b.id, (b.picks || {}) as Record<string, string>)
+            }
+          }
+        }
+
         // Extract champion picks and check alive status
         const championMap = new Map<string, { name: string; abbr: string; alive: boolean }>()
 
@@ -209,6 +224,7 @@ export async function GET(
             movement,
             round_picks: roundPicks,
             ...(champ ? { champion_name: champ.name, champion_abbr: champ.abbr, champion_alive: champ.alive } : {}),
+            picks: entry.bracket_id ? bracketPicksMap.get(entry.bracket_id) ?? {} : {},
           }
         })
       },

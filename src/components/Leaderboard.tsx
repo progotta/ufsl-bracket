@@ -7,6 +7,8 @@ import { formatCurrency, getConsolationPrize } from '@/lib/payouts'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import PlayerAvatar from '@/components/ui/PlayerAvatar'
+import LivePicksRow from '@/components/LivePicksRow'
+import type { Team } from '@/types/database'
 
 // Lazy-load the share modal — only needed when the user clicks share
 const ShareModal = dynamic(() => import('@/components/ShareModal'), { ssr: false })
@@ -32,6 +34,7 @@ export interface LeaderboardEntry {
   champion_name?: string
   champion_abbr?: string
   champion_alive?: boolean
+  picks?: Record<string, string>
   // Global/Friends
   total_score?: number
   total_correct_picks?: number
@@ -218,7 +221,7 @@ const RANK_COLORS: Record<number, string> = {
   3: 'text-amber-600 font-bold',
 }
 
-function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePayoutPerPerson }: {
+function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePayoutPerPerson, picks, teams }: {
   entry: LeaderboardEntry
   isMe: boolean
   isGlobal: boolean
@@ -226,6 +229,8 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
   payouts?: PayoutInfo[]
   multiBracket?: boolean
   onePayoutPerPerson?: boolean
+  picks?: Record<string, string>
+  teams: Team[]
 }) {
   const score = isGlobal ? (entry.total_score ?? 0) : (entry.score ?? 0)
   const maxPossible = isGlobal ? (entry.best_score ?? 0) : (entry.max_possible_score ?? 0)
@@ -310,6 +315,9 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
       {!isGlobal && (
         <LeaderboardRoundGrid roundPicks={entry.round_picks} />
       )}
+      {!isGlobal && picks && teams.length > 0 && (
+        <LivePicksRow picks={picks} teams={teams} />
+      )}
     </button>
   )
 }
@@ -332,6 +340,7 @@ export default function Leaderboard({
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [shareTarget, setShareTarget] = useState<LeaderboardEntry | null>(null)
+  const [teams, setTeams] = useState<Team[]>([])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -360,7 +369,17 @@ export default function Leaderboard({
   }, [activeTab, poolId, globalFilter])
 
   useEffect(() => {
-    fetchData()
+    fetchData().then(() => {
+      if (activeTab === 'pool' && teams.length === 0) {
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+        supabase.from('teams').select('*').then(({ data }) => {
+          setTeams(data ?? [])
+        })
+      }
+    })
   }, [fetchData])
 
   // Realtime subscription: refresh pool leaderboard when brackets change
@@ -521,6 +540,8 @@ export default function Leaderboard({
                 payouts={activeTab === 'pool' ? payoutsProp : undefined}
                 multiBracket={maxBracketsPerMember > 1}
                 onePayoutPerPerson={onePayoutPerPerson}
+                picks={entry.picks}
+                teams={teams}
               />
             ))
           ) : (
@@ -534,6 +555,8 @@ export default function Leaderboard({
                 payouts={activeTab === 'pool' ? payoutsProp : undefined}
                 multiBracket={maxBracketsPerMember > 1}
                 onePayoutPerPerson={onePayoutPerPerson}
+                picks={entry.picks}
+                teams={teams}
               />
             ))
           )}

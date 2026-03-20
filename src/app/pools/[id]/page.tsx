@@ -32,6 +32,8 @@ const Leaderboard = dynamic(() => import('@/components/Leaderboard'), {
   ssr: false,
 })
 
+const LiveGames = dynamic(() => import('@/components/LiveGames'), { ssr: false })
+
 const SmackTalk = dynamic(() => import('@/components/smack/SmackTalk'), {
   loading: () => (
     <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 min-h-[120px] flex items-center justify-center">
@@ -642,6 +644,9 @@ export default async function PoolPage({ params }: Props) {
           onePayoutPerPerson={onePayoutPerPerson}
         />
       </ErrorBoundary>
+
+      {/* Live Games */}
+      <LiveGames />
 
       {/* Smack Talk */}
       {isMember && (
