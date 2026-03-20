@@ -192,8 +192,8 @@ async function DashboardPageInner() {
   return (
     <div className="space-y-8">
       {/* Welcome header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5">
           <PlayerAvatar
             userId={session.user.id}
             displayName={displayName}
@@ -202,14 +202,14 @@ async function DashboardPageInner() {
             size="w-8 h-8"
             borderClass="border-brand-orange/50"
           />
-          <div className="min-w-0">
-            <h1 className="text-lg font-black leading-tight truncate">
+          <div>
+            <h1 className="text-lg font-black leading-tight">
               Hey, <span className="bg-brand-gradient bg-clip-text text-transparent">{displayName}</span> 👋
             </h1>
             <p className="text-brand-muted text-xs leading-tight">2026 NCAA Tournament • Mar 19 – Apr 6</p>
           </div>
         </div>
-        <Link href="/pools/new" className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+        <Link href="/pools/new" className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 mt-1">
           <Plus size={14} />
           New Pool
         </Link>
