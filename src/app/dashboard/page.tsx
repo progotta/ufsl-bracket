@@ -206,7 +206,7 @@ async function DashboardPageInner() {
             <h1 className="text-lg font-black leading-tight">
               Hey, <span className="bg-brand-gradient bg-clip-text text-transparent">{displayName}</span> 👋
             </h1>
-            <p className="text-brand-muted text-xs leading-tight">2026 NCAA Tournament • Mar 19 – Apr 6</p>
+            <p className="text-brand-muted text-xs leading-tight whitespace-nowrap">NCAA Tournament • Mar 19 – Apr 6</p>
           </div>
         </div>
         <Link href="/pools/new" className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 mt-1">
