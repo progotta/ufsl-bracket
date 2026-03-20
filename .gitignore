@@ -9,3 +9,6 @@ dist/
 .vercel
 e2e/auth.json
 .env*.local
+
+# HAL credential store - never commit
+CREDENTIALS.md
