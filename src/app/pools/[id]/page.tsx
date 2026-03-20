@@ -206,7 +206,7 @@ export default async function PoolPage({ params }: Props) {
   return (
     <>
       <ScrollToTop />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-2 space-y-4">
       <RealtimeStatus />
       {/* Stripe/Payment status banners */}
       <StripeStatusBanner />
@@ -284,36 +284,6 @@ export default async function PoolPage({ params }: Props) {
           )}
         </div>
       </div>
-
-      {/* Tournament Progress */}
-      {tournamentProgress && tournamentProgress.rounds.length > 0 && (
-        <div className="bg-brand-surface border border-brand-border rounded-xl px-4 py-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-bold">🏀</span>
-            <div className="flex items-center gap-1 text-xs font-semibold">
-              {tournamentProgress.rounds.map(([round, { total, completed }], idx) => {
-                const label = tournamentProgress.labels[round] || `R${round}`
-                const isComplete = completed >= total
-                const isCurrent = round === tournamentProgress.currentRound && !tournamentProgress.allComplete
-                return (
-                  <span key={round} className="flex items-center gap-1">
-                    {idx > 0 && <span className="text-brand-muted mx-0.5">&rarr;</span>}
-                    <span className={
-                      isCurrent ? 'text-brand-orange font-black' :
-                      isComplete ? 'text-green-400' : 'text-brand-muted'
-                    }>
-                      {isComplete ? `✓ ${label}` : isCurrent ? `● ${label}` : label}
-                    </span>
-                  </span>
-                )
-              })}
-            </div>
-            <span className="text-xs text-brand-muted ml-auto">
-              {tournamentProgress.allComplete ? 'Tournament complete' : `${tournamentProgress.gamesRemaining} games remaining`}
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Action card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -505,6 +475,36 @@ export default async function PoolPage({ params }: Props) {
         isCommissioner={!!isCommissioner}
         notesUpdatedAt={(pool as any).notes_updated_at || null}
       />
+
+      {/* Tournament Progress */}
+      {tournamentProgress && tournamentProgress.rounds.length > 0 && (
+        <div className="bg-brand-surface border border-brand-border rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-bold">🏀</span>
+            <div className="flex items-center gap-1 text-xs font-semibold">
+              {tournamentProgress.rounds.map(([round, { total, completed }], idx) => {
+                const label = tournamentProgress.labels[round] || `R${round}`
+                const isComplete = completed >= total
+                const isCurrent = round === tournamentProgress.currentRound && !tournamentProgress.allComplete
+                return (
+                  <span key={round} className="flex items-center gap-1">
+                    {idx > 0 && <span className="text-brand-muted mx-0.5">&rarr;</span>}
+                    <span className={
+                      isCurrent ? 'text-brand-orange font-black' :
+                      isComplete ? 'text-green-400' : 'text-brand-muted'
+                    }>
+                      {isComplete ? `✓ ${label}` : isCurrent ? `● ${label}` : label}
+                    </span>
+                  </span>
+                )
+              })}
+            </div>
+            <span className="text-xs text-brand-muted ml-auto">
+              {tournamentProgress.allComplete ? 'Tournament complete' : `${tournamentProgress.gamesRemaining} games remaining`}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Pool Pot */}
       {FEATURES.paidPools && entryFee > 0 && (
