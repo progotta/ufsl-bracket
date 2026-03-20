@@ -274,11 +274,11 @@ export default async function PoolPage({ params }: Props) {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-3xl font-black">{pool.name}</h1>
+            <h1 className="text-xl font-black">{pool.name}</h1>
             {pool.description && (
-              <p className="text-brand-muted mt-1">{pool.description}</p>
+              <p className="text-brand-muted text-sm mt-0.5">{pool.description}</p>
             )}
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-3 mt-1.5">
               <PoolStatusBadge status={pool.status} />
               {pool.bracket_type && pool.bracket_type !== 'full' && (() => {
                 const meta = BRACKET_TYPE_META[pool.bracket_type as BracketType]
@@ -307,9 +307,8 @@ export default async function PoolPage({ params }: Props) {
                   Manage Pool
                 </Link>
               )}
-              <Link href={`/pools/${params.id}/settings`} className="btn-secondary text-sm flex items-center gap-2">
+              <Link href={`/pools/${params.id}/settings`} className="btn-secondary p-2" title="Settings">
                 <Settings size={16} />
-                Settings
               </Link>
             </>
           )}
