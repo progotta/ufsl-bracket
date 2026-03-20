@@ -468,14 +468,6 @@ export default async function PoolPage({ params }: Props) {
         )}
       </div>
 
-      {/* League Notes */}
-      <LeagueNotes
-        poolId={params.id}
-        initialNotes={(pool as any).notes || null}
-        isCommissioner={!!isCommissioner}
-        notesUpdatedAt={(pool as any).notes_updated_at || null}
-      />
-
       {/* Tournament Progress */}
       {tournamentProgress && tournamentProgress.rounds.length > 0 && (
         <div className="bg-brand-surface border border-brand-border rounded-xl px-4 py-3">
@@ -505,6 +497,14 @@ export default async function PoolPage({ params }: Props) {
           </div>
         </div>
       )}
+
+      {/* League Notes */}
+      <LeagueNotes
+        poolId={params.id}
+        initialNotes={(pool as any).notes || null}
+        isCommissioner={!!isCommissioner}
+        notesUpdatedAt={(pool as any).notes_updated_at || null}
+      />
 
       {/* Pool Pot */}
       {FEATURES.paidPools && entryFee > 0 && (
