@@ -285,8 +285,8 @@ export default async function PoolPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Action card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Your Brackets */}
+      <div>
         {/* Bracket action */}
         <div id="my-brackets" className="bg-brand-surface border border-brand-border rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -441,31 +441,6 @@ export default async function PoolPage({ params }: Props) {
           )}
         </div>
 
-        {/* Invite (pre-lock) or Share Standings (once games are underway) */}
-        {pool.status === 'locked' || pool.status === 'completed' ||
-         tournamentProgress?.rounds.some(([, { completed }]) => completed > 0) ? (
-          <ShareStandingsCard poolName={pool.name} poolUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/pools/${pool.id}`} leaderboard={leaderboard || []} />
-        ) : (
-          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-blue-500/10 rounded-xl p-2.5">
-                <LinkIcon size={22} className="text-blue-400" />
-              </div>
-              <div>
-                <div className="font-bold">Invite Friends</div>
-                <div className="text-xs text-brand-muted">Share the link to join</div>
-              </div>
-            </div>
-            <InviteSection
-              poolName={pool.name}
-              inviteCode={pool.invite_code}
-              inviteUrl={inviteUrl}
-              inviterName={commissionerProfile?.display_name || undefined}
-              memberCount={members?.length || 0}
-              bracketType={pool.bracket_type}
-            />
-          </div>
-        )}
       </div>
 
       {/* Tournament Progress */}
@@ -495,6 +470,32 @@ export default async function PoolPage({ params }: Props) {
               {tournamentProgress.allComplete ? 'Tournament complete' : `${tournamentProgress.gamesRemaining} games remaining`}
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Invite (pre-lock) or Share Standings (once games are underway) */}
+      {pool.status === 'locked' || pool.status === 'completed' ||
+       tournamentProgress?.rounds.some(([, { completed }]) => completed > 0) ? (
+        <ShareStandingsCard poolName={pool.name} poolUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/pools/${pool.id}`} leaderboard={leaderboard || []} />
+      ) : (
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-blue-500/10 rounded-xl p-2.5">
+              <LinkIcon size={22} className="text-blue-400" />
+            </div>
+            <div>
+              <div className="font-bold">Invite Friends</div>
+              <div className="text-xs text-brand-muted">Share the link to join</div>
+            </div>
+          </div>
+          <InviteSection
+            poolName={pool.name}
+            inviteCode={pool.invite_code}
+            inviteUrl={inviteUrl}
+            inviterName={commissionerProfile?.display_name || undefined}
+            memberCount={members?.length || 0}
+            bracketType={pool.bracket_type}
+          />
         </div>
       )}
 
