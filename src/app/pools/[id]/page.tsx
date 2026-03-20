@@ -206,7 +206,7 @@ export default async function PoolPage({ params }: Props) {
   return (
     <>
       <ScrollToTop />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-8 space-y-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 pb-8 space-y-4">
       <RealtimeStatus />
       {/* Stripe/Payment status banners */}
       <StripeStatusBanner />
