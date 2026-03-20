@@ -29,6 +29,9 @@ export interface LeaderboardEntry {
   movement?: number | null
   is_best_bracket?: boolean
   round_picks?: number[] | null // [r1_correct, r2_correct, ..., r6_correct]
+  champion_name?: string
+  champion_abbr?: string
+  champion_alive?: boolean
   // Global/Friends
   total_score?: number
   total_correct_picks?: number
@@ -115,6 +118,11 @@ function Podium({ entries, currentUserId, onClickUser, payouts }: {
               </div>
               <div className="text-lg font-black text-brand-orange">{score}</div>
               <div className="text-xs text-brand-muted">pts</div>
+              {entry.champion_name && (
+                <div className="text-[10px] text-brand-muted mt-0.5">
+                  🏆 <span className={entry.champion_alive === false ? "line-through opacity-40" : ""}>{entry.champion_abbr || entry.champion_name}</span>
+                </div>
+              )}
               {(() => {
                 const payout = payouts?.find(p => p.place === entry.rank)
                 if (score === 0) return null
@@ -261,6 +269,13 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
           {!isGlobal && (entry.bracket_name || multiBracket) && (
             <div className="text-[11px] text-brand-muted truncate">
               {entry.bracket_name || `Bracket ${entry.bracket_number || 1}`}
+            </div>
+          )}
+          {!isGlobal && entry.champion_name && (
+            <div className="text-[11px] text-brand-muted truncate">
+              🏆 <span className={entry.champion_alive === false ? "line-through opacity-40" : ""}>
+                {entry.champion_abbr || entry.champion_name}
+              </span>
             </div>
           )}
           {isGlobal && (
