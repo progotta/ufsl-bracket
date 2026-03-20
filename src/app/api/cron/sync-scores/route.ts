@@ -62,9 +62,10 @@ export async function GET(req: NextRequest) {
 
   // ── Pre-load teams by espn_id for fast lookup ───────────────────────
   const { data: allTeams } = await db.from('teams').select('id, espn_id')
-  const teamByEspnId: Record<number, string> = {}
+  // Key by string to avoid int/text cast issues (DB stores espn_id as text)
+  const teamByEspnId: Record<string, string> = {}
   for (const t of allTeams ?? []) {
-    if (t.espn_id) teamByEspnId[t.espn_id] = t.id
+    if (t.espn_id) teamByEspnId[String(t.espn_id)] = t.id
   }
 
   // ── Pre-load incomplete games ───────────────────────────────────────
@@ -88,8 +89,8 @@ export async function GET(req: NextRequest) {
       const espnLoser = competitors.find((c: any) => c.winner !== true)
       if (!espnWinner || !espnLoser) continue
 
-      const winnerEspnId = parseInt(espnWinner.team.id)
-      const loserEspnId = parseInt(espnLoser.team.id)
+      const winnerEspnId = String(espnWinner.team.id)
+      const loserEspnId = String(espnLoser.team.id)
       const winnerDbId = teamByEspnId[winnerEspnId]
       const loserDbId = teamByEspnId[loserEspnId]
       if (!winnerDbId || !loserDbId) continue
