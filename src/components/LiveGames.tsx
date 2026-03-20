@@ -10,6 +10,8 @@ import TeamLogo from '@/components/ui/TeamLogo'
 interface LiveGamesProps {
   /** Team IDs the current user has picked (for color coding) */
   userPickIds?: string[]
+  /** IANA timezone for displaying scheduled game times */
+  timezone?: string
 }
 
 /**
@@ -17,7 +19,7 @@ interface LiveGamesProps {
  * Shows all games as always-visible mini box score cards.
  * Auto-polls at 30s interval while games are active.
  */
-export default function LiveGames({ userPickIds = [] }: LiveGamesProps) {
+export default function LiveGames({ userPickIds = [], timezone = 'America/Denver' }: LiveGamesProps) {
   const pickIdSet = new Set(userPickIds)
   const [showAll, setShowAll] = useState(false)
 
@@ -109,10 +111,10 @@ export default function LiveGames({ userPickIds = [] }: LiveGamesProps) {
         {(displayGames.length > 0 || scheduledGames.length > 0) && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5">
             {displayGames.map(game => (
-              <GameCard key={game.id} game={game} userPickIds={pickIdSet} />
+              <GameCard key={game.id} game={game} userPickIds={pickIdSet} timezone={timezone} />
             ))}
             {scheduledGames.map(game => (
-              <GameCard key={game.id} game={game} userPickIds={pickIdSet} />
+              <GameCard key={game.id} game={game} userPickIds={pickIdSet} timezone={timezone} />
             ))}
           </div>
         )}
@@ -141,12 +143,24 @@ export default function LiveGames({ userPickIds = [] }: LiveGamesProps) {
 
 // ---
 
+function formatGameTime(isoDate: string | undefined, timezone: string): string {
+  if (!isoDate) return 'TBD'
+  return new Date(isoDate).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+    timeZone: timezone,
+  })
+}
+
 function GameCard({
   game,
   userPickIds,
+  timezone,
 }: {
   game: LiveGameScore
   userPickIds: Set<string>
+  timezone: string
 }) {
   const isLive = game.status === 'in_progress' || game.status === 'halftime'
   const isFinal = game.status === 'completed'
@@ -184,7 +198,9 @@ function GameCard({
         {isLive && game.isClose && (
           <span className="text-brand-gold text-[10px] font-bold">Close</span>
         )}
-        <span className="text-[10px] text-brand-muted ml-auto">{game.clock}</span>
+        <span className="text-[10px] text-brand-muted ml-auto">
+          {isScheduled ? formatGameTime(game.scheduledAt, timezone) : game.clock}
+        </span>
       </div>
 
       {/* Team rows */}

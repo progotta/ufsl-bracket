@@ -23,6 +23,7 @@ export interface Database {
           stripe_onboarded: boolean
           paypal_merchant_id: string | null
           paypal_onboarded: boolean
+          timezone: string
         }
         Insert: {
           id: string
@@ -37,6 +38,7 @@ export interface Database {
           stripe_onboarded?: boolean
           paypal_merchant_id?: string | null
           paypal_onboarded?: boolean
+          timezone?: string
         }
         Update: {
           id?: string
@@ -51,6 +53,7 @@ export interface Database {
           stripe_onboarded?: boolean
           paypal_merchant_id?: string | null
           paypal_onboarded?: boolean
+          timezone?: string
         }
       }
       pools: {

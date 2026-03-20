@@ -14,8 +14,23 @@ interface ProfileFormProps {
   userId: string
 }
 
+const TIMEZONES = [
+  { value: "America/New_York",    label: "Eastern Time (ET)" },
+  { value: "America/Chicago",     label: "Central Time (CT)" },
+  { value: "America/Denver",      label: "Mountain Time (MT)" },
+  { value: "America/Phoenix",     label: "Arizona (no DST)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+  { value: "America/Anchorage",   label: "Alaska Time (AKT)" },
+  { value: "Pacific/Honolulu",    label: "Hawaii Time (HT)" },
+  { value: "Europe/London",       label: "London (GMT/BST)" },
+  { value: "Europe/Paris",        label: "Central European (CET)" },
+  { value: "Asia/Tokyo",          label: "Japan (JST)" },
+  { value: "Australia/Sydney",    label: "Sydney (AEST)" },
+]
+
 export default function ProfileForm({ profile, userId }: ProfileFormProps) {
   const [displayName, setDisplayName] = useState(profile?.display_name || '')
+  const [timezone, setTimezone] = useState(profile?.timezone || 'America/Denver')
   const [avatarIcon, setAvatarIcon] = useState<string | null>(profile?.avatar_icon || null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -34,6 +49,7 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
       .from('profiles')
       .update({
         display_name: displayName.trim(),
+        timezone,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId)
@@ -181,6 +197,19 @@ export default function ProfileForm({ profile, userId }: ProfileFormProps) {
               className="input-base"
             />
             <p className="text-xs text-brand-muted mt-1">{displayName.length}/30 — shown on leaderboards</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">Time Zone</label>
+            <select
+              value={timezone}
+              onChange={e => setTimezone(e.target.value)}
+              className="w-full bg-brand-card border border-brand-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-orange/50"
+            >
+              {TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
           </div>
 
           {profile?.email && (

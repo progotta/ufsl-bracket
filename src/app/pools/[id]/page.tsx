@@ -646,7 +646,7 @@ export default async function PoolPage({ params }: Props) {
       </ErrorBoundary>
 
       {/* Live Games */}
-      <LiveGames />
+      <LiveGames timezone={currentProfile?.timezone ?? 'America/Denver'} />
 
       {/* Smack Talk */}
       {isMember && (

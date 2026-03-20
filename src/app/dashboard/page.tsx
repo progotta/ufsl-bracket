@@ -352,7 +352,7 @@ async function DashboardPageInner() {
       </section>
 
       {/* ── PRIORITY 2: Live Games (only when something is live) ── */}
-      <LiveGames userPickIds={userPickIds} />
+      <LiveGames userPickIds={userPickIds} timezone={profile?.timezone ?? 'America/Denver'} />
 
       {/* ── PRIORITY 3: Single contextual banner ── */}
       {isFullBracketBusted && hasSecondChanceOpen ? (
