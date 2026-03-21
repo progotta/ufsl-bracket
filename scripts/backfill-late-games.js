@@ -16,54 +16,15 @@ const db = createClient(SUPABASE_URL, SERVICE_KEY)
 // Round points mapping (must match ROUND_POINTS in lib/bracket.ts)
 const ROUND_POINTS = { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16, 6: 32 }
 
-// getPickSlug mirrors the server-side logic in lib/bracketUtils.ts
-// slot IDs: east-r1-g1, ff-r5-g1, championship-r6-g1
-const REGION_ORDER = ['East', 'West', 'South', 'Midwest']
-const R1_GAMES_PER_REGION = 8
-const R2_GAMES_PER_REGION = 4
-const R3_GAMES_PER_REGION = 2
-const R4_GAMES_PER_REGION = 1
+// getPickSlug mirrors the server-side logic in lib/bracketUtils.ts exactly.
+// Uses global game_number minus round offset (NOT per-region local numbering).
+const ROUND_OFFSETS = { 1: 0, 2: 32, 3: 48, 4: 56, 5: 60, 6: 0 }
 
 function getPickSlug(game) {
-  const round = game.round
-  const region = game.region
-  const gameNumber = game.game_number
-
-  if (round === 5) {
-    // Final Four: ff-r5-g1, ff-r5-g2
-    return `ff-r${round}-g${gameNumber}`
-  }
-  if (round === 6) {
-    return `championship-r${round}-g1`
-  }
-
-  const regionSlug = region.toLowerCase().replace(/ /g, '-')
-
-  if (round === 1) {
-    const regionIdx = REGION_ORDER.indexOf(region)
-    const offset = regionIdx * R1_GAMES_PER_REGION
-    const localNum = gameNumber - offset
-    return `${regionSlug}-r${round}-g${localNum}`
-  }
-  if (round === 2) {
-    const regionIdx = REGION_ORDER.indexOf(region)
-    const offset = regionIdx * R2_GAMES_PER_REGION
-    const localNum = gameNumber - offset
-    return `${regionSlug}-r${round}-g${localNum}`
-  }
-  if (round === 3) {
-    const regionIdx = REGION_ORDER.indexOf(region)
-    const offset = regionIdx * R3_GAMES_PER_REGION
-    const localNum = gameNumber - offset
-    return `${regionSlug}-r${round}-g${localNum}`
-  }
-  if (round === 4) {
-    const regionIdx = REGION_ORDER.indexOf(region)
-    const offset = regionIdx * R4_GAMES_PER_REGION
-    const localNum = gameNumber - offset
-    return `${regionSlug}-r${round}-g${localNum}`
-  }
-  return `${regionSlug}-r${round}-g${gameNumber}`
+  if (game.round === 6) return 'championship-r6-g1'
+  const adjusted = game.game_number - (ROUND_OFFSETS[game.round] || 0)
+  if (game.round === 5) return `ff-r5-g${adjusted}`
+  return `${(game.region || '').toLowerCase()}-r${game.round}-g${adjusted}`
 }
 
 async function main() {
