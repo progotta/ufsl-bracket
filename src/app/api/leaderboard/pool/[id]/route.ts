@@ -2,6 +2,7 @@ import { createRouteClient } from '@/lib/supabase/route'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCached } from '@/lib/cache'
 import { rateLimit } from '@/lib/ratelimit'
+import { getPickSlug } from '@/lib/bracketUtils'
 
 const CACHE_TTL = 60 // 60 seconds
 
@@ -118,7 +119,8 @@ export async function GET(
                 for (const game of games) {
                   const round = game.round as number
                   // Picks are keyed by slug (e.g. "east-r1-g2"), not UUID
-                  const slug = `${(game.region as string || '').toLowerCase()}-r${game.round}-g${game.game_number}`
+                  // Must use getPickSlug to apply round offsets (raw game_number is wrong for R2+)
+                  const slug = getPickSlug(game as Parameters<typeof getPickSlug>[0])
                   if (round >= 1 && round <= 6 && picks[slug] === game.winner_id) {
                     roundCounts[round - 1]++
                   }

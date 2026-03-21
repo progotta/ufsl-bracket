@@ -8,7 +8,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import PlayerAvatar from '@/components/ui/PlayerAvatar'
 import LivePicksRow from '@/components/LivePicksRow'
-import type { Team } from '@/types/database'
+import type { Team, Game } from '@/types/database'
 
 // Lazy-load the share modal — only needed when the user clicks share
 const ShareModal = dynamic(() => import('@/components/ShareModal'), { ssr: false })
@@ -221,7 +221,7 @@ const RANK_COLORS: Record<number, string> = {
   3: 'text-amber-600 font-bold',
 }
 
-function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePayoutPerPerson, picks, teams }: {
+function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePayoutPerPerson, picks, teams, games }: {
   entry: LeaderboardEntry
   isMe: boolean
   isGlobal: boolean
@@ -231,6 +231,7 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
   onePayoutPerPerson?: boolean
   picks?: Record<string, string>
   teams: Team[]
+  games: Game[]
 }) {
   const score = isGlobal ? (entry.total_score ?? 0) : (entry.score ?? 0)
   const maxPossible = isGlobal ? (entry.best_score ?? 0) : (entry.max_possible_score ?? 0)
@@ -313,7 +314,7 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
 
       {/* Row 2: Live picks (pool tab only) */}
       {!isGlobal && picks && teams.length > 0 && (
-        <LivePicksRow picks={picks} teams={teams} />
+        <LivePicksRow picks={picks} teams={teams} games={games} />
       )}
       {/* Row 3: Round grid (pool tab only) */}
       {!isGlobal && (
@@ -342,6 +343,7 @@ export default function Leaderboard({
   const [search, setSearch] = useState('')
   const [shareTarget, setShareTarget] = useState<LeaderboardEntry | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
+  const [games, setGames] = useState<Game[]>([])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -379,6 +381,11 @@ export default function Leaderboard({
         supabase.from('teams').select('*').then(({ data }) => {
           setTeams(data ?? [])
         })
+        supabase
+          .from('games')
+          .select('*')
+          .eq('season', 2026)
+          .then(({ data }) => { setGames(data ?? []) })
       }
     })
   }, [fetchData])
@@ -543,6 +550,7 @@ export default function Leaderboard({
                 onePayoutPerPerson={onePayoutPerPerson}
                 picks={entry.picks}
                 teams={teams}
+                games={games}
               />
             ))
           ) : (
@@ -558,6 +566,7 @@ export default function Leaderboard({
                 onePayoutPerPerson={onePayoutPerPerson}
                 picks={entry.picks}
                 teams={teams}
+                games={games}
               />
             ))
           )}

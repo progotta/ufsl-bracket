@@ -2,24 +2,35 @@
 
 import { useMemo } from 'react'
 import { useLiveScores } from '@/hooks/useLiveScores'
-import type { Team } from '@/types/database'
+import { getPickSlug } from '@/lib/bracketUtils'
+import type { Team, Game } from '@/types/database'
 import TeamLogo from '@/components/ui/TeamLogo'
 
 interface LivePicksRowProps {
   picks: Record<string, string>
   teams: Team[]
+  /** DB games list — used to resolve the exact pick slot for each live game */
+  games?: Game[]
 }
 
-export default function LivePicksRow({ picks, teams }: LivePicksRowProps) {
+export default function LivePicksRow({ picks, teams, games = [] }: LivePicksRowProps) {
   const { activeGames } = useLiveScores()
 
   const livePicks = useMemo(() => {
-    const pickedIds = new Set(Object.values(picks))
-    // Build two lookup maps: by DB UUID and by ESPN ID (string)
-    const teamById = new Map(teams.map(t => [t.id, t]))
+    // Build lookup maps
     const teamByEspnId = new Map(
       teams.filter(t => t.espn_id != null).map(t => [String(t.espn_id), t])
     )
+    const teamById = new Map(teams.map(t => [t.id, t]))
+
+    // Build a lookup from (team1_id, team2_id) → DB game for quick matching
+    const dbGameByTeamPair = new Map<string, Game>()
+    for (const g of games) {
+      if (g.team1_id && g.team2_id) {
+        dbGameByTeamPair.set(`${g.team1_id}|${g.team2_id}`, g)
+        dbGameByTeamPair.set(`${g.team2_id}|${g.team1_id}`, g)
+      }
+    }
 
     const results: {
       teamId: string
@@ -30,27 +41,60 @@ export default function LivePicksRow({ picks, teams }: LivePicksRowProps) {
     }[] = []
 
     for (const game of activeGames) {
-      for (const side of [game.team1, game.team2] as const) {
-        // Match by DB UUID (database source) OR by ESPN team ID (ESPN source)
-        const dbTeam =
-          (side.id ? teamById.get(side.id) : undefined) ??
-          (side.espnTeamId ? teamByEspnId.get(side.espnTeamId) : undefined)
+      // Resolve DB team objects for both sides
+      const dbTeam1 =
+        (game.team1.id ? teamById.get(game.team1.id) : undefined) ??
+        (game.team1.espnTeamId ? teamByEspnId.get(game.team1.espnTeamId) : undefined)
+      const dbTeam2 =
+        (game.team2.id ? teamById.get(game.team2.id) : undefined) ??
+        (game.team2.espnTeamId ? teamByEspnId.get(game.team2.espnTeamId) : undefined)
 
-        if (!dbTeam) continue
-        if (!pickedIds.has(dbTeam.id)) continue
+      if (!dbTeam1 || !dbTeam2) continue
 
-        results.push({
-          teamId: dbTeam.id,
-          abbreviation: dbTeam.abbreviation ?? side.abbreviation,
-          espnId: dbTeam.espn_id ?? null,
-          isWinning: side.isWinning,
-          isTied: game.team1.score === game.team2.score,
-        })
+      // Find the specific DB game for this matchup so we can compute the pick slot
+      const dbGame = dbGameByTeamPair.get(`${dbTeam1.id}|${dbTeam2.id}`)
+
+      let pickedTeamId: string | undefined
+
+      if (dbGame) {
+        // Best path: check the exact pick slot for this game
+        const slug = getPickSlug(dbGame)
+        pickedTeamId = picks[slug]
+      } else {
+        // Fallback: find a pick key whose value is one of the two teams,
+        // preferring the higher-round key (most recently applicable pick).
+        let bestRound = -1
+        for (const [key, val] of Object.entries(picks)) {
+          if (val !== dbTeam1.id && val !== dbTeam2.id) continue
+          const roundMatch = key.match(/-r(\d+)-/)
+          const round = roundMatch ? parseInt(roundMatch[1]) : 0
+          if (round > bestRound) {
+            bestRound = round
+            pickedTeamId = val
+          }
+        }
       }
+
+      if (!pickedTeamId) continue
+
+      // Only show the team this bracket actually picked for this game
+      const pickedSide = pickedTeamId === dbTeam1.id ? game.team1 : pickedTeamId === dbTeam2.id ? game.team2 : null
+      if (!pickedSide) continue
+
+      const pickedDbTeam = pickedTeamId === dbTeam1.id ? dbTeam1 : dbTeam2
+      const isTied = game.team1.score === game.team2.score
+
+      results.push({
+        teamId: pickedDbTeam.id,
+        abbreviation: pickedDbTeam.abbreviation ?? pickedSide.abbreviation,
+        espnId: pickedDbTeam.espn_id ?? null,
+        isWinning: pickedSide.isWinning,
+        isTied,
+      })
     }
 
     return results
-  }, [picks, teams, activeGames])
+  }, [picks, teams, games, activeGames])
 
   if (livePicks.length === 0) return null
 
