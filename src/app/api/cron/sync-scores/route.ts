@@ -31,12 +31,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
   }
 
-  // ── Time window check: 10am–10pm Mountain Time ──────────────────────
+  // ── Time window check: 10am–2am Mountain Time ───────────────────────
+  // Allows late games finishing after midnight. Block 2am–10am only.
   const now = new Date()
   const mtHour = parseInt(
     now.toLocaleString('en-US', { timeZone: 'America/Denver', hour: 'numeric', hour12: false })
   )
-  if (mtHour < 10 || mtHour >= 22) {
+  if (mtHour >= 2 && mtHour < 10) {
     return NextResponse.json({ skipped: 'outside_window', mtHour })
   }
 
