@@ -6,7 +6,34 @@
  * Defaults to yesterday if no date given.
  */
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { createClient } = require('@supabase/supabase-js')
+
+// Bracket advancement map (mirrors lib/bracketAdvancement.ts)
+const BRACKET_ADVANCEMENT = {
+  1:{n:33,s:'team1_id'}, 2:{n:33,s:'team2_id'}, 3:{n:34,s:'team1_id'}, 4:{n:34,s:'team2_id'},
+  5:{n:35,s:'team1_id'}, 6:{n:35,s:'team2_id'}, 7:{n:36,s:'team1_id'}, 8:{n:36,s:'team2_id'},
+  9:{n:37,s:'team1_id'}, 10:{n:37,s:'team2_id'}, 11:{n:38,s:'team1_id'}, 12:{n:38,s:'team2_id'},
+  13:{n:39,s:'team1_id'}, 14:{n:39,s:'team2_id'}, 15:{n:40,s:'team1_id'}, 16:{n:40,s:'team2_id'},
+  17:{n:41,s:'team1_id'}, 18:{n:41,s:'team2_id'}, 19:{n:42,s:'team1_id'}, 20:{n:42,s:'team2_id'},
+  21:{n:43,s:'team1_id'}, 22:{n:43,s:'team2_id'}, 23:{n:44,s:'team1_id'}, 24:{n:44,s:'team2_id'},
+  25:{n:45,s:'team1_id'}, 26:{n:45,s:'team2_id'}, 27:{n:46,s:'team1_id'}, 28:{n:46,s:'team2_id'},
+  29:{n:47,s:'team1_id'}, 30:{n:47,s:'team2_id'}, 31:{n:48,s:'team1_id'}, 32:{n:48,s:'team2_id'},
+  33:{n:49,s:'team1_id'}, 34:{n:49,s:'team2_id'}, 35:{n:53,s:'team1_id'}, 36:{n:53,s:'team2_id'},
+  37:{n:50,s:'team1_id'}, 38:{n:50,s:'team2_id'}, 39:{n:54,s:'team1_id'}, 40:{n:54,s:'team2_id'},
+  41:{n:51,s:'team1_id'}, 42:{n:51,s:'team2_id'}, 43:{n:55,s:'team1_id'}, 44:{n:55,s:'team2_id'},
+  45:{n:52,s:'team1_id'}, 46:{n:52,s:'team2_id'}, 47:{n:56,s:'team1_id'}, 48:{n:56,s:'team2_id'},
+  49:{n:57,s:'team1_id'}, 53:{n:57,s:'team2_id'}, 50:{n:58,s:'team1_id'}, 54:{n:58,s:'team2_id'},
+  51:{n:59,s:'team1_id'}, 55:{n:59,s:'team2_id'}, 52:{n:60,s:'team1_id'}, 56:{n:60,s:'team2_id'},
+  57:{n:61,s:'team1_id'}, 58:{n:61,s:'team2_id'}, 59:{n:62,s:'team1_id'}, 60:{n:62,s:'team2_id'},
+  61:{n:63,s:'team1_id'}, 62:{n:63,s:'team2_id'},
+}
+
+async function advanceWinner(db, gameNumber, winnerId) {
+  const adv = BRACKET_ADVANCEMENT[gameNumber]
+  if (!adv) return
+  await db.from('games').update({ [adv.s]: winnerId }).eq('game_number', adv.n)
+}
 
 const SUPABASE_URL = 'https://szosapevsgegcgdifqhb.supabase.co'
 const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6b3NhcGV2c2dlZ2NnZGlmcWhiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzIwNTY0NiwiZXhwIjoyMDg4NzgxNjQ2fQ.OW2n3hHFVrOlhLbyicJYxVR5GsRdOwZZsSsTNo8tfGo'
@@ -143,7 +170,10 @@ async function main() {
       errors.push(`RPC max: ${maxError.message}`)
     }
 
-    console.log(`   ✅ Updated and recalculated scores`)
+    // Advance winner to next round slot
+    await advanceWinner(db, game.game_number, winnerTeam.id)
+
+    console.log(`   ✅ Updated, scores recalculated, winner advanced`)
     updated++
   }
 

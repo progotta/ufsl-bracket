@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { getPickSlug } from '@/lib/bracketUtils'
 import { ROUND_POINTS } from '@/lib/bracket'
 import { invalidateCache } from '@/lib/cache'
+import { advanceWinner } from '@/lib/bracketAdvancement'
 
 const ESPN_SCOREBOARD_URL =
   'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=50&limit=64'
@@ -138,6 +139,9 @@ export async function GET(req: NextRequest) {
         console.error(`[sync-scores] recalculate_scores_for_game error for ${gameSlug}:`, rpcError)
         errors.push(`RPC scores ${gameSlug}: ${rpcError.message}`)
       }
+
+      // ── Advance winner to next round ──────────────────────────────
+      await advanceWinner(db, game.game_number, winnerDbId)
 
       // ── Recalculate max possible ──────────────────────────────────
       const { error: maxError } = await db.rpc('recalculate_max_possible_for_game', {
