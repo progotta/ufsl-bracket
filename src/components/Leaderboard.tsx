@@ -207,12 +207,12 @@ function LeaderboardRoundGrid({ roundPicks, currentRound }: {
         return (
           <div
             key={i}
-            className={`flex flex-col items-center py-2.5 gap-0.5 ${bgColor} ${borderTop} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
+            className={`flex flex-col items-center py-1.5 gap-0.5 ${bgColor} ${borderTop} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
           >
             <span className={`text-[9px] uppercase tracking-wide leading-none ${headerColor}`}>
               {header}
             </span>
-            <span className={`text-base font-bold leading-none tabular-nums ${scoreColor}`}>
+            <span className={`text-sm font-bold leading-none tabular-nums ${scoreColor}`}>
               {hasData ? pts : '—'}
             </span>
             <span className={`text-[9px] leading-none tabular-nums ${hasData ? scoreColor + ' opacity-60' : 'text-brand-muted/30'}`}>
