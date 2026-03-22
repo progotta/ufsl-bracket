@@ -169,19 +169,19 @@ function MovementBadge({ movement }: { movement: number | null | undefined }) {
 
 const ROUND_HEADERS = ['R64', 'R32', 'S16', 'E8', 'F4', '🏆']
 const ROUND_TOTALS = [32, 16, 8, 4, 2, 1]
+const ROUND_PTS = [1, 2, 4, 8, 16, 32]
 
 function LeaderboardRoundGrid({ roundPicks, currentRound }: {
   roundPicks: number[] | null | undefined
   currentRound: number
 }) {
-  // roundPicks: array of 6 correct-pick counts, or null if no games played yet
-  // currentRound: 1-indexed round currently in play (1=R64, 2=R32, etc.)
   return (
     <div className="grid grid-cols-6 border border-brand-border/60 rounded-lg overflow-hidden mt-2">
       {ROUND_HEADERS.map((header, i) => {
-        const round = i + 1 // 1-indexed
+        const round = i + 1
         const correct = roundPicks?.[i] ?? null
         const total = ROUND_TOTALS[i]
+        const pts = correct !== null ? correct * ROUND_PTS[i] : null
         const ratio = correct !== null ? correct / total : null
         const hasData = correct !== null
         const isActive = round === currentRound
@@ -189,41 +189,34 @@ function LeaderboardRoundGrid({ roundPicks, currentRound }: {
 
         const headerColor = isActive
           ? 'text-green-400 font-bold'
-          : isPast
-            ? 'text-green-600/60'
-            : 'text-brand-muted/40'
+          : isPast ? 'text-green-600/60' : 'text-brand-muted/40'
 
         const scoreColor = isActive
           ? (!hasData ? 'text-brand-muted/40' :
               ratio! >= 0.75 ? 'text-green-400' :
-              ratio! >= 0.5 ? 'text-yellow-400' :
-              'text-red-400')
+              ratio! >= 0.5 ? 'text-yellow-400' : 'text-red-400')
           : isPast
             ? (!hasData ? 'text-brand-muted/30' :
                 ratio! >= 0.75 ? 'text-green-600/60' :
-                ratio! >= 0.5 ? 'text-yellow-600/60' :
-                'text-red-600/60')
+                ratio! >= 0.5 ? 'text-yellow-600/60' : 'text-red-600/60')
             : 'text-brand-muted/25'
 
-        const bgColor = isActive
-          ? 'bg-green-500/10'
-          : ''
-
+        const bgColor = isActive ? 'bg-green-500/10' : ''
         const borderTop = isActive ? 'border-t-2 border-green-400' : 'border-t-2 border-transparent'
 
         return (
           <div
             key={i}
-            className={`flex flex-col items-center py-1.5 ${bgColor} ${borderTop} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
+            className={`flex flex-col items-center py-2.5 gap-0.5 ${bgColor} ${borderTop} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
           >
-            <span className={`text-[9px] uppercase tracking-wide leading-none mb-1 ${headerColor}`}>
+            <span className={`text-[9px] uppercase tracking-wide leading-none ${headerColor}`}>
               {header}
             </span>
-            <span className={`text-sm font-bold leading-none tabular-nums ${scoreColor}`}>
-              {hasData ? correct : '—'}
+            <span className={`text-base font-bold leading-none tabular-nums ${scoreColor}`}>
+              {hasData ? pts : '—'}
             </span>
-            <span className="text-[9px] text-brand-muted/40 leading-none mt-0.5 tabular-nums">
-              {hasData ? `/${total}` : ''}
+            <span className={`text-[9px] leading-none tabular-nums ${hasData ? scoreColor + ' opacity-60' : 'text-brand-muted/30'}`}>
+              {hasData ? `(${correct}W)` : ''}
             </span>
           </div>
         )
