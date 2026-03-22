@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, ChevronRight, Share2 } from 'lucide-react'
 import { formatCurrency, getConsolationPrize } from '@/lib/payouts'
@@ -187,40 +187,34 @@ function LeaderboardRoundGrid({ roundPicks, currentRound }: {
         const isActive = round === currentRound
         const isPast = round < currentRound
 
-        // Active round: always bright green header + score
-        // Past rounds: muted green (done)
-        // Future rounds: dimmed
         const headerColor = isActive
-          ? 'text-green-400/90 font-bold'
+          ? 'text-green-400 font-bold'
           : isPast
-            ? 'text-green-500/40'
-            : 'text-brand-muted/50'
+            ? 'text-green-600/60'
+            : 'text-brand-muted/40'
 
         const scoreColor = isActive
-          ? (!hasData ? 'text-brand-muted/30' :
+          ? (!hasData ? 'text-brand-muted/40' :
               ratio! >= 0.75 ? 'text-green-400' :
               ratio! >= 0.5 ? 'text-yellow-400' :
               'text-red-400')
           : isPast
             ? (!hasData ? 'text-brand-muted/30' :
-                ratio! >= 0.75 ? 'text-green-500/50' :
-                ratio! >= 0.5 ? 'text-yellow-500/50' :
-                'text-red-500/50')
-            : 'text-brand-muted/30'
+                ratio! >= 0.75 ? 'text-green-600/60' :
+                ratio! >= 0.5 ? 'text-yellow-600/60' :
+                'text-red-600/60')
+            : 'text-brand-muted/25'
 
         const bgColor = isActive
-          ? (hasData ?
-              ratio! >= 0.75 ? 'bg-green-500/10' :
-              ratio! >= 0.5 ? 'bg-yellow-500/10' :
-              'bg-red-500/10' : '')
-          : isPast
-            ? (hasData ? 'bg-green-500/3' : '')
-            : ''
+          ? 'bg-green-500/10'
+          : ''
+
+        const borderTop = isActive ? 'border-t-2 border-green-400' : 'border-t-2 border-transparent'
 
         return (
           <div
             key={i}
-            className={`flex flex-col items-center py-1.5 ${bgColor} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
+            className={`flex flex-col items-center py-1.5 ${bgColor} ${borderTop} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
           >
             <span className={`text-[9px] uppercase tracking-wide leading-none mb-1 ${headerColor}`}>
               {header}
@@ -370,15 +364,7 @@ export default function Leaderboard({
   const [shareTarget, setShareTarget] = useState<LeaderboardEntry | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
   const [games, setGames] = useState<Game[]>([])
-
-  // Current active round: lowest round with any incomplete game, or 6 if all done
-  const currentRound = useMemo(() => {
-    for (let r = 1; r <= 6; r++) {
-      const roundGames = games.filter(g => g.round === r)
-      if (roundGames.length > 0 && roundGames.some(g => g.status !== 'completed')) return r
-    }
-    return 6
-  }, [games])
+  const [currentRound, setCurrentRound] = useState<number>(1)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -398,6 +384,7 @@ export default function Leaderboard({
       const res = await fetch(url)
       const json = await res.json()
       setEntries(json.data || [])
+      if (json.currentRound) setCurrentRound(json.currentRound)
     } catch (err) {
       console.error(err)
       setEntries([])

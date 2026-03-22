@@ -45,6 +45,20 @@ export async function GET(
 
     const cacheKey = `leaderboard:pool:${poolId}`
 
+    // Compute current active round (outside cache so it's always fresh)
+    let currentRound = 1
+    {
+      const { data: roundData } = await supabase
+        .from('games')
+        .select('round, status')
+        .eq('season', 2026)
+      for (let r = 1; r <= 6; r++) {
+        const rGames = (roundData ?? []).filter(g => g.round === r)
+        if (rGames.length > 0 && rGames.some(g => g.status !== 'completed')) { currentRound = r; break }
+        if (r === 6) currentRound = 6
+      }
+    }
+
     const entries = await getCached(
       cacheKey,
       async () => {
@@ -234,7 +248,7 @@ export async function GET(
     )
 
     return NextResponse.json(
-      { data: entries },
+      { data: entries, currentRound },
       {
         headers: {
           'Cache-Control': `public, max-age=${CACHE_TTL}`,
