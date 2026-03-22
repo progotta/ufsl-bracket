@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Trophy, Users, Globe, Search, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown, ChevronRight, Share2 } from 'lucide-react'
 import { formatCurrency, getConsolationPrize } from '@/lib/payouts'
@@ -170,34 +170,59 @@ function MovementBadge({ movement }: { movement: number | null | undefined }) {
 const ROUND_HEADERS = ['R64', 'R32', 'S16', 'E8', 'F4', '🏆']
 const ROUND_TOTALS = [32, 16, 8, 4, 2, 1]
 
-function LeaderboardRoundGrid({ roundPicks }: { roundPicks: number[] | null | undefined }) {
+function LeaderboardRoundGrid({ roundPicks, currentRound }: {
+  roundPicks: number[] | null | undefined
+  currentRound: number
+}) {
   // roundPicks: array of 6 correct-pick counts, or null if no games played yet
+  // currentRound: 1-indexed round currently in play (1=R64, 2=R32, etc.)
   return (
     <div className="grid grid-cols-6 border border-brand-border/60 rounded-lg overflow-hidden mt-2">
       {ROUND_HEADERS.map((header, i) => {
+        const round = i + 1 // 1-indexed
         const correct = roundPicks?.[i] ?? null
         const total = ROUND_TOTALS[i]
         const ratio = correct !== null ? correct / total : null
         const hasData = correct !== null
+        const isActive = round === currentRound
+        const isPast = round < currentRound
 
-        const scoreColor =
-          !hasData ? 'text-brand-muted/30' :
-          ratio! >= 0.75 ? 'text-green-400' :
-          ratio! >= 0.5 ? 'text-yellow-400' :
-          'text-red-400'
+        // Active round: always bright green header + score
+        // Past rounds: muted green (done)
+        // Future rounds: dimmed
+        const headerColor = isActive
+          ? 'text-green-400/90 font-bold'
+          : isPast
+            ? 'text-green-500/40'
+            : 'text-brand-muted/50'
 
-        const bgColor =
-          !hasData ? '' :
-          ratio! >= 0.75 ? 'bg-green-500/5' :
-          ratio! >= 0.5 ? 'bg-yellow-500/5' :
-          'bg-red-500/5'
+        const scoreColor = isActive
+          ? (!hasData ? 'text-brand-muted/30' :
+              ratio! >= 0.75 ? 'text-green-400' :
+              ratio! >= 0.5 ? 'text-yellow-400' :
+              'text-red-400')
+          : isPast
+            ? (!hasData ? 'text-brand-muted/30' :
+                ratio! >= 0.75 ? 'text-green-500/50' :
+                ratio! >= 0.5 ? 'text-yellow-500/50' :
+                'text-red-500/50')
+            : 'text-brand-muted/30'
+
+        const bgColor = isActive
+          ? (hasData ?
+              ratio! >= 0.75 ? 'bg-green-500/10' :
+              ratio! >= 0.5 ? 'bg-yellow-500/10' :
+              'bg-red-500/10' : '')
+          : isPast
+            ? (hasData ? 'bg-green-500/3' : '')
+            : ''
 
         return (
           <div
             key={i}
             className={`flex flex-col items-center py-1.5 ${bgColor} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
           >
-            <span className="text-[9px] font-semibold text-brand-muted/50 uppercase tracking-wide leading-none mb-1">
+            <span className={`text-[9px] uppercase tracking-wide leading-none mb-1 ${headerColor}`}>
               {header}
             </span>
             <span className={`text-sm font-bold leading-none tabular-nums ${scoreColor}`}>
@@ -221,7 +246,7 @@ const RANK_COLORS: Record<number, string> = {
   3: 'text-amber-600 font-bold',
 }
 
-function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePayoutPerPerson, picks, teams, games }: {
+function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePayoutPerPerson, picks, teams, games, currentRound }: {
   entry: LeaderboardEntry
   isMe: boolean
   isGlobal: boolean
@@ -232,6 +257,7 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
   picks?: Record<string, string>
   teams: Team[]
   games: Game[]
+  currentRound: number
 }) {
   const score = isGlobal ? (entry.total_score ?? 0) : (entry.score ?? 0)
   const maxPossible = isGlobal ? (entry.best_score ?? 0) : (entry.max_possible_score ?? 0)
@@ -318,7 +344,7 @@ function TableRow({ entry, isMe, isGlobal, onClick, payouts, multiBracket, onePa
       )}
       {/* Row 3: Round grid (pool tab only) */}
       {!isGlobal && (
-        <LeaderboardRoundGrid roundPicks={entry.round_picks} />
+        <LeaderboardRoundGrid roundPicks={entry.round_picks} currentRound={currentRound} />
       )}
     </button>
   )
@@ -344,6 +370,15 @@ export default function Leaderboard({
   const [shareTarget, setShareTarget] = useState<LeaderboardEntry | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
   const [games, setGames] = useState<Game[]>([])
+
+  // Current active round: lowest round with any incomplete game, or 6 if all done
+  const currentRound = useMemo(() => {
+    for (let r = 1; r <= 6; r++) {
+      const roundGames = games.filter(g => g.round === r)
+      if (roundGames.length > 0 && roundGames.some(g => g.status !== 'completed')) return r
+    }
+    return 6
+  }, [games])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -551,6 +586,7 @@ export default function Leaderboard({
                 picks={entry.picks}
                 teams={teams}
                 games={games}
+                currentRound={currentRound}
               />
             ))
           ) : (
@@ -567,6 +603,7 @@ export default function Leaderboard({
                 picks={entry.picks}
                 teams={teams}
                 games={games}
+                currentRound={currentRound}
               />
             ))
           )}
