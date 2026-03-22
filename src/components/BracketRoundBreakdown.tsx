@@ -15,6 +15,14 @@ export default function BracketRoundBreakdown({ picks, games, isLeading = false 
   const breakdown = computeRoundBreakdown(picks, games)
   const badges = computeBadgesFromGames(picks, games, isLeading)
 
+  // Derive current active round from game statuses
+  let currentRound = 1
+  for (let r = 1; r <= 6; r++) {
+    const rGames = games.filter(g => g.round === r)
+    if (rGames.length > 0 && rGames.some(g => g.status !== 'completed')) { currentRound = r; break }
+    if (r === 6) currentRound = 6
+  }
+
   return (
     <div className="space-y-2">
       {/* Round grid — full width, 6 equal columns */}
@@ -22,27 +30,39 @@ export default function BracketRoundBreakdown({ picks, games, isLeading = false 
         {breakdown.map((rd, i) => {
           const header = ROUND_HEADERS[i]
           const ratio = rd.started && rd.total > 0 ? rd.correct / rd.total : null
+          const isActive = rd.round === currentRound
+          const isPast = rd.round < currentRound
 
-          const scoreColor =
-            !rd.started ? 'text-brand-muted/30' :
-            ratio === null ? 'text-brand-muted/30' :
-            ratio >= 0.75 ? 'text-green-400' :
-            ratio >= 0.5 ? 'text-yellow-400' :
-            'text-red-400'
+          const headerColor = isActive
+            ? 'text-green-400 font-bold'
+            : isPast
+              ? 'text-green-600/60'
+              : 'text-brand-muted/40'
 
-          const bgColor =
-            !rd.started ? '' :
-            ratio !== null && ratio >= 0.75 ? 'bg-green-500/5' :
-            ratio !== null && ratio >= 0.5 ? 'bg-yellow-500/5' :
-            ratio !== null ? 'bg-red-500/5' : ''
+          const scoreColor = isActive
+            ? (!rd.started ? 'text-brand-muted/40' :
+                ratio === null ? 'text-brand-muted/40' :
+                ratio >= 0.75 ? 'text-green-400' :
+                ratio >= 0.5 ? 'text-yellow-400' :
+                'text-red-400')
+            : isPast
+              ? (!rd.started ? 'text-brand-muted/30' :
+                  ratio === null ? 'text-brand-muted/30' :
+                  ratio >= 0.75 ? 'text-green-600/60' :
+                  ratio >= 0.5 ? 'text-yellow-600/60' :
+                  'text-red-600/60')
+              : 'text-brand-muted/25'
+
+          const bgColor = isActive ? 'bg-green-500/10' : ''
+          const borderTop = isActive ? 'border-t-2 border-green-400' : 'border-t-2 border-transparent'
 
           return (
             <div
               key={rd.round}
-              className={`flex flex-col items-center py-2 ${bgColor} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
+              className={`flex flex-col items-center py-2 ${bgColor} ${borderTop} ${i > 0 ? 'border-l border-brand-border/60' : ''}`}
             >
               {/* Round label */}
-              <span className="text-[9px] font-semibold text-brand-muted/50 uppercase tracking-wide leading-none mb-1">
+              <span className={`text-[9px] uppercase tracking-wide leading-none mb-1 ${headerColor}`}>
                 {header}
               </span>
               {/* Correct picks */}
